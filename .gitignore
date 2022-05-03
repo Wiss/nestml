@@ -26,3 +26,6 @@ venv
 *.gdf
 *~
 *.iml
+
+# Ismael
+.ipynb_checkpoints
