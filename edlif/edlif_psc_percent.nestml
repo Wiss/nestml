@@ -57,8 +57,8 @@ neuron edlif_psc_percent:
     V_abs' = -V_abs / tau_m + (I_syn + I_e + I_stim) / C_m 
     #ATP' = (ATP_s - ATP_c) * o_t 
     #ATP' = -(ATP - ATP_h) * o_t 
-    ATP' = ((ATP_h - ATP) * K_ATP * homeostatic_s_enabled - E_ap_c) * o_t 
-    E_ap_tr' = - E_ap_tr / tau_ap
+    ATP' = (-(ATP - ATP_h) * K_ATP * homeostatic_s_enabled - E_ap_c) * o_t 
+    #E_ap_tr' = - E_ap_tr / tau_ap
     E_ap_tr2' = E_ap_der - E_ap_tr2 / tau_ap
     E_ap_der' = - E_ap_der / tau_ap
     # TODO: fix E_ap_tr ODE using:  ATP_ap_kernel = t / tau_ap**2 * exp(-t / tau_ap) # t / (tau_ap ** 2) * exp(-t / tau_ap)
@@ -109,6 +109,7 @@ neuron edlif_psc_percent:
   output: spike
 
   update:
+    E_ap_tr *= exp(-resolution() / tau_ap)
     integrate_odes()
     
     if r > 0:
