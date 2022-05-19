@@ -83,7 +83,9 @@ neuron edlif_psc_percent:
     # TODO: fix physical units
     K_ATP real = 1                  # ATP production parameter. TODO: fix units 1/ms
     o_t ms**-1 = 1 ms**-1           # to convert to 1/ms units
-    tau_ap ms = 50 ms               # action-potential energy-consumption time constant
+    tau_ap ms = 6500 ms               # action-potential energy-consumption time constant
+    # update tau_ap maintaining tau_m/tau_ap relationship
+    # should be something around 650*tau_m
     ATP_h real = 100                # homeostatic ATP level in percent
     E_rp real = 5                   # resting-potential consumption percent/ms
     E_hk real = 5                   # housekeeping consuption percent/ms
