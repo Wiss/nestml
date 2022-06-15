@@ -66,7 +66,9 @@ synapse third_factor_stdp:
   input:
     pre_spikes nS <- spike
     post_spikes nS <- spike
-    I_post_dend pA <- continuous
+    # I_post_dend pA <- continuous
+    A_post real <- continuous # current ATP level of postsynaptic neuron
+    A_H_post real <- continuous # current homeostatic ATP level of postsynaptic neuron
   end
 
   output: spike
@@ -74,18 +76,26 @@ synapse third_factor_stdp:
   onReceive(post_spikes):
     # potentiate synapse
     w_ real = Wmax * ( w / Wmax  + (lambda * ( 1. - ( w / Wmax ) )**mu_plus * pre_trace ))
-    if I_post_dend <= 1 pA:
-      w_ = (I_post_dend / pA) * w_ + (1 - I_post_dend / pA) * w   # "gating" of the weight update
-    end
+    # if I_post_dend <= 1 pA:
+    #   w_ = (I_post_dend / pA) * w_ + (1 - I_post_dend / pA) * w   # "gating" of the weight update
+    # end
+    # TODO: update weights using postsynaptic available ATP
+    energy_factor = energy_mod(A_post, A_H_post)
+    w_ = (energy_factor) * w_ + (1 - energy_factor) * w   # "gating" of the weight update
+
     w = min(Wmax, w_)
   end
 
   onReceive(pre_spikes):
     # depress synapse
     w_ real = Wmax * ( w / Wmax  - ( alpha * lambda * ( w / Wmax )**mu_minus * post_trace ))
-    if I_post_dend <= 1 pA:
-      w_ = (I_post_dend / pA) * w_ + (1 - I_post_dend / pA) * w   # "gating" of the weight update
-    end
+    # if I_post_dend <= 1 pA:
+      # w_ = (I_post_dend / pA) * w_ + (1 - I_post_dend / pA) * w   # "gating" of the weight update
+    # end
+    # TODO: update weights using postsynaptic available ATP
+    # This one should be energy-*IN*dependent
+    energy_factor = energy_mod(A_post, A_H_post)
+    w_ = (energy_factor) * w_ + (1 - energy_factor) * w   # "gating" of the weight update
     w = max(Wmin, w_)
 
     # deliver spike to postsynaptic partner
