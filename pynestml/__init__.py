@@ -29,6 +29,5 @@ __all__ = ['cocos',
            'meta_model',
            'symbols',
            'symbol_table',
-           'transformers',
            'utils',
            'visitors']
