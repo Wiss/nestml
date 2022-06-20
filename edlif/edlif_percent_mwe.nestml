@@ -40,7 +40,7 @@ neuron edlif_percent_mwe:
     kernel ATP_kernel_exc = exp(-t / tau_syn_atp_exc)   # excitatory ATP kernel
     recordable inline E_syn_c real = (convolve(ATP_kernel_exc, exc_spikes) / tau_syn_atp_exc * E_syn_exc + convolve(ATP_kernel_inh, inh_spikes) / tau_syn_atp_inh * E_syn_inh) /o_t /pA
     recordable inline E_ap_c real = E_ap_tr / tau_ap * E_ap / o_t  # reescale to obtain E_ap consumption 
-    recordable inline ATP_c real = (ATP_basal + E_ap_c + E_syn_c * 0) 
+    recordable inline ATP_c real = (ATP_basal + E_ap_c + E_syn_c*0) 
     # if we do not multiply E_syn_c by 0 strange things happens. 
     # membrane voltage gets undefined
     
