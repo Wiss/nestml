@@ -1,0 +1,10 @@
+numpy>=1.8.2
+sympy>=1.1.1
+antlr4-python3-runtime>=4.7
+setuptools
+Jinja2>=2.10
+astropy
+odetoolbox>=2.4
+
+[:python_version < "3.5"]
+typing
