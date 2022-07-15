@@ -29,13 +29,20 @@ synapse stdp0:
   input:
     pre_spikes nS <- spike
     post_spikes nS <- spike
+    post_ATP real <- continuous
   end
 
   output: spike
 
   onReceive(post_spikes):
     # potentiate synapse
-    w_ real = Wmax * ( w / Wmax  + (lambda * ( 1. - ( w / Wmax ) )**mu_plus * pre_trace ))
+    # following line works
+    #w_ real = Wmax * ( w / Wmax  + (lambda * ( 1. - ( w / Wmax ) )**mu_plus * pre_trace ))
+    # following line **does not** work!
+    if post_ATP > 0:
+        println("yes")
+    end
+    w_ real = post_ATP * Wmax * ( w / Wmax  + (lambda * ( 1. - ( w / Wmax ) )**mu_plus * pre_trace ))
     w = min(Wmax, w_)
   end
 
