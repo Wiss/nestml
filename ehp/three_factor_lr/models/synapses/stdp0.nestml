@@ -3,6 +3,7 @@ synapse stdp0:
 
   state:
     w real = 1.
+    energy_factor real = 1.
   end
 
   parameters:
@@ -29,14 +30,21 @@ synapse stdp0:
   input:
     pre_spikes nS <- spike
     post_spikes nS <- spike
+    post_ATP real <- continuous 
   end
 
   output: spike
 
   onReceive(post_spikes):
     # potentiate synapse
-    w_ real = Wmax * ( w / Wmax  + (lambda * ( 1. - ( w / Wmax ) )**mu_plus * pre_trace ))
+    #energy_factor = energy_mod(post_ATP)
+    #println("energy_factor: {energy_factor}")
+    w_ real = Wmax * ( w / Wmax  + (lambda * ( 1. - ( w / Wmax ) )**mu_plus * pre_trace )) * post_ATP
+    #w_ = energy_factor * w_ 
     w = min(Wmax, w_)
+    
+
+  
   end
 
   onReceive(pre_spikes):
@@ -47,5 +55,10 @@ synapse stdp0:
     # deliver spike to postsynaptic partner
     deliver_spike(w, d)
   end
+  
+  function energy_mod(ATP_percent real) real:
+    return ATP_percent/100
+  end
+  
 end
 
