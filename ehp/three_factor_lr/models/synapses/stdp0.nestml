@@ -39,12 +39,9 @@ synapse stdp0:
     # potentiate synapse
     #energy_factor = energy_mod(post_ATP)
     #println("energy_factor: {energy_factor}")
-    w_ real = Wmax * ( w / Wmax  + (lambda * ( 1. - ( w / Wmax ) )**mu_plus * pre_trace )) * post_ATP
-    #w_ = energy_factor * w_ 
+    w_ real = Wmax * ( w / Wmax  + (lambda * ( 1. - ( w / Wmax ) )**mu_plus * pre_trace ))
+    w_ = post_ATP/100 * w_ 
     w = min(Wmax, w_)
-    
-
-  
   end
 
   onReceive(pre_spikes):

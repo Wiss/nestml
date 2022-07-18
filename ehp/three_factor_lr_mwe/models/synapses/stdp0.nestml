@@ -37,12 +37,9 @@ synapse stdp0:
   onReceive(post_spikes):
     # potentiate synapse
     # following line works
-    #w_ real = Wmax * ( w / Wmax  + (lambda * ( 1. - ( w / Wmax ) )**mu_plus * pre_trace ))
+    # w_ real = Wmax * ( w / Wmax  + (lambda * ( 1. - ( w / Wmax ) )**mu_plus * pre_trace ))
     # following line **does not** work!
-    if post_ATP > 0:
-        println("yes")
-    end
-    w_ real = post_ATP * Wmax * ( w / Wmax  + (lambda * ( 1. - ( w / Wmax ) )**mu_plus * pre_trace ))
+    w_ real = post_ATP/100 * Wmax * ( w / Wmax  + (lambda * ( 1. - ( w / Wmax ) )**mu_plus * pre_trace ))
     w = min(Wmax, w_)
   end
 
