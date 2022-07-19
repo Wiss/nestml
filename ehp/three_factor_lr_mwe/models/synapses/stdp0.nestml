@@ -39,7 +39,7 @@ synapse stdp0:
     # following line works
     # w_ real = Wmax * ( w / Wmax  + (lambda * ( 1. - ( w / Wmax ) )**mu_plus * pre_trace ))
     # following line **does not** work!
-    w_ real = post_ATP/100 * Wmax * ( w / Wmax  + (lambda * ( 1. - ( w / Wmax ) )**mu_plus * pre_trace ))
+    w_ real = 0*post_ATP/100 * Wmax * ( w / Wmax  + (lambda * ( 1. - ( w / Wmax ) )**mu_plus * pre_trace ))
     w = min(Wmax, w_)
   end
 
