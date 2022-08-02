@@ -13,7 +13,7 @@ Refrences
        doi: 10.1111/ejn.15326. Epub 2021 Jul 16. PMID: 34109698.
 """
 
-neuron edlif_percent_mwe:
+neuron edlif_psc_percent:
 
   state:
     r integer = 0                    # counts number of tick during the refractory period
@@ -38,9 +38,10 @@ neuron edlif_percent_mwe:
     # ATP consumption
     kernel ATP_kernel_inh = exp(-t / tau_syn_atp_inh)   # inhibitory ATP kernel
     kernel ATP_kernel_exc = exp(-t / tau_syn_atp_exc)   # excitatory ATP kernel
-    recordable inline E_syn_c real = (convolve(ATP_kernel_exc, exc_spikes) / tau_syn_atp_exc * E_syn_exc + convolve(ATP_kernel_inh, inh_spikes) / tau_syn_atp_inh * E_syn_inh) /o_t /pA
-    recordable inline E_ap_c real = E_ap_tr / tau_ap * E_ap / o_t  # reescale to obtain E_ap consumption 
-    recordable inline ATP_c real = (ATP_basal + E_ap_c + E_syn_c * 0) 
+    recordable inline E_syn_c real = (convolve(ATP_kernel_exc, exc_spikes) * E_syn_exc / tau_syn_atp_exc / w_max + convolve(ATP_kernel_inh, inh_spikes) * E_syn_inh / tau_syn_atp_inh / w_min) /o_t /pA
+    # TODO: need to normalize acounting for weights values
+    recordable inline E_ap_c real = E_ap_tr  * E_ap / tau_ap / o_t  # reescale to obtain E_ap consumption 
+    recordable inline ATP_c real = (ATP_basal + E_ap_c + E_syn_c) 
     # if we do not multiply E_syn_c by 0 strange things happens. 
     # membrane voltage gets undefined
     
@@ -80,8 +81,9 @@ neuron edlif_percent_mwe:
     E_syn_exc real = 8              # exc consumption percent/spike
     E_syn_inh real = 5              # inh synapsis consumption percent/spike
     ATP_basal real = E_rp + E_hk    # basal ATP production percent/ms
-    gamma  real = 16                # sensitivity to energy imbalance
-    E_syn_enabled real = 0
+    gamma real = 16                # sensitivity to energy imbalance
+    w_max real = 1000
+    w_min real = 1000
   end
 
   internals:
