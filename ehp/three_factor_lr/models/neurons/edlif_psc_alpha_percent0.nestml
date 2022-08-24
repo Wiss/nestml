@@ -13,7 +13,7 @@ Refrences
        doi: 10.1111/ejn.15326. Epub 2021 Jul 16. PMID: 34109698.
 """
 
-neuron edlif_psc_percent:
+neuron edlif_psc_alpha_percent0:
 
   state:
     r integer = 0                    # counts number of tick during the refractory period
@@ -28,9 +28,6 @@ neuron edlif_psc_percent:
   equations:
     # currents
     # current kernels
-    # exponential psc kernel
-    #kernel I_kernel_inh = exp(-t / tau_syn_inh)         # inhibitory
-    #kernel I_kernel_exc = exp(-t / tau_syn_exc)         # excitatory
     # alpha psc kernel iaf_psc_alpha
     kernel I_kernel_inh = (e / tau_syn_inh) * t * exp(-t / tau_syn_inh)
     kernel I_kernel_exc = (e / tau_syn_exc) * t * exp(-t / tau_syn_exc)
@@ -155,3 +152,4 @@ neuron edlif_psc_percent:
     return beta(ATP) * V_th
   end
 end  
+
