@@ -30,3 +30,4 @@ venv
 # Ismael
 .ipynb_checkpoints
 .conda_config
+*/results
