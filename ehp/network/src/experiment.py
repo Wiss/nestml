@@ -9,7 +9,7 @@ import yaml
 import os
 import copy
 
-import src.network
+import src.network as network
 #from utils.figures import create_weights_figs, \
 #create_frs_figs, create_graph_figs
 #
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     config_path = args.file
 
     ## CONFIG
-    general, neuron, connections, network_layout, \
+    general, neurons, connections, network_layout, \
         external_source = load_config(config_path)
 
     ## folder for results
@@ -48,3 +48,15 @@ if __name__ == '__main__':
         create_folder(PATH_TO_DATA)
         # save configuration file
         save_config(config_path, PATH_TO_OUTPUT)
+
+    # setup network
+    network.init_network(neurons=neurons,
+                         connections=connections,
+                         network_layout=network_layout,
+                         external_source=external_source)
+
+    # run network
+    results = network.run_network(simtime=general['simtime'],
+                                  seed=general['seed'],
+                                  record=general['record'],
+                                  record_rate=general['record_rate'])
