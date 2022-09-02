@@ -37,7 +37,7 @@ def load_config(path):
     """
     with open(path) as f:
         data = yaml.safe_load(f)
-    return data['general'], data['neuron'], data['connection'], \
+    return data['general'], data['neurons'], data['connections'], \
         data['network_layout'], data['external_source']
 
 
