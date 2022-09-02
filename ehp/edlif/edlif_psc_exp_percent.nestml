@@ -28,23 +28,20 @@ neuron edlif_psc_exp_percent:
   equations:
     # currents
     # current kernels
-    # exponential psc kernel
-    kernel I_kernel_inh = exp(-t / tau_syn_inh)         # inhibitory
-    kernel I_kernel_exc = exp(-t / tau_syn_exc)         # excitatory
-    inline I_syn pA = convolve(I_kernel_exc, exc_spikes) - convolve(I_kernel_inh, inh_spikes)
+    # alpha psc kernel iaf_psc_alpha
+    kernel I_kernel_in = exp(-t / tau_syn_in)
+    kernel I_kernel_ex = exp(-t / tau_syn_ex)
+    inline I_syn pA = convolve(I_kernel_ex, exc_spikes) - convolve(I_kernel_in, inh_spikes)
     
     # voltages
     recordable inline V_m mV = V_abs + E_L              # Membrane potential
     
     # ATP consumption
-    kernel ATP_kernel_inh = exp(-t / tau_syn_atp_inh)   # inhibitory ATP kernel
-    kernel ATP_kernel_exc = exp(-t / tau_syn_atp_exc)   # excitatory ATP kernel
-    recordable inline E_syn_c real = (convolve(ATP_kernel_exc, exc_spikes) * E_syn_exc / tau_syn_atp_exc / w_max + convolve(ATP_kernel_inh, inh_spikes) * E_syn_inh / tau_syn_atp_inh / w_min) /o_t /pA
-    # TODO: need to normalize acounting for weights values
+    kernel ATP_kernel_in = exp(-t / tau_syn_atp_in)   # inhibitory ATP kernel
+    kernel ATP_kernel_ex = exp(-t / tau_syn_atp_ex)   # excitatory ATP kernel
+    recordable inline E_syn_c real = (convolve(ATP_kernel_ex, exc_spikes) * E_syn_ex / tau_syn_atp_ex / w_max + convolve(ATP_kernel_in, inh_spikes) * E_syn_in / tau_syn_atp_in / w_min) /o_t /pA
     recordable inline E_ap_c real = E_ap_tr  * E_ap / tau_ap / o_t  # reescale to obtain E_ap consumption 
     recordable inline ATP_c real = (ATP_basal + E_ap_c + E_syn_c) 
-    # if we do not multiply E_syn_c by 0 strange things happens. 
-    # membrane voltage gets undefined
     
     # ATP supply
     recordable inline ATP_s real = (ATP_h - ATP) * K_ATP * homeostatic_s_enabled + ATP_basal
@@ -52,15 +49,13 @@ neuron edlif_psc_exp_percent:
     # ODEs
     V_abs' = -V_abs / tau_m + (I_syn + I_e + I_stim) / C_m 
     ATP' = (ATP_s - ATP_c) * o_t 
-    #E_ap_tr' = - E_ap_tr / tau_ap # This one is not working properly, should
-    # define the E_ap_tr update inside the update block, why?
   end
 
   parameters:
     C_m     pF = 250 pF         # Capacitance of the membrane
     tau_m   ms = 10 ms          # Membrane time constant
-    tau_syn_inh ms = 2 ms       # Time constant of synaptic current
-    tau_syn_exc ms = 2 ms       # Time constant of synaptic current
+    tau_syn_in ms = 2 ms       # Time constant of synaptic current
+    tau_syn_ex ms = 2 ms       # Time constant of synaptic current
     t_ref   ms = 2 ms           # Duration of refractory period
     E_L     mV = -70 mV         # Resting potential
     V_reset mV = -70 mV - E_L   # Reset potential of the membrane
@@ -73,14 +68,14 @@ neuron edlif_psc_exp_percent:
     K_ATP real = 1                  # ATP production parameter. TODO: fix units 1/ms
     o_t ms**-1 = 1 ms**-1           # to convert to 1/ms units
     tau_ap ms = 50 ms               # action-potential energy-consumption time constant
-    tau_syn_atp_inh ms = 20 ms      # Time constant of synaptic consumption
-    tau_syn_atp_exc ms = 20 ms      # Time constant of synaptic consumption
+    tau_syn_atp_in ms = 20 ms      # Time constant of synaptic consumption
+    tau_syn_atp_ex ms = 20 ms      # Time constant of synaptic consumption
     ATP_h real = 100                # homeostatic ATP level in percent
     E_rp real = 5                   # resting-potential consumption percent/ms
     E_hk real = 5                   # housekeeping consuption percent/ms
     E_ap real = 15                  # action potential consumption percent/spike
-    E_syn_exc real = 8              # exc consumption percent/spike
-    E_syn_inh real = 5              # inh synapsis consumption percent/spike
+    E_syn_ex real = 8              # exc consumption percent/spike
+    E_syn_in real = 5              # inh synapsis consumption percent/spike
     ATP_basal real = E_rp + E_hk    # basal ATP production percent/ms
     gamma real = 16                # sensitivity to energy imbalance
     w_max real = 1000
