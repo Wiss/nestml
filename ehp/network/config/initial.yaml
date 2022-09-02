@@ -5,52 +5,170 @@ general:
   record_rate: # TODO: record every x ms
   simtime: # ms
   seed: 0
-neuron:
-  types:
-    exc:
-    inh:
-  params:
-    ATP_H_mean:
-    ATP_H_ds:
-    ATP_I_mean:
-    ATP_I_ds:
-    ATP_H_dist:
-    ATP_I_dist:
-    # TODO: include distributions for:
-    # g_leak
+neurons:
+  exc:
+    model: "iaf_psc_alpha"
+    # Initial conditon for ATP
+    ATP:
+      mean: 100
+      std: 0
+    # ATP production parameter
+    K_ATP:
+      mean: 1
+      std: 0
+    # action-potential energy consumption time-constant
+    tau_ap:
+      mean: 30
+      std: 0
+    # Time constant of synaptic consumption
+    tau_syn_atp_in:
+      mean: 20
+      std: 0
+    tau_syn_atp_ex:
+      mean: 20
+      std: 0
+    # resting-potential consumption percent/ms
+    E_rp:
+      mean: 5
+      std: 0
+    # housekeeping consumption percent/ms
+    E_hk:
+      mean: 5
+      std: 0
+    # action potential consumption percent/spike
+    E_ap:
+      mean: 15
+      std: 0
+    #synaptic consumption percent/spike
+    E_syn_ex:
+      mean: 8
+      std: 0
+    E_syn_in:
+      mean: 5
+      std: 0
+    # sensitivity to energy imbalance
+    gamma:
+      mean: 16
+      std: 0
+    # synaptic time constants
+    tau_syn_ex:
+      mean: 6
+      std: 1
+    tau_syn_in:
+      mean: 6
+      std: 1
+    # membrane time constant
+    tau_m:
+      mean: 2
+      std: 0.1
     # capacitance
-    # tau_m
-    # tau_syn (both)
-    # tau_refrac
-    #
-connection:
-  types:
-    exc_exc:
-      conn_spec:
-      syn_spec:
-        # TODO
-        # model: stdp_synapse
-        # tau_minus
-        # tau_plus
-        # alpha
-        # weight # exponential distribution
-        # delay # uniform distribution
-    exc_inh:
-    inh_inh:
-    inh_exc:
+    c_m:
+      mean: 250
+      std: 12
+    # refractory period
+    t_ref:
+      mean: 2
+      std: 0.1
+  inh:
+    model: "iaf_psc_alpha"
+    # Initial conditon for ATP
+    ATP:
+      mean: 100
+      std: 0
+    # ATP production parameter
+    K_ATP:
+      mean: 1
+      std: 0
+    # action-potential energy consumption time-constant
+    tau_ap:
+      mean: 30
+      std: 0
+    # Time constant of synaptic consumption
+    tau_syn_atp_in:
+      mean: 20
+      std: 0
+    tau_syn_atp_ex:
+      mean: 20
+      std: 0
+    # resting-potential consumption percent/ms
+    E_rp:
+      mean: 5
+      std: 0
+    # housekeeping consumption percent/ms
+    E_hk:
+      mean: 5
+      std: 0
+    # action potential consumption percent/spike
+    E_ap:
+      mean: 15
+      std: 0
+    #synaptic consumption percent/spike
+    E_syn_ex:
+      mean: 8
+      std: 0
+    E_syn_in:
+      mean: 5
+      std: 0
+    # sensitivity to energy imbalance
+    gamma:
+      mean: 16
+      std: 0
+    # synaptic time constants
+    tau_syn_ex:
+      mean: 6
+      std: 1
+    tau_syn_in:
+      mean: 6
+      std: 1
+    # membrane time constant
+    tau_m:
+      mean: 2
+      std: 0.1
+    # capacitance
+    c_m:
+      mean: 250
+      std: 12
+    # refractory period
+    t_ref:
+      mean: 2
+      std: 0.1
+connections:
+  exc_exc:
+    conn_spec:
+    syn_spec:
+      # TODO
+      # model: stdp_synapse
+      # tau_minus
+      # tau_plus
+      # alpha
+      # weight # exponential distribution
+      # delay # uniform distribution
+  exc_inh: ""
+  inh_inh: ""
+  inh_exc: ""
   params:
+    # TODO separe this for each connection type
     max_weight:
     min_weight:
     stdp_decay: # for ATP dependent weights
-    weight_masc:
+    weight_mask:
     homeostatic_plasticity: False
 network_layout:
   energy_dependent: True
-  weights_distribution:
-  neurons_distribution:
-  delays_distribution:
   n_neurons: 100
   exc_inh_ratio: 0.8 # n_exc = exc_inh_ratio*n_neurons
+  weights_distribution: "exponential" # "exponential" or "normal"
+  weights_dist_beta: 1
+  weights_dist_mean: 10
+  weights_dist_sd: 3
+  delays_distribution: "uniform"
+  positions:
+    dist: "uniform"
+    dim: 2 # number of spatial dimensions (2 or 3)
+    pos_bounds:
+      # TODO include real values
+      - -1
+      - 1
 external_source:
   noise_type:
   target_neurons_id:
