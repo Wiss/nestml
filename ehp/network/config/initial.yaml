@@ -65,7 +65,7 @@ neurons:
           mean: 2
           std: 0.1
         # capacitance
-        c_m:
+        C_m:
           mean: 250
           std: 12
         # refractory period
@@ -131,7 +131,7 @@ neurons:
           mean: 2
           std: 0.1
         # capacitance
-        c_m:
+        C_m:
           mean: 250
           std: 12
         # refractory period
@@ -144,15 +144,15 @@ connections:
     # connection parameters
     conn_spec:
       allow_autapses: True # bool
-      allow_mutapses: True # bool
+      allow_multapses: True # bool
       rule: "pairwise_bernoulli"
-      p:
+      p:  # TODO gaussian kernel centered in each neuron
     # synaptic parameters
     syn_spec:
       synapse_model: "stdp_synapse"
       weights_dist: "exponential" # exponential, normal or uniform
-      delay_dist: "uniform" # exponential, normal or uniform
-      alpha_dist: "uniform"
+      delays_dist: "uniform" # exponential, normal or uniform
+      alphas_dist: "uniform"
       # TODO
       # model: stdp_synapse
       # tau_minus
@@ -172,7 +172,7 @@ connections:
     homeostatic_plasticity: False
 network_layout:
   energy_dependent: True
-  n_neurons: 100
+  n_neurons: 5
   ex_in_ratio: 0.8 # n_exc = exc_inh_ratio*n_neurons
   weights_distribution: "exponential" # "exponential" or "normal"
   weights_dist_beta: 1
