@@ -31,3 +31,4 @@ venv
 .ipynb_checkpoints
 .conda_config
 *results/
+*last_experiment.log
