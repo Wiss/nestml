@@ -67,7 +67,7 @@ def init_population(position_dist: str, neuron_model: str, n_neurons: int,
     elif neuron_model == "edlif_psc_alpha_percent":
         module_name = "edlif_psc_alpha" + "_module"
         try_install_module(module_name, neuron_model)
-    nest.ResetKernel()
+    #nest.ResetKernel()
 
     # define neuron positions
     if position_dist == "uniform":
@@ -100,3 +100,55 @@ def init_population(position_dist: str, neuron_model: str, n_neurons: int,
                          param_v['std']*np.random.rand() for x in range(len(pop))]})
         logger.debug(pop.get(param))
     return pop
+
+def fix_syn_spec(syn_spec: dict):
+    """
+    given config values for connections, create synaptic specifications
+    following nest syntaxys
+
+    Parameters
+    ----------
+    syn_spec:
+        synaptic specifications from config file
+    """
+    syn_spec_fixed = {}
+    syn_spec_fixed["synapse_model"] = syn_spec["synapse_model"]
+    if syn_spec["weights_dist"] == "exponential":
+        # TODO include params
+        syn_spec_fixed["weight"] = nest.random.exponential()
+    else:
+        raise KeyError
+    if syn_spec["delays_dist"] == "uniform":
+        # TODO include bounds
+        syn_spec_fixed["delay"] = nest.random.uniform(min=0.8, max=2.5)
+    else:
+        raise KeyError
+    if syn_spec["alphas_dist"] == "uniform":
+        # TODO include bounds
+        syn_spec_fixed["alpha"] = nest.random.uniform()
+    else:
+        raise KeyError
+    return syn_spec_fixed
+
+def connect_pops(pop_pre, pop_post, conn_spec: dict, syn_spec: dict):
+    """
+    initialize weights between two populations
+
+    Parameters
+    ----------
+    pop_pre: nest population
+        presynaptic population
+    pop_post: nest population
+        postsynaptic population
+    conn_spec:
+        connection specifications
+    syn_spec:
+        synaptic specifications
+    """
+    #nest.Connect(pop_pre, pop_post, conn_spec=conn_spec)
+    # fix syn_dict
+    syn_spec_fixed = fix_syn_spec(syn_spec)
+    nest.Connect(pop_pre, pop_post, conn_spec=conn_spec,
+                 syn_spec=syn_spec_fixed)
+    # TODO logger
+    #logger("connection number: %s", nest.num_conmnections)
