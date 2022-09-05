@@ -9,15 +9,16 @@ import yaml
 import os
 import copy
 
+from src.logging.logging import logger
 import src.network as network
 #from utils.figures import create_weights_figs, \
-#create_frs_figs, create_graph_figs
-#
-from utils.manage_files import create_folder, load_config, save_config, \
+#create_spikes_figs, create_graph_figs
+from src.utils.manage_files import create_folder, load_config, save_config, \
     save_data, load_data
 #from utils.bionet_tools import weight_init, population_pos_init
 
 #from logging.logger import logger TODO
+
 
 if __name__ == '__main__':
     import argparse
