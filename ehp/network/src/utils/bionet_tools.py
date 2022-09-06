@@ -12,6 +12,17 @@ NEST_SIMULATOR_INSTALL_LOCATION = nest.ll_api.sli_func("statusdict/prefix ::")
 
 logger = logger.getChild(__name__)
 
+
+def set_seed(seed):
+    """
+    set seed for numpy and nest
+    """
+    logger.info("Setting seed %i for nest and numpy", seed)
+    nest.rng_seed = seed
+    np.random.seed(seed)
+
+
+
 def install_needed_modules():
     """
     Install needed nestml modules
