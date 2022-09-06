@@ -3,6 +3,7 @@ bionet_tool.py
     tools for constructing and manage the biophysical network
 """
 import nest
+import matplotlib.pyplot as plt
 import numpy as np
 
 from src.logging.logging import logger
@@ -70,7 +71,7 @@ def init_population(position_dist: str, neuron_model: str, n_neurons: int,
         spatial dimension
     """
     # check if model is edlif
-    # TODO: this shoukld be fixed takinmg into account which neurons and
+    # TODO: this should be fixed taking into account which neurons and
     # synapses are being used
     if neuron_model == "edlif_psc_exp_percent":
         module_name = "edlif_psc_exp" + "_module"
@@ -78,7 +79,6 @@ def init_population(position_dist: str, neuron_model: str, n_neurons: int,
     elif neuron_model == "edlif_psc_alpha_percent":
         module_name = "edlif_psc_alpha" + "_module"
         try_install_module(module_name, neuron_model)
-    #nest.ResetKernel()
 
     # define neuron positions
     if position_dist == "uniform":
@@ -89,8 +89,8 @@ def init_population(position_dist: str, neuron_model: str, n_neurons: int,
                         )
         pop = nest.Create(neuron_model, n=n_neurons,
                           positions=pop_pos)
-        logger.debug("uniform distribution created for %s positions",
-                     neuron_model)
+        logger.debug("uniform distribution with %i neurons created, for %s"
+                        " positions", n_neurons, neuron_model)
 
     if "edlif" in neuron_model.split("_"):  # check if the model es ED
         # Energy params only for energy-dependent neurons
@@ -104,12 +104,15 @@ def init_population(position_dist: str, neuron_model: str, n_neurons: int,
 
     # General params for all neuron types
     for param, param_v in params["general_params"].items():
-        logger.debug("seting general param %s", param)
+        logger.debug("setting general param %s", param)
         logger.debug("with mean: %s and std: %s", param_v['mean'],
                      param_v['std'])
         pop.set({param: [param_v['mean'] +
                          param_v['std']*np.random.rand() for x in range(len(pop))]})
         logger.debug(pop.get(param))
+    # this shouldn't be here. Organice!
+    nest.PlotLayer(pop, nodesize=80)
+    plt.show()
     return pop
 
 def fix_syn_spec(syn_spec: dict):
@@ -205,11 +208,46 @@ def connect_pops(pop_pre, pop_post, conn_spec: dict, syn_spec: dict,
         connection specifications
     syn_spec:
         synaptic specifications
+    params:
+        extra params for the synapses
+    label:
+        connection label
+    record:
+        do we want to record weights?
     """
-    #nest.Connect(pop_pre, pop_post, conn_spec=conn_spec)
     # fix syn_dict
     syn_spec_fixed = fix_syn_spec(syn_spec)
-    nest.Connect(pop_pre, pop_post, conn_spec=conn_spec,
-                 syn_spec=syn_spec_fixed)
-    # TODO logger
-    #logger("connection number: %s", nest.num_conmnections)
+
+    # include syn_spec["params"] from config file if we have plasticity
+    if syn_spec['synapse_model'] != 'static_synapse':
+        # FIX
+        include_params(syn_spec_fixed, syn_spec['params'])
+    # create recorder if we are recording
+    if record:
+        pass
+        # TODO
+        #wr = nest.Create('weight_recorder', label=label)
+        #nest.CopyModel(syn_spec['synapse_model'],
+        #               f'{label}_rec')
+        #syn_spec_fixed['weight_recorder'] = wr
+
+    conn = nest.Connect(pop_pre, pop_post, conn_spec=conn_spec,
+                        syn_spec=syn_spec_fixed)
+
+    syn_coll = get_connections(pop_pre, pop_post)
+    logger.debug("connections for %s generated", label)
+    logger.debug(nest.GetConnections(pop_pre, pop_post))
+    return conn, syn_coll
+
+def simulate(simtime: float):
+    """
+    simulate the network
+
+    Parameters
+    ----------
+    simitme:
+        simulation time in ms
+    TODO:
+    here we can include some protocolos for reading data and
+    return it to the experiment
+    """
