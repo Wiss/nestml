@@ -124,19 +124,65 @@ def test__init_population__succeed(pos_dist, n_model, n_neurons, params,
        "rule": "pairwise_bernoulli",
        "p": 0.2},
       {"synapse_model": "stdp_synapse",
-       "weights_dist": "exponential",
-       "delays_dist": "uniform",
-       "alphas_dist": "uniform"},
-      0)
+       "params": {
+           "mu_minus": 0.1,
+           "mu_plus": 1,
+           "lambda": None,
+           "alpha": 0.3
+       },
+       "weight": {
+           "dist": "exponential",
+           "beta": 10
+           },
+       "delay": {
+           "dist": "uniform",
+           "min": 0.1,
+           "max": 2.5
+           },
+       "alpha": {
+           "dist": "uniform",
+           "min": 0.5,
+           "max": 3.1
+         }},
+      0),
+     ({"allow_autapses": True,
+       "allow_multapses": False,
+       "rule": "pairwise_bernoulli",
+       "p": 0.2},
+            {"synapse_model": "static_synapse",
+       "params": {
+           "mu_minus": 0.1,
+           "mu_plus": 1,
+           "lambda": None,
+           "alpha": 0.3
+       },
+       "weight": {
+           "dist": "exponential",
+           "beta": 10
+           },
+       "delay": {
+           "dist": "uniform",
+           "min": 0.1,
+           "max": 2.5
+           },
+       "alpha": {
+           "dist": None,
+           "min": None,
+           "max": None
+         }},
+         0),
      ],)
 def test__init_network__succeed(population, conn_spec, syn_spec, expected):
     """
     test connection initialization
     """
     pop1, pop2 = population[0], population[1]
-    bionet_tools.connect_pops(pop_pre=pop1,
+    conn, syn = bionet_tools.connect_pops(pop_pre=pop1,
                               pop_post=pop2,
                               conn_spec=conn_spec,
-                              syn_spec=syn_spec
+                              syn_spec=syn_spec,
+                              label="test"
                               )
+    #print(conn["weights"])
+    print(syn.weight)
     #assert len(pop) == expected
