@@ -3,11 +3,11 @@ experiment.py
     perform one experiment using the biophysical network and the yaml config
     file in config
 """
-import datetime
+#import datetime
 import time
-import yaml
+#import yaml
 import os
-import copy
+#import copy
 
 from src.logging.logging import logger
 import src.network as network
@@ -17,7 +17,7 @@ from src.utils.manage_files import create_folder, load_config, save_config, \
     save_data, load_data
 #from utils.bionet_tools import weight_init, population_pos_init
 
-#from logging.logger import logger TODO
+from src.logging.logging import logger
 
 
 if __name__ == '__main__':
@@ -51,13 +51,21 @@ if __name__ == '__main__':
         save_config(config_path, PATH_TO_OUTPUT)
 
     # setup network
-    network.init_network(neurons=neurons,
-                         connections=connections,
-                         network_layout=network_layout,
-                         external_source=external_source)
+    logger.info("setting up network")
+    pop_ex, pop_in = network.init_network(neurons=neurons,
+                                          connections=connections,
+                                          network_layout=network_layout,
+                                          external_source=external_source)
+    print(pop_ex)
+    print(pop_ex.spatial)
+    print(pop_in)
+    print(pop_in.spatial)
 
     # run network
+    logger.info("running network")
     results = network.run_network(simtime=general['simtime'],
                                   seed=general['seed'],
                                   record=general['record'],
                                   record_rate=general['record_rate'])
+
+    logger.info("simulation finished successfully")
