@@ -4,10 +4,10 @@ general:
   record: True
   record_rate: 1 # TODO: record every x ms
   simtime: 100 # ms
-  seed: 0
+  seed: 1
 neurons:
   ex:
-    model: "iaf_psc_alpha"
+    model: "edlif_psc_alpha_percent" #"iaf_psc_alpha"
     params:
       energy_params:
         # Initial condition for ATP
@@ -140,31 +140,115 @@ neurons:
           std: 0.1
 #  connecting populations
 connections:
+  # excitatory -> excitatory
   ex_ex:
     # connection parameters
     conn_spec:
       allow_autapses: True # bool
       allow_multapses: True # bool
       rule: "pairwise_bernoulli"
-      p:  # TODO gaussian kernel centered in each neuron
+      p: 1  # TODO gaussian kernel centered in each neuron
     # synaptic parameters
     syn_spec:
       synapse_model: "stdp_synapse"
-      weights_dist: "exponential" # exponential, normal or uniform
-      delays_dist: "uniform" # exponential, normal or uniform
-      alphas_dist: "uniform"
-      # TODO
-      # model: stdp_synapse
-      # tau_minus
-      # tau_plus
-      # alpha
-      # weight # exponential distribution
-      # delay # uniform distribution
-  ex_in: ""
-  in_in: ""
-  in_ex: ""
+      params:
+        mu_minus:
+        mu_plus:
+        lambda:
+        alpha:
+      weight:
+        dist: "exponential" # exponential, normal or uniform
+        beta: 0.1  # beta param for exponential
+      delay:
+        dist: "uniform" # exponential, normal or uniform
+        min: 0.1
+        max: 2.5
+      alpha:
+        dist: "uniform"
+        min: 0.5
+        max: 3.1
+  # excitatory -> inhibitory
+  ex_in:
+    # connection parameters
+    conn_spec:
+      allow_autapses: True # bool
+      allow_multapses: True # bool
+      rule: "pairwise_bernoulli"
+      p: 1  # TODO gaussian kernel centered in each neuron
+    # synaptic parameters
+    syn_spec:
+      synapse_model: "static_synapse"
+      params:
+        mu_minus:
+        mu_plus:
+        lambda:
+        alpha:
+      weight:
+        dist: "exponential" # exponential, normal or uniform
+        beta: 0.1  # beta param for exponential
+      delay:
+        dist: "uniform" # exponential, normal or uniform
+        min: 0.1
+        max: 2.5
+      alpha:
+        dist:
+        min:
+        max:
+  # inhibitory -> inhibitory
+  in_in:
+    # connection parameters
+    conn_spec:
+      allow_autapses: True # bool
+      allow_multapses: True # bool
+      rule: "pairwise_bernoulli"
+      p: 1  # TODO gaussian kernel centered in each neuron
+    # synaptic parameters
+    syn_spec:
+      synapse_model: "static_synapse"
+      params:
+        mu_minus:
+        mu_plus:
+        lambda:
+        alpha:
+      weight:
+        dist: "exponential" # exponential, normal or uniform
+        beta: 0.1  # beta param for exponential
+      delay:
+        dist: "uniform" # exponential, normal or uniform
+        min: 0.1
+        max: 2.5
+      alpha:
+        dist:
+        min:
+        max:
+  # inhibitory -> excitatory
+  in_ex:
+    # connection parameters
+    conn_spec:
+      allow_autapses: True # bool
+      allow_multapses: True # bool
+      rule: "pairwise_bernoulli"
+      p: 1  # TODO gaussian kernel centered in each neuron
+    # synaptic parameters
+    syn_spec:
+      synapse_model: "static_synapse"
+      params:
+        mu_minus:
+        mu_plus:
+        lambda:
+        alpha:
+      weight:
+        dist: "exponential" # exponential, normal or uniform
+        beta: 0.1  # beta param for exponential
+      delay:
+        dist: "uniform" # exponential, normal or uniform
+        min: 0.1
+        max: 2.5
+      alpha:
+        dist:
+        min:
+        max:
   params:
-    # TODO separe this for each connection type
     max_weight:
     min_weight:
     stdp_decay: # for ATP dependent weights
@@ -189,3 +273,4 @@ network_layout:
 external_source:
   noise_type:
   target_neurons_id:
+  target_neurons_subregion:
