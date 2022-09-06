@@ -124,24 +124,74 @@ def fix_syn_spec(syn_spec: dict):
     """
     syn_spec_fixed = {}
     syn_spec_fixed["synapse_model"] = syn_spec["synapse_model"]
-    if syn_spec["weights_dist"] == "exponential":
-        # TODO include params
-        syn_spec_fixed["weight"] = nest.random.exponential()
-    else:
-        raise KeyError
-    if syn_spec["delays_dist"] == "uniform":
-        # TODO include bounds
-        syn_spec_fixed["delay"] = nest.random.uniform(min=0.8, max=2.5)
-    else:
-        raise KeyError
-    if syn_spec["alphas_dist"] == "uniform":
-        # TODO include bounds
-        syn_spec_fixed["alpha"] = nest.random.uniform()
-    else:
-        raise KeyError
+    # set alpha values
+    if syn_spec["weight"]["dist"]:
+        if syn_spec["weight"]["dist"] == "exponential":
+            syn_spec_fixed["weight"] = nest.random.exponential(
+                                            beta=syn_spec["weight"]["beta"])
+        else:
+            raise KeyError
+
+    # set delay values
+    if syn_spec["delay"]["dist"]:
+        if syn_spec["delay"]["dist"] == "uniform":
+            syn_spec_fixed["delay"] = nest.random.uniform(
+                                                    min=syn_spec["delay"]["min"],
+                                                    max=syn_spec["delay"]["max"])
+        else:
+            raise KeyError
+
+    # set alpha values
+    if syn_spec["alpha"]["dist"]:
+        # do not include this param if we have a static synapse
+        if syn_spec["synapse_model"] == "static_synapse":
+            logger.error("This conection doesn't allow alpha params")
+            raise TypeError("This conection doesn't allow alpha params")
+        if syn_spec["alpha"]["dist"] == "uniform":
+            syn_spec_fixed["alpha"] = nest.random.uniform(
+                                                min=syn_spec["alpha"]["min"],
+                                                max=syn_spec["alpha"]["max"])
+        else:
+            raise KeyError
     return syn_spec_fixed
 
-def connect_pops(pop_pre, pop_post, conn_spec: dict, syn_spec: dict):
+def include_params(syn_spec: dict, params: dict):
+    """
+    include syn_spec['params'] (config file) into syn_spec
+
+    Parameters
+    ----------
+    syn_spec:
+        synapses specifications dict
+    params:
+        extra params from config file
+    """
+    for k, v in params.items():
+        if v is not None:
+            logger.debug("including param %s = %f in syn_spec dict", k, v)
+            syn_spec[k] = v
+    return syn_spec
+
+def get_connections(pop_pre, pop_post):
+    """
+    read all weights values from pop_pre to pop_post
+
+    pop could also be a subpopulation
+
+    Parameters
+    ----------
+
+    pop_pre:
+        presynaptic (sub)population
+    pop_post:
+        postsynaptic (sub)population
+    """
+    syn_coll = nest.GetConnections(pop_pre, pop_post)
+    #logger.debug(syn_coll.weight)
+    return syn_coll
+
+def connect_pops(pop_pre, pop_post, conn_spec: dict, syn_spec: dict,
+               label: str, record: bool = False):
     """
     initialize weights between two populations
 
