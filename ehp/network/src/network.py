@@ -5,8 +5,11 @@
 #import sys
 
 from src.logging.logging import logger
-from src.utils.bionet_tools import (init_population, connect_pops,
-                                    set_seed, simulate)
+from src.utils.bionet_tools import (init_population,
+                                    connect_pops,
+                                    reset_kernel,
+                                    set_seed,
+                                    simulate)
 #from pynestml.frontend.pynestml_frontend import generate_nest_target
 #NEST_SIMULATOR_INSTALL_LOCATION = nest.ll_api.sli_func("statusdict/prefix ::")
 
@@ -14,7 +17,7 @@ logger = logger.getChild(__name__)
 
 
 
-def connect_noise():
+def connect_external_sources():
     pass
 
 
@@ -22,13 +25,15 @@ def measure():
     pass
 
 
-def init_network(neurons: dict, connections: dict, network_layout: dict,
+def init_network(seed: int, neurons: dict, connections: dict, network_layout: dict,
                external_source: dict):
     """
     Initialize network
 
     Parameters
     ----------
+    seed:
+        random seed
     neurons:
         neuron parameters
     connections:
@@ -37,7 +42,19 @@ def init_network(neurons: dict, connections: dict, network_layout: dict,
         network layout parameters
     external_source:
         external source parameters
+
+    Return
+    ------
+    pop: dict
+        dictionary with poopulations
+    conn: dict
+        dictionary with connection specifications
     """
+    # reset NEST
+    logger.info("Resetting Nest")
+    reset_kernel()
+    # set seed for simulation
+    set_seed(seed)
     # init pops
     position_dist = network_layout["positions"]["dist"]
     n_neurons = network_layout["n_neurons"]
@@ -100,21 +117,23 @@ def run_network(simtime: float, record: dict, record_rate: float, pop_dict: dict
     ----------
     simtime:
         simulation time
-    seed:
-        random seed
     record:
-        do you want to record results?
+        what do we want to record?
     record_rate:
         recording rate
+    pop_dict:
+        dictionary with populations
+    weight_rec_dict:
+        dictionary with weight recorders
 
     Returns
     -------
     sim_results: dict
 
     """
-    # simulation results
-    sim_results = {}
-    # set seed for simulation
-    set_seed(seed)
-    simulate(simtime)
-    return sim_results
+    sr, mult, weights = simulate(simtime=simtime,
+                                 record=record,
+                                 record_rate=record_rate,
+                                 pop_dict=pop_dict,
+                                 weight_rec_dict=weight_rec_dict)
+    return sr, mult, weights
