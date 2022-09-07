@@ -1,8 +1,13 @@
 # Initial configuration file for doing experiments with Biophysical network
 notes: "Test"
 general:
-  record: True
-  record_rate: 1 # TODO: record every x ms
+  record:
+    spikes: True
+    weights: True
+    variables:
+      # define which variable do you want to record
+      - ATP
+  record_rate: 10 # record every x ms. Only for recording variables
   simtime: 100 # ms
   seed: 1
 neurons:
@@ -159,6 +164,8 @@ connections:
       weight:
         dist: "exponential" # exponential, normal or uniform
         beta: 0.1  # beta param for exponential
+        min:
+        max:
       delay:
         dist: "uniform" # exponential, normal or uniform
         min: 0.1
@@ -167,6 +174,7 @@ connections:
         dist: "uniform"
         min: 0.5
         max: 3.1
+      record: True
   # excitatory -> inhibitory
   ex_in:
     # connection parameters
@@ -186,6 +194,8 @@ connections:
       weight:
         dist: "exponential" # exponential, normal or uniform
         beta: 0.1  # beta param for exponential
+        min:
+        max:
       delay:
         dist: "uniform" # exponential, normal or uniform
         min: 0.1
@@ -194,6 +204,7 @@ connections:
         dist:
         min:
         max:
+      record: False
   # inhibitory -> inhibitory
   in_in:
     # connection parameters
@@ -213,6 +224,8 @@ connections:
       weight:
         dist: "exponential" # exponential, normal or uniform
         beta: 0.1  # beta param for exponential
+        min:
+        max:
       delay:
         dist: "uniform" # exponential, normal or uniform
         min: 0.1
@@ -221,6 +234,7 @@ connections:
         dist:
         min:
         max:
+      record: False
   # inhibitory -> excitatory
   in_ex:
     # connection parameters
@@ -240,6 +254,8 @@ connections:
       weight:
         dist: "exponential" # exponential, normal or uniform
         beta: 0.1  # beta param for exponential
+        min:
+        max:
       delay:
         dist: "uniform" # exponential, normal or uniform
         min: 0.1
@@ -248,9 +264,8 @@ connections:
         dist:
         min:
         max:
+      record: False
   params:
-    max_weight:
-    min_weight:
     stdp_decay: # for ATP dependent weights
     weight_mask:
     homeostatic_plasticity: False
@@ -267,7 +282,7 @@ network_layout:
     dist: "uniform"
     dim: 2 # number of spatial dimensions (2 or 3)
     pos_bounds:
-      # TODO include real values
+      # in mm
       - -1
       - 1
 external_source:
