@@ -14,14 +14,21 @@ NEST_SIMULATOR_INSTALL_LOCATION = nest.ll_api.sli_func("statusdict/prefix ::")
 logger = logger.getChild(__name__)
 
 
-def set_seed(seed):
+def set_seed(seed: int):
     """
     set seed for numpy and nest
+
+    Parameters
+    ----------
+    seed
     """
     logger.info("Setting seed %i for nest and numpy", seed)
     nest.rng_seed = seed
     np.random.seed(seed)
 
+
+def reset_kernel():
+     nest.ResetKernel
 
 
 def install_needed_modules():
@@ -110,12 +117,22 @@ def init_population(position_dist: str, neuron_model: str, n_neurons: int,
         pop.set({param: [param_v['mean'] +
                          param_v['std']*np.random.rand() for x in range(len(pop))]})
         logger.debug(pop.get(param))
-    # this shouldn't be here. Organice!
-    nest.PlotLayer(pop, nodesize=80)
-    plt.show()
+    # TODO: this shouldn't be here. Organice!
+    fig = nest.PlotLayer(pop, nodesize=80)
+    #ctr = nest.FindCenterElement(pop)
+    #final_fig = nest.PlotTargets(ctr,
+    #                             pop,
+    #                             fig=fig,
+    #                             probability_parameter=1,
+    #                             src_size=250,
+    #                             tgt_color='red',
+    #                             tgt_size=20,
+    #                             mask_color='red',
+    #                             probability_cmap='Greens')
+    #plt.show()
     return pop
 
-def fix_syn_spec(syn_spec: dict):
+def fix_syn_spec(syn_spec: dict, label: str):
     """
     given config values for connections, create synaptic specifications
     following nest syntaxys
@@ -124,6 +141,8 @@ def fix_syn_spec(syn_spec: dict):
     ----------
     syn_spec:
         synaptic specifications from config file
+    label:
+        connection label
     """
     syn_spec_fixed = {}
     syn_spec_fixed["synapse_model"] = syn_spec["synapse_model"]
@@ -134,6 +153,9 @@ def fix_syn_spec(syn_spec: dict):
                                             beta=syn_spec["weight"]["beta"])
         else:
             raise KeyError
+
+    if label.split("_")[0] == "in":
+        syn_spec_fixed["weight"] *= -1
 
     # set delay values
     if syn_spec["delay"]["dist"]:
@@ -160,7 +182,7 @@ def fix_syn_spec(syn_spec: dict):
 
 def include_params(syn_spec: dict, params: dict):
     """
-    include syn_spec['params'] (config file) into syn_spec
+    include syn_spec['params'] (from config file) into syn_spec
 
     Parameters
     ----------
@@ -190,11 +212,10 @@ def get_connections(pop_pre, pop_post):
         postsynaptic (sub)population
     """
     syn_coll = nest.GetConnections(pop_pre, pop_post)
-    #logger.debug(syn_coll.weight)
     return syn_coll
 
 def connect_pops(pop_pre, pop_post, conn_spec: dict, syn_spec: dict,
-               label: str, record: bool = False):
+               label: str, weight_rec_list: list):
     """
     initialize weights between two populations
 
