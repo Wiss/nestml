@@ -212,34 +212,46 @@ def connect_pops(pop_pre, pop_post, conn_spec: dict, syn_spec: dict,
         extra params for the synapses
     label:
         connection label
-    record:
-        do we want to record weights?
+    weight_rec_list:
+        this list will contain every needed weight recorder
+
+    Return
+    ------
+    conn: dict
+        connection dictionary
     """
     # fix syn_dict
-    syn_spec_fixed = fix_syn_spec(syn_spec)
+    syn_spec_fixed = fix_syn_spec(syn_spec, label)
 
     # include syn_spec["params"] from config file if we have plasticity
     if syn_spec['synapse_model'] != 'static_synapse':
         # FIX
         include_params(syn_spec_fixed, syn_spec['params'])
     # create recorder if we are recording
-    if record:
-        pass
-        # TODO
-        #wr = nest.Create('weight_recorder', label=label)
-        #nest.CopyModel(syn_spec['synapse_model'],
-        #               f'{label}_rec')
-        #syn_spec_fixed['weight_recorder'] = wr
+    if syn_spec['record']:
+        weight_rec_list.append(nest.Create('weight_recorder'))
+        # TODO FIX
+        # I'm not sure if this wr is recording the weights I want.
+        # It is unclear for me how it work and why I cannot include the weight
+        # recorder in the syn_spec of the connection
+        nest.CopyModel(syn_spec['synapse_model'],
+                       f"{label}_rec",
+                       {"weight_recorder": weight_rec_list[-1]})
+        #syn_spec_fixed['weight_recorder'] = weight_rec_list[-1]
+        logger.info("new weight recorder for %s label created", label)
+    else:
+        weight_rec_list.append(None)
 
-    conn = nest.Connect(pop_pre, pop_post, conn_spec=conn_spec,
+    nest.Connect(pop_pre, pop_post, conn_spec=conn_spec,
                         syn_spec=syn_spec_fixed)
 
-    syn_coll = get_connections(pop_pre, pop_post)
+    conn = get_connections(pop_pre, pop_post)
     logger.debug("connections for %s generated", label)
     logger.debug(nest.GetConnections(pop_pre, pop_post))
-    return conn, syn_coll
+    return conn, weight_rec_list[-1]
 
-def simulate(simtime: float):
+def simulate(simtime: float, record: dict, record_rate: int, pop_dict: dict,
+           weight_rec_dict: dict):
     """
     simulate the network
 
