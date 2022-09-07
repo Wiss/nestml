@@ -247,7 +247,47 @@ def simulate(simtime: float):
     ----------
     simitme:
         simulation time in ms
+    record:
+        dictionary with information about what should be recorded
+    record_rate:
+        recording rate
+    pop_dict:
+        dictionary with populations
+    weight_rec_dict:
+        dictionary with weight recorders
     TODO:
     here we can include some protocolos for reading data and
     return it to the experiment
     """
+    # record spikes
+    if record['spikes']:
+        sr = nest.Create('spike_recorder')
+        for pop_k, pop_v in pop_dict.items():
+            logger.info("connecting %s population to spike recorder", pop_k)
+            nest.Connect(pop_v, sr)
+    else:
+        sr = None
+
+    # record variables
+    if record['variables']:
+        print(record['variables'])
+        mult = nest.Create('multimeter',
+                           params={'interval': record_rate,
+                                   'record_from': record['variables']})
+        for pop_k, pop_v in pop_dict.items():
+            if (sum([var in nest.GetDefaults(pop_v[0].model)['recordables']
+                     for var in record['variables']]) ==
+                len(record['variables'])):
+                nest.Connect(mult, pop_v)
+                logger.info("reading %s from %s population",
+                            record['variables'], pop_k)
+                logger.info("connecting %s population to multimeter", pop_k)
+    else:
+        mult = None
+
+    # TODO record weights
+    weights = weight_rec_dict
+
+    logger.info("running simulation")
+    nest.Simulate(simtime)
+    return sr, mult, weights
