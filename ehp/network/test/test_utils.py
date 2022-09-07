@@ -45,7 +45,7 @@ def population():
                                        dim=dim)
     pop2 = bionet_tools.init_population(position_dist=pos_dist,
                                        neuron_model=n_model,
-                                       n_neurons=n_neurons,
+                                       n_neurons=int(n_neurons/2),
                                        params=params,
                                        pos_bounds=pos_bounds,
                                        dim=dim)
@@ -108,6 +108,7 @@ def test__init_population__succeed(pos_dist, n_model, n_neurons, params,
     """
     test population initialization
     """
+    #bionet_tools.reset_kernel()
     pop = bionet_tools.init_population(position_dist=pos_dist,
                                        neuron_model=n_model,
                                        n_neurons=n_neurons,
@@ -118,7 +119,7 @@ def test__init_population__succeed(pos_dist, n_model, n_neurons, params,
 
 
 @pytest.mark.parametrize(
-    "conn_spec, syn_spec, expected",
+    "conn_spec, syn_spec, label, expected",
     [({"allow_autapses": True,
        "allow_multapses": False,
        "rule": "pairwise_bernoulli",
@@ -144,6 +145,7 @@ def test__init_population__succeed(pos_dist, n_model, n_neurons, params,
            "min": 0.5,
            "max": 3.1
          }},
+      "ex_in",
       0),
      ({"allow_autapses": True,
        "allow_multapses": False,
@@ -170,19 +172,53 @@ def test__init_population__succeed(pos_dist, n_model, n_neurons, params,
            "min": None,
            "max": None
          }},
+      "ex_ex",
+         0),
+     ({"allow_autapses": True,
+       "allow_multapses": False,
+       "rule": "pairwise_bernoulli",
+       "p": 0.2},
+            {"synapse_model": "static_synapse",
+       "params": {
+           "mu_minus": 0.1,
+           "mu_plus": 1,
+           "lambda": None,
+           "alpha": 0.3
+       },
+       "weight": {
+           "dist": "exponential",
+           "beta": 10
+           },
+       "delay": {
+           "dist": "uniform",
+           "min": 0.1,
+           "max": 2.5
+           },
+       "alpha": {
+           "dist": None,
+           "min": None,
+           "max": None
+         }},
+      "in_ex",
          0),
      ],)
-def test__init_network__succeed(population, conn_spec, syn_spec, expected):
+def test__init_network__succeed(population, conn_spec, syn_spec, label, expected):
     """
     test connection initialization
     """
     pop1, pop2 = population[0], population[1]
-    conn, syn = bionet_tools.connect_pops(pop_pre=pop1,
+    conn = bionet_tools.connect_pops(pop_pre=pop1,
                               pop_post=pop2,
                               conn_spec=conn_spec,
                               syn_spec=syn_spec,
-                              label="test"
+                              label=label
                               )
     #print(conn["weights"])
-    print(syn.weight)
+    print(conn.weight)
+    print(label)
     #assert len(pop) == expected
+    w = conn.weight
+    if label.split("_")[0] == "in":
+        assert w <= [expected] * len(w)
+    else:
+        assert w >= [expected] * len(w)
