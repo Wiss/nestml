@@ -47,52 +47,52 @@ def init_network(neurons: dict, connections: dict, network_layout: dict,
     logger.info("Initializing network with %i neurons", n_neurons)
     logger.info("%i excitatory and %i inhibitory neurons", n_neurons_ex,
                 n_neurons_in)
-    pop_ex = init_population(position_dist=position_dist,
+    # create empty pop dictionary
+    pop = {}
+    pop['ex'] = init_population(position_dist=position_dist,
                              neuron_model=neurons["ex"]["model"],
                              n_neurons=n_neurons_ex,
                              params=neurons["ex"]["params"],
                              pos_bounds=network_layout["positions"]["pos_bounds"],
                              dim=network_layout["positions"]["dim"]
                              )
-    pop_in = init_population(position_dist=position_dist,
+    pop['in'] = init_population(position_dist=position_dist,
                              neuron_model=neurons["in"]["model"],
                              n_neurons=n_neurons_in,
                              params=neurons["in"]["params"],
                              pos_bounds=network_layout["positions"]["pos_bounds"],
                              dim=network_layout["positions"]["dim"]
                              )
+    # create empty conn dictionary
+    conn = {}
+    # create dict for recording weights
+    weight_rec = {}
+    # This list is created bc working with weight recorders is anoying
+    weight_rec_list = []
     # Create connections
-    for conn, conn_v in connections.items():
-        print(connections)
-        print(conn)
-        print(conn_v)
-        if conn in ['ex_ex', 'ex_in', 'in_ex', 'in_in']:
+    for con, con_v in connections.items():
+        if con in ['ex_ex', 'ex_in', 'in_ex', 'in_in']:
+            pre_pop, post_pop = con.split("_")[0], con.split("_")[1]
             logger.info("Setting up connection %s -> %s",
-                        conn.split("_")[0], conn.split("_")[1])
-            if conn.split("_")[0] == conn.split("_")[1] == "ex":
-                connect_pops(pop_ex, pop_ex, conn_v["conn_spec"],
-                             conn_v["syn_spec"], label=conn)
-                pass
-            elif conn.split("_")[0] == conn.split("_")[1] == "in":
-                connect_pops(pop_in, pop_in, conn_v["conn_spec"],
-                             conn_v["syn_spec"], label=conn)
-                pass
-            elif conn.split("_")[0] == "ex" and conn.split("_")[1] == "in":
-                connect_pops(pop_ex, pop_in, conn_v["conn_spec"],
-                             conn_v["syn_spec"], label=conn)
-                pass
-            elif conn.split("_")[0] == "in" and conn.split("_")[1] == "ex":
-                connect_pops(pop_in, pop_ex, conn_v["conn_spec"],
-                             conn_v["syn_spec"], label=conn)
-                pass
+                        pre_pop, post_pop)
+            conn[con], weight_rec[con] = connect_pops(
+                                            pop[pre_pop],
+                                            pop[post_pop],
+                                            con_v["conn_spec"],
+                                            con_v["syn_spec"],
+                                            label=con,
+                                            weight_rec_list=weight_rec_list)
+        elif con == 'params':
+            pass
+        else:
+            logger.error("connection key unknown")
 
     # connect external sources
-    connect_noise()
-    # connect measurement devices
-    measure()
-    return pop_ex, pop_in
+    connect_external_sources()
+    return pop, conn, weight_rec
 
-def run_network(simtime: float, seed: int, record: bool, record_rate: float):
+def run_network(simtime: float, record: dict, record_rate: float, pop_dict: dict,
+              weight_rec_dict: dict):
     """
     run network
 
