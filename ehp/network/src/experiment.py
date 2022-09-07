@@ -4,6 +4,7 @@ experiment.py
     file in config
 """
 #import datetime
+import matplotlib.pyplot as plt
 import time
 #import yaml
 import os
@@ -52,20 +53,42 @@ if __name__ == '__main__':
 
     # setup network
     logger.info("setting up network")
-    pop_ex, pop_in = network.init_network(neurons=neurons,
-                                          connections=connections,
-                                          network_layout=network_layout,
-                                          external_source=external_source)
-    print(pop_ex)
-    print(pop_ex.spatial)
-    print(pop_in)
-    print(pop_in.spatial)
+    pop_dict, conn_dict, weight_rec_dict = network.init_network(
+                                            seed=general['seed'],
+                                            neurons=neurons,
+                                            connections=connections,
+                                            network_layout=network_layout,
+                                            external_source=external_source)
+    print(pop_dict['ex'])
+    print(pop_dict['ex'].spatial)
+    print(pop_dict['in'])
+    print(pop_dict['in'].spatial)
+    print(pop_dict['in'].spatial["positions"])
+    plt.show()
+    print(conn_dict['ex_ex'])
+
 
     # run network
     logger.info("running network")
-    results = network.run_network(simtime=general['simtime'],
-                                  seed=general['seed'],
-                                  record=general['record'],
-                                  record_rate=general['record_rate'])
+    spikes, multimeter, weights = network.run_network(
+                                            simtime=general['simtime'],
+                                            record=general['record'],
+                                            record_rate=general['record_rate'],
+                                            pop_dict=pop_dict,
+                                            weight_rec_dict=weight_rec_dict)
+
+    # TODO organice
+    print(spikes)
+    s_events = spikes.get('events')
+    print(s_events['senders'])
+    print(s_events['times'])
+    print(multimeter)
+    m_events = multimeter.get('events')
+    print(m_events['ATP'])
+    print(m_events['times'])
+    print(weights)
+    w_events = weights['ex_ex'].get('events')
+    print(w_events['weights'])
+    print(w_events['times'])
 
     logger.info("simulation finished successfully")
