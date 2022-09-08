@@ -259,20 +259,57 @@ def connect_pops(pop_pre, pop_post, conn_spec: dict, syn_spec: dict,
         # I'm not sure if this wr is recording the weights I want.
         # It is unclear for me how it work and why I cannot include the weight
         # recorder in the syn_spec of the connection
+        print(syn_spec_fixed)
+        # create syn_spec_fixed_wr dictionary for weight recorder
+        syn_spec_fixed_wr = syn_spec_fixed.copy()
+        syn_spec_fixed_wr.pop('synapse_model')
+        print(syn_spec_fixed_wr)
         nest.CopyModel(syn_spec['synapse_model'],
                        f"{label}_rec",
-                       {"weight_recorder": weight_rec_list[-1]})
-        #syn_spec_fixed['weight_recorder'] = weight_rec_list[-1]
+                       {'weight_recorder': weight_rec_list[-1]})
+        nest.Connect(pop_pre, pop_post,
+                     conn_spec=conn_spec,
+                     syn_spec={'synapse_model': f'{label}_rec'})
         logger.info("new weight recorder for %s label created", label)
+        # include all syn_spec params
+        #syn = nest.GetConnections(source=pre_neuron, synapse_model="stdp_nestml_rec")
+        syn = get_connections(pop_pre=pop_pre,
+                              pop_post=pop_post,
+                              synapse_model=f'{label}_rec')
+        #nest.SetStatus(syn, syn_spec_fixed_wr)
+        for k, v in syn_spec_fixed_wr.items():
+            if k == 'weight':
+                for s in syn:
+                    print(len(syn))
+                    v = np.random.rand()
+                    new_param_dict = {k: v}
+                    print(new_param_dict)
+                    nest.SetStatus(s, new_param_dict)
+
+                pass
+            elif k == 'delay':
+                pass
+            elif k == 'alpha':
+                pass
+            else:
+                pass
+                new_param_dict = {k: v}
+        logger.info("parameters for weight recorder %s_rec updated", label)
+        conn = get_connections(pop_pre=pop_pre,
+                               pop_post=pop_post,
+                               synapse_model=f'{label}_rec')
     else:
         weight_rec_list.append(None)
+        nest.Connect(pop_pre,
+                     pop_post,
+                     conn_spec=conn_spec,
+                     syn_spec=syn_spec_fixed)
 
-    nest.Connect(pop_pre, pop_post, conn_spec=conn_spec,
-                        syn_spec=syn_spec_fixed)
-
-    conn = get_connections(pop_pre, pop_post)
-    logger.debug("connections for %s generated", label)
-    logger.debug(nest.GetConnections(pop_pre, pop_post))
+        conn = get_connections(pop_pre=pop_pre,
+                            pop_post=pop_post,
+                            synapse_model=syn_spec['synapse_model'])
+        logger.debug("connections for %s generated", label)
+    logger.debug(conn)
     return conn, weight_rec_list[-1]
 
 def simulate(simtime: float, record: dict, record_rate: int, pop_dict: dict,
