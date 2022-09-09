@@ -218,8 +218,56 @@ def get_connections(pop_pre, pop_post, synapse_model):
                                    synapse_model=synapse_model)
     return syn_coll
 
-def connect_pops(pop_pre, pop_post, conn_spec: dict, syn_spec: dict,
-               label: str, weight_rec_list: list):
+def update_syn_w_wr(syn: nest.NodeCollection, syn_spec: dict, label: str):
+    """
+    uodate synaptic collection with weight recorder
+
+    Parameters
+    ----------
+    syn: NodeCollection
+        synaptic collection
+    syn_spec:
+        synaptic specifications
+    label:
+        connection label
+    """
+    for k, v in syn_spec.items():
+        print(k)
+        print(v)
+        if k in ['weight', 'delay', 'alpha'] and v:
+            logger.info('connection param (wr) "%s" with specifications: %s',
+                        k, syn_spec[k])
+            for s in syn:
+                if syn_spec[k]['dist'] == 'exponential':
+                    v = np.random.exponential(syn_spec[k]['beta'])
+                    # negative weight if pop_pre is inh
+                    if label.split("_")[0] == "in" and k == 'weight':
+                        v *= -1
+                elif syn_spec[k]['dist'] == 'uniform':
+                    v = np.random.uniform(low=syn_spec[k]['min'],
+                                          high=syn_spec[k]['max'])
+
+
+                    new_param_dict = {k: v}
+                    print(new_param_dict)
+                    nest.SetStatus(s, new_param_dict)
+                else:
+                    raise KeyError
+        elif k == 'params':
+            for kp, vp in syn_spec[k].items():
+                if vp is not None:
+                    new_param_dict = {k: v}
+                    print(new_param_dict)
+                    nest.SetStatus(syn, new_param_dict)
+            # if v == None
+        elif k in ['synapse_model', 'record']:
+           continue
+        else:
+            raise KeyError(f'"{k}" key nor supported yet')
+
+def connect_pops(pop_pre: nest.NodeCollection, pop_post: nest.NodeCollection,
+               conn_spec: dict, syn_spec: dict, label: str,
+               weight_rec_list: list):
     """
     initialize weights between two populations
 
@@ -245,25 +293,11 @@ def connect_pops(pop_pre, pop_post, conn_spec: dict, syn_spec: dict,
     conn: dict
         connection dictionary
     """
-    # fix syn_dict
-    syn_spec_fixed = fix_syn_spec(syn_spec, label)
-
-    # include syn_spec["params"] from config file if we have plasticity
-    if syn_spec['synapse_model'] != 'static_synapse':
-        # FIX
-        include_params(syn_spec_fixed, syn_spec['params'])
     # create recorder if we are recording
     if syn_spec['record']:
+        # create weight recorder
         weight_rec_list.append(nest.Create('weight_recorder'))
-        # TODO FIX
-        # I'm not sure if this wr is recording the weights I want.
-        # It is unclear for me how it work and why I cannot include the weight
-        # recorder in the syn_spec of the connection
-        print(syn_spec_fixed)
-        # create syn_spec_fixed_wr dictionary for weight recorder
-        syn_spec_fixed_wr = syn_spec_fixed.copy()
-        syn_spec_fixed_wr.pop('synapse_model')
-        print(syn_spec_fixed_wr)
+        # copy synaptic_model to record weights
         nest.CopyModel(syn_spec['synapse_model'],
                        f"{label}_rec",
                        {'weight_recorder': weight_rec_list[-1]})
@@ -271,43 +305,35 @@ def connect_pops(pop_pre, pop_post, conn_spec: dict, syn_spec: dict,
                      conn_spec=conn_spec,
                      syn_spec={'synapse_model': f'{label}_rec'})
         logger.info("new weight recorder for %s label created", label)
-        # include all syn_spec params
-        #syn = nest.GetConnections(source=pre_neuron, synapse_model="stdp_nestml_rec")
+        # get syn object
         syn = get_connections(pop_pre=pop_pre,
                               pop_post=pop_post,
                               synapse_model=f'{label}_rec')
-        #nest.SetStatus(syn, syn_spec_fixed_wr)
-        for k, v in syn_spec_fixed_wr.items():
-            if k == 'weight':
-                for s in syn:
-                    print(len(syn))
-                    v = np.random.rand()
-                    new_param_dict = {k: v}
-                    print(new_param_dict)
-                    nest.SetStatus(s, new_param_dict)
-
-                pass
-            elif k == 'delay':
-                pass
-            elif k == 'alpha':
-                pass
-            else:
-                pass
-                new_param_dict = {k: v}
+        # update synapses with param from config file
+        # this is necessary when working with syn objects
+        update_syn_w_wr(syn=syn,
+                        syn_spec=syn_spec,
+                        label=label)
         logger.info("parameters for weight recorder %s_rec updated", label)
         conn = get_connections(pop_pre=pop_pre,
                                pop_post=pop_post,
                                synapse_model=f'{label}_rec')
     else:
         weight_rec_list.append(None)
+        # fix syn_dict
+        syn_spec_fixed = fix_syn_spec(syn_spec, label)
+        # include syn_spec["params"] from config file if we have plasticity
+        if syn_spec['synapse_model'] != 'static_synapse':
+            # FIX
+            include_params(syn_spec_fixed, syn_spec['params'])
         nest.Connect(pop_pre,
                      pop_post,
                      conn_spec=conn_spec,
                      syn_spec=syn_spec_fixed)
 
         conn = get_connections(pop_pre=pop_pre,
-                            pop_post=pop_post,
-                            synapse_model=syn_spec['synapse_model'])
+                               pop_post=pop_post,
+                               synapse_model=syn_spec['synapse_model'])
         logger.debug("connections for %s generated", label)
     logger.debug(conn)
     return conn, weight_rec_list[-1]
