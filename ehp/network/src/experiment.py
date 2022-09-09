@@ -4,10 +4,10 @@ experiment.py
     file in config
 """
 #import datetime
-import matplotlib.pyplot as plt
 import time
-#import yaml
 import os
+import matplotlib.pyplot as plt
+#import yaml
 #import copy
 
 from src.logging.logging import logger
