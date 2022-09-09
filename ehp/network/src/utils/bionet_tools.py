@@ -146,38 +146,22 @@ def fix_syn_spec(syn_spec: dict, label: str):
     """
     syn_spec_fixed = {}
     syn_spec_fixed["synapse_model"] = syn_spec["synapse_model"]
-    # set alpha values
-    if syn_spec["weight"]["dist"]:
-        if syn_spec["weight"]["dist"] == "exponential":
-            syn_spec_fixed["weight"] = nest.random.exponential(
+    # set weight, delay and alpha values
+    for key in ['weight', 'delay', 'alpha']:
+        logger.info('connection param "%s" with specifications: %s',
+                    key, syn_spec[key])
+        if syn_spec[key]['dist']:
+            if syn_spec[key]['dist'] == 'exponential':
+                syn_spec_fixed[key] = nest.random.exponential(
                                             beta=syn_spec["weight"]["beta"])
-        else:
-            raise KeyError
+                # set megative weights if pop_pre is inhibitory
+                if label.split("_")[0] == "in" and key == 'weight':
+                    syn_spec_fixed["weight"] *= -1
 
-    if label.split("_")[0] == "in":
-        syn_spec_fixed["weight"] *= -1
-
-    # set delay values
-    if syn_spec["delay"]["dist"]:
-        if syn_spec["delay"]["dist"] == "uniform":
-            syn_spec_fixed["delay"] = nest.random.uniform(
-                                                    min=syn_spec["delay"]["min"],
-                                                    max=syn_spec["delay"]["max"])
-        else:
-            raise KeyError
-
-    # set alpha values
-    if syn_spec["alpha"]["dist"]:
-        # do not include this param if we have a static synapse
-        if syn_spec["synapse_model"] == "static_synapse":
-            logger.error("This conection doesn't allow alpha params")
-            raise TypeError("This conection doesn't allow alpha params")
-        if syn_spec["alpha"]["dist"] == "uniform":
-            syn_spec_fixed["alpha"] = nest.random.uniform(
-                                                min=syn_spec["alpha"]["min"],
-                                                max=syn_spec["alpha"]["max"])
-        else:
-            raise KeyError
+            elif syn_spec[key]['dist'] == 'uniform':
+                syn_spec_fixed[key] = nest.random.uniform(
+                                                min=syn_spec[key]["min"],
+                                                max=syn_spec[key]["max"])
     return syn_spec_fixed
 
 def include_params(syn_spec: dict, params: dict):
