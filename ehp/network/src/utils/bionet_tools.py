@@ -197,7 +197,8 @@ def include_params(syn_spec: dict, params: dict):
             syn_spec[k] = v
     return syn_spec
 
-def get_connections(pop_pre, pop_post, synapse_model):
+def get_connections(pop_pre: nest.NodeCollection, pop_post: nest.NodeCollection,
+                  synapse_model: str):
     """
     read all weights values from pop_pre to pop_post
 
