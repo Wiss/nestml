@@ -163,7 +163,7 @@ connections:
         alpha:
       weight:
         dist: "exponential" # exponential, normal or uniform
-        beta: 0.1  # beta param for exponential
+        beta: 5  # beta param for exponential
         min:
         max:
       delay:
@@ -193,7 +193,7 @@ connections:
         alpha:
       weight:
         dist: "exponential" # exponential, normal or uniform
-        beta: 0.1  # beta param for exponential
+        beta: 5  # beta param for exponential
         min:
         max:
       delay:
@@ -223,7 +223,7 @@ connections:
         alpha:
       weight:
         dist: "exponential" # exponential, normal or uniform
-        beta: 0.1  # beta param for exponential
+        beta: 5  # beta param for exponential
         min:
         max:
       delay:
@@ -253,7 +253,7 @@ connections:
         alpha:
       weight:
         dist: "exponential" # exponential, normal or uniform
-        beta: 0.1  # beta param for exponential
+        beta: 5  # beta param for exponential
         min:
         max:
       delay:
