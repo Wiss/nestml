@@ -4,10 +4,10 @@ general:
   record:
     spikes: True
     weights: True
-    variables:
+    multimeter:
       # define which variable do you want to record
       - ATP
-  record_rate: 10 # record every x ms. Only for recording variables
+  record_rate: 10 # record every x ms. Only for recorded variables
   simtime: 100 # ms
   seed: 1
 neurons:
@@ -77,6 +77,9 @@ neurons:
         t_ref:
           mean: 2
           std: 0.1
+        I_e:
+          mean: 2000
+          std: 0
   in:
     model: "iaf_psc_alpha"
     params:
@@ -143,6 +146,9 @@ neurons:
         t_ref:
           mean: 2
           std: 0.1
+        I_e:
+          mean: 2000
+          std: 0
 #  connecting populations
 connections:
   # excitatory -> excitatory
@@ -152,7 +158,7 @@ connections:
       allow_autapses: True # bool
       allow_multapses: True # bool
       rule: "pairwise_bernoulli"
-      p: 1  # TODO gaussian kernel centered in each neuron
+      p: 1  # 1 == all-to-all
     # synaptic parameters
     syn_spec:
       synapse_model: "stdp_synapse"
@@ -182,7 +188,7 @@ connections:
       allow_autapses: True # bool
       allow_multapses: True # bool
       rule: "pairwise_bernoulli"
-      p: 1  # TODO gaussian kernel centered in each neuron
+      p: 1  # 1 == all-to-all
     # synaptic parameters
     syn_spec:
       synapse_model: "static_synapse"
@@ -212,7 +218,7 @@ connections:
       allow_autapses: True # bool
       allow_multapses: True # bool
       rule: "pairwise_bernoulli"
-      p: 1  # TODO gaussian kernel centered in each neuron
+      p: 1  # 1 == all-to-all
     # synaptic parameters
     syn_spec:
       synapse_model: "static_synapse"
@@ -242,7 +248,7 @@ connections:
       allow_autapses: True # bool
       allow_multapses: True # bool
       rule: "pairwise_bernoulli"
-      p: 1  # TODO gaussian kernel centered in each neuron
+      p: 1  # 1 == all-to-all
     # synaptic parameters
     syn_spec:
       synapse_model: "static_synapse"
@@ -273,11 +279,6 @@ network_layout:
   energy_dependent: True
   n_neurons: 5
   ex_in_ratio: 0.8 # n_exc = exc_inh_ratio*n_neurons
-  weights_distribution: "exponential" # "exponential" or "normal"
-  weights_dist_beta: 1
-  weights_dist_mean: 10
-  weights_dist_sd: 3
-  delays_distribution: "uniform"
   positions:
     dist: "uniform"
     dim: 2 # number of spatial dimensions (2 or 3)
