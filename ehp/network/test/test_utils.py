@@ -11,6 +11,7 @@ from src.utils import bionet_tools
 def population():
     pos_dist = "uniform"
     n_model = "iaf_psc_alpha"
+    n_model_edlif = "edlif_psc_alpha_percent"
     n_neurons = 10
     params = {"general_params":
               {"tau_m": {
@@ -44,7 +45,7 @@ def population():
                                        pos_bounds=pos_bounds,
                                        dim=dim)
     pop2 = bionet_tools.init_population(position_dist=pos_dist,
-                                       neuron_model=n_model,
+                                       neuron_model=n_model_edlif,
                                        n_neurons=int(n_neurons/2),
                                        params=params,
                                        pos_bounds=pos_bounds,
@@ -131,6 +132,7 @@ def test__init_population__succeed(pos_dist, n_model, n_neurons, params,
            "lambda": None,
            "alpha": 0.3
        },
+       "record": True,
        "weight": {
            "dist": "exponential",
            "beta": 10
@@ -151,13 +153,14 @@ def test__init_population__succeed(pos_dist, n_model, n_neurons, params,
        "allow_multapses": False,
        "rule": "pairwise_bernoulli",
        "p": 0.2},
-            {"synapse_model": "static_synapse",
+      {"synapse_model": "stdp_synapse",
        "params": {
-           "mu_minus": 0.1,
+           "mu_minus": None,
            "mu_plus": 1,
            "lambda": None,
            "alpha": 0.3
        },
+       "record": False,
        "weight": {
            "dist": "exponential",
            "beta": 10
@@ -178,13 +181,14 @@ def test__init_population__succeed(pos_dist, n_model, n_neurons, params,
        "allow_multapses": False,
        "rule": "pairwise_bernoulli",
        "p": 0.2},
-            {"synapse_model": "static_synapse",
+      {"synapse_model": "static_synapse",
        "params": {
-           "mu_minus": 0.1,
-           "mu_plus": 1,
+           "mu_minus": None,
+           "mu_plus": None,
            "lambda": None,
-           "alpha": 0.3
+           "alpha": None
        },
+       "record": True,
        "weight": {
            "dist": "exponential",
            "beta": 10
@@ -206,12 +210,14 @@ def test__init_network__succeed(population, conn_spec, syn_spec, label, expected
     """
     test connection initialization
     """
+    weight_rec_list = []
     pop1, pop2 = population[0], population[1]
-    conn = bionet_tools.connect_pops(pop_pre=pop1,
+    conn, _ = bionet_tools.connect_pops(pop_pre=pop1,
                               pop_post=pop2,
                               conn_spec=conn_spec,
                               syn_spec=syn_spec,
-                              label=label
+                              label=label,
+                              weight_rec_list=weight_rec_list
                               )
     #print(conn["weights"])
     print(conn.weight)
