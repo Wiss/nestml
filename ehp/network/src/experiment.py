@@ -40,7 +40,7 @@ if __name__ == '__main__':
                     'results',
                     f"ed_{network_layout['energy_dependent']}",
                     time.strftime("%Y_%m_%d_%H%M%S")+f"_seed_{general['seed']}")
-    if general['record']:
+    if general['record']['spikes'] or general['record']['weights']:
         create_folder(PATH_TO_OUTPUT)
         # create figure folder
         PATH_TO_FIGS = os.path.join(PATH_TO_OUTPUT, 'figures')
@@ -64,9 +64,8 @@ if __name__ == '__main__':
     print(pop_dict['in'])
     print(pop_dict['in'].spatial)
     print(pop_dict['in'].spatial["positions"])
-    plt.show()
+    #plt.show()
     print(conn_dict['ex_ex'])
-
 
     # run network
     logger.info("running network")
@@ -77,18 +76,20 @@ if __name__ == '__main__':
                                             pop_dict=pop_dict,
                                             weight_rec_dict=weight_rec_dict)
 
-    # TODO organice
-    print(spikes)
-    s_events = spikes.get('events')
-    print(s_events['senders'])
-    print(s_events['times'])
-    print(multimeter)
-    m_events = multimeter.get('events')
-    print(m_events['ATP'])
-    print(m_events['times'])
-    print(weights)
-    w_events = weights['ex_ex'].get('events')
-    print(w_events['weights'])
-    print(w_events['times'])
-
     logger.info("simulation finished successfully")
+
+    # save data
+    rec_dict = {'spikes': spikes,
+                'multimeter': multimeter,
+                'weights': weights}
+    for rec_k, rec_dict_v in rec_dict.items():
+        data = {}
+        if general['record'][rec_k]:
+            for key, value in rec_dict_v.items():
+                if value is None:
+                    data[key] = None
+                else:
+                    data[key] = value.get('events')
+            save_data(PATH_TO_DATA, rec_k, data)
+            logger.info("recordable %s recorded", rec_k)
+

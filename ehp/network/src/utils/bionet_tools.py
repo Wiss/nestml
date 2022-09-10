@@ -46,17 +46,21 @@ def try_install_module(module_name, neuron_model):
     try loading neuron model
     """
     try:
+        nest.Create(neuron_model)
+        logger.debug('model %s already loaded', neuron_model)
+    except:
         nest.Install(module_name)
         nest.Create(neuron_model)
-    except:
-        nest.ResetKernel()
-        generate_nest_target(input_path="models/neurons/" + neuron_model + ".nestml",
-                             target_path="/tmp/nestml-component",
-                             module_name=module_name,
-                             logging_level="INFO",
-                             codegen_opts={"nest_path":
-                                           NEST_SIMULATOR_INSTALL_LOCATION})
-        nest.Install(module_name)
+        logger.debug('model %s installed and loaded', neuron_model)
+    #else:
+        #nest.ResetKernel()
+        #generate_nest_target(input_path="models/neurons/" + neuron_model + ".nestml",
+        #                     target_path="/tmp/nestml-component",
+        #                     module_name=module_name,
+        #                     logging_level="INFO",
+        #                     codegen_opts={"nest_path":
+        #                                   NEST_SIMULATOR_INSTALL_LOCATION})
+        #nest.Install(module_name)
 
 
 def init_population(position_dist: str, neuron_model: str, n_neurons: int,
@@ -217,38 +221,38 @@ def update_syn_w_wr(syn: nest.NodeCollection, syn_spec: dict, label: str):
         connection label
     """
     for k, v in syn_spec.items():
-        print(k)
-        print(v)
         if k in ['weight', 'delay', 'alpha'] and v:
             logger.info('connection param (wr) "%s" with specifications: %s',
                         k, syn_spec[k])
             for s in syn:
-                if syn_spec[k]['dist'] == 'exponential':
-                    v = np.random.exponential(syn_spec[k]['beta'])
-                    # negative weight if pop_pre is inh
-                    if label.split("_")[0] == "in" and k == 'weight':
-                        v *= -1
-                elif syn_spec[k]['dist'] == 'uniform':
-                    v = np.random.uniform(low=syn_spec[k]['min'],
-                                          high=syn_spec[k]['max'])
-
-
+                if syn_spec[k]['dist'] is not None:
+                    if syn_spec[k]['dist'] == 'exponential':
+                        v = np.random.exponential(syn_spec[k]['beta'])
+                        # negative weight if pop_pre is inh
+                        if label.split("_")[0] == "in" and k == 'weight':
+                            v *= -1
+                    elif syn_spec[k]['dist'] == 'uniform':
+                        v = np.random.uniform(low=syn_spec[k]['min'],
+                                            high=syn_spec[k]['max'])
+                    else:
+                        raise KeyError(f'"{k}" key not supported yet')
+                    # update synapses
                     new_param_dict = {k: v}
-                    print(new_param_dict)
                     nest.SetStatus(s, new_param_dict)
+                # if dist == None, continue
                 else:
-                    raise KeyError
+                    continue
+
         elif k == 'params':
             for kp, vp in syn_spec[k].items():
                 if vp is not None:
-                    new_param_dict = {k: v}
-                    print(new_param_dict)
+                    new_param_dict = {kp: vp}
                     nest.SetStatus(syn, new_param_dict)
             # if v == None
         elif k in ['synapse_model', 'record']:
            continue
         else:
-            raise KeyError(f'"{k}" key nor supported yet')
+            raise KeyError(f'"{k}" key not supported yet')
 
 def connect_pops(pop_pre: nest.NodeCollection, pop_post: nest.NodeCollection,
                conn_spec: dict, syn_spec: dict, label: str,
@@ -340,35 +344,34 @@ def simulate(simtime: float, record: dict, record_rate: int, pop_dict: dict,
         dictionary with populations
     weight_rec_dict:
         dictionary with weight recorders
-    TODO:
-    here we can include some protocolos for reading data and
-    return it to the experiment
     """
     # record spikes
+    sr = {}
     if record['spikes']:
-        sr = nest.Create('spike_recorder')
         for pop_k, pop_v in pop_dict.items():
+            sr[pop_k] = nest.Create('spike_recorder')
             logger.info("connecting %s population to spike recorder", pop_k)
-            nest.Connect(pop_v, sr)
+            nest.Connect(pop_v, sr[pop_k])
     else:
         sr = None
 
-    # record variables
-    if record['variables']:
-        print(record['variables'])
-        mult = nest.Create('multimeter',
-                           params={'interval': record_rate,
-                                   'record_from': record['variables']})
+    # record multimeter
+    mult = {}
+    if record['multimeter']:
+        print(record['multimeter'])
         for pop_k, pop_v in pop_dict.items():
             if (sum([var in nest.GetDefaults(pop_v[0].model)['recordables']
-                     for var in record['variables']]) ==
-                len(record['variables'])):
-                nest.Connect(mult, pop_v)
+                     for var in record['multimeter']]) ==
+                    len(record['multimeter'])):
+                mult[pop_k] = nest.Create('multimeter',
+                                        params={'interval': record_rate,
+                                        'record_from': record['multimeter']})
+                nest.Connect(mult[pop_k], pop_v)
                 logger.info("reading %s from %s population",
-                            record['variables'], pop_k)
+                            record['multimeter'], pop_k)
                 logger.info("connecting %s population to multimeter", pop_k)
-    else:
-        mult = None
+            else:
+                mult[pop_k] = None
 
     # TODO record weights
     weights = weight_rec_dict
