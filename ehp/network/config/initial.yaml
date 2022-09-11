@@ -79,7 +79,7 @@ neurons:
           std: 0.1
         I_e:
           mean: 2000
-          std: 0
+          std: 500
   in:
     model: "iaf_psc_alpha"
     params:
