@@ -3,20 +3,21 @@ experiment.py
     perform one experiment using the biophysical network and the yaml config
     file in config
 """
-#import datetime
 import time
 import os
-import matplotlib.pyplot as plt
-#import yaml
-#import copy
 
 from src.logging.logging import logger
 import src.network as network
-#from utils.figures import create_weights_figs, \
-#create_spikes_figs, create_graph_figs
-from src.utils.manage_files import create_folder, load_config, save_config, \
-    save_data, load_data
-#from utils.bionet_tools import weight_init, population_pos_init
+from src.utils.figures import (create_weights_figs,
+                               create_spikes_figs,
+                               create_graph_figs,
+                               create_pops_figs,
+                               create_multimeter_figs)
+from src.utils.manage_files import (create_folder,
+                                    load_config,
+                                    save_config,
+                                    save_data,
+                                    load_data)
 
 from src.logging.logging import logger
 
@@ -66,6 +67,9 @@ if __name__ == '__main__':
     print(pop_dict['in'].spatial["positions"])
     #plt.show()
     print(conn_dict['ex_ex'])
+    create_pops_figs(pop=pop_dict,
+                     fig_name="pop_positions",
+                     output_path=PATH_TO_FIGS)
 
     # run network
     logger.info("running network")
@@ -90,6 +94,21 @@ if __name__ == '__main__':
                     data[key] = None
                 else:
                     data[key] = value.get('events')
+            # get events for figures
+            if rec_k == 'spikes':
+                spikes_events = data
+                create_spikes_figs(spikes_events=spikes_events,
+                                   fig_name='spikes',
+                                   output_path=PATH_TO_FIGS)
+            elif rec_k == 'multimeter':
+                multimeter_events = data
+            if rec_k == 'weights':
+                weights_events = data
             save_data(PATH_TO_DATA, rec_k, data)
             logger.info("recordable %s recorded", rec_k)
 
+    # generate figs (only if data is recorded)
+    #for rec_k, rec_dict_v in rec_dict.items():
+    #    if general['record'][rec_k]:
+    #        for key, value in rec_dict_v.items():
+    #        PATH_TO_FIGS
