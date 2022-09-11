@@ -121,19 +121,6 @@ def init_population(position_dist: str, neuron_model: str, n_neurons: int,
         pop.set({param: [param_v['mean'] +
                          param_v['std']*np.random.rand() for x in range(len(pop))]})
         logger.debug(pop.get(param))
-    # TODO: this shouldn't be here. Organice!
-    fig = nest.PlotLayer(pop, nodesize=80)
-    #ctr = nest.FindCenterElement(pop)
-    #final_fig = nest.PlotTargets(ctr,
-    #                             pop,
-    #                             fig=fig,
-    #                             probability_parameter=1,
-    #                             src_size=250,
-    #                             tgt_color='red',
-    #                             tgt_size=20,
-    #                             mask_color='red',
-    #                             probability_cmap='Greens')
-    #plt.show()
     return pop
 
 def fix_syn_spec(syn_spec: dict, label: str):
@@ -373,7 +360,6 @@ def simulate(simtime: float, record: dict, record_rate: int, pop_dict: dict,
             else:
                 mult[pop_k] = None
 
-    # TODO record weights
     weights = weight_rec_dict
 
     logger.info("running simulation")

@@ -10,12 +10,8 @@ from src.utils.bionet_tools import (init_population,
                                     reset_kernel,
                                     set_seed,
                                     simulate)
-#from pynestml.frontend.pynestml_frontend import generate_nest_target
-#NEST_SIMULATOR_INSTALL_LOCATION = nest.ll_api.sli_func("statusdict/prefix ::")
 
 logger = logger.getChild(__name__)
-
-
 
 def connect_external_sources():
     pass
