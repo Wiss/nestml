@@ -60,16 +60,6 @@ if __name__ == '__main__':
                                             connections=connections,
                                             network_layout=network_layout,
                                             external_source=external_source)
-    print(pop_dict['ex'])
-    print(pop_dict['ex'].spatial)
-    print(pop_dict['in'])
-    print(pop_dict['in'].spatial)
-    print(pop_dict['in'].spatial["positions"])
-    #plt.show()
-    print(conn_dict['ex_ex'])
-    create_pops_figs(pop=pop_dict,
-                     fig_name="pop_positions",
-                     output_path=PATH_TO_FIGS)
 
     # run network
     logger.info("running network")
@@ -82,7 +72,12 @@ if __name__ == '__main__':
 
     logger.info("simulation finished successfully")
 
-    # save data
+    # save data and generate plots
+    # position plots
+    create_pops_figs(pop=pop_dict,
+                     fig_name="pop_positions",
+                     output_path=PATH_TO_FIGS)
+    # spikes, multimeter and weights data
     rec_dict = {'spikes': spikes,
                 'multimeter': multimeter,
                 'weights': weights}
