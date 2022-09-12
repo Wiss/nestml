@@ -1,0 +1,294 @@
+# Initial configuration file for doing experiments with Biophysical network
+notes: "Energy dependent"
+general:
+  record:
+    spikes: True
+    weights: True
+    multimeter:
+      # define which variable do you want to record
+      - ATP
+  record_rate: 10 # record every x ms. Only for recorded variables
+  simtime: 100 # ms
+  seed: 1
+  module: "edlif_psc_alpha_0_module" 
+neurons:
+  ex:
+    model: "edlif_psc_alpha_percent0_nestml__with_ed_stdp0_nestml"  # "edlif_psc_alpha_percent"
+    params:
+      energy_params:
+        # Initial condition for ATP
+        ATP:
+          mean: 100
+          std: 0
+        # ATP production parameter
+        K_ATP:
+          mean: 1
+          std: 0
+        # action-potential energy consumption time-constant
+        tau_ap:
+          mean: 30
+          std: 0
+        # Time constant of synaptic consumption
+        tau_syn_atp_in:
+          mean: 20
+          std: 0
+        tau_syn_atp_ex:
+          mean: 20
+          std: 0
+        # resting-potential consumption percent/ms
+        E_rp:
+          mean: 5  # %
+          std: 0
+        # housekeeping consumption percent/ms
+        E_hk:
+          mean: 5  # %
+          std: 0
+        # action potential consumption percent/spike
+        E_ap:
+          mean: 15  # %
+          std: 0
+        #synaptic consumption percent/spike
+        E_syn_ex:
+          mean: 8  # %
+          std: 0
+        E_syn_in:
+          mean: 5  # %
+          std: 0
+        # sensitivity to energy imbalance
+        gamma:
+          mean: 0
+          std: 0
+      general_params:
+        # synaptic time constants
+        tau_syn_ex:
+          mean: 6
+          std: 1
+        tau_syn_in:
+          mean: 6
+          std: 1
+        # membrane time constant
+        tau_m:
+          mean: 2
+          std: 0.1
+        # capacitance
+        C_m:
+          mean: 250
+          std: 12
+        # refractory period
+        t_ref:
+          mean: 2
+          std: 0.1
+        I_e:
+          mean: 2000
+          std: 500
+  in:
+    model: "edlif_psc_alpha_percent0_nestml__with_ed_stdp0_nestml"  # "edlif_psc_alpha_percent"
+    params:
+      energy_params:
+        # Initial condition for ATP
+        ATP:
+          mean: 100
+          std: 0
+        # ATP production parameter
+        K_ATP:
+          mean: 1
+          std: 0
+        # action-potential energy consumption time-constant
+        tau_ap:
+          mean: 30
+          std: 0
+        # Time constant of synaptic consumption
+        tau_syn_atp_in:
+          mean: 20
+          std: 0
+        tau_syn_atp_ex:
+          mean: 20
+          std: 0
+        # resting-potential consumption percent/ms
+        E_rp:
+          mean: 5  # %
+          std: 0
+        # housekeeping consumption percent/ms
+        E_hk:
+          mean: 5  # %
+          std: 0
+        # action potential consumption percent/spike
+        E_ap:
+          mean: 15  # %
+          std: 0
+        #synaptic consumption percent/spike
+        E_syn_ex:
+          mean: 8  # %
+          std: 0
+        E_syn_in:
+          mean: 5  # %
+          std: 0
+        # sensitivity to energy imbalance
+        gamma:
+          mean: 0
+          std: 0
+      general_params:
+        # synaptic time constants
+        tau_syn_ex:
+          mean: 6
+          std: 1
+        tau_syn_in:
+          mean: 6
+          std: 1
+        # membrane time constant
+        tau_m:
+          mean: 2
+          std: 0.1
+        # capacitance
+        C_m:
+          mean: 250
+          std: 12
+        # refractory period
+        t_ref:
+          mean: 2
+          std: 0.1
+        I_e:
+          mean: 2000
+          std: 0
+#  connecting populations
+connections:
+  # excitatory -> excitatory
+  ex_ex:
+    # connection parameters
+    conn_spec:
+      allow_autapses: True # bool
+      allow_multapses: True # bool
+      rule: "pairwise_bernoulli"
+      p: 0.8  # 1 == all-to-all
+    # synaptic parameters
+    syn_spec:
+      synapse_model: "ed_stdp0_nestml__with_edlif_psc_alpha_percent0_nestml"  
+      params:
+        mu_minus: 0
+        mu_plus: 0
+        lambda: 0.01
+        alpha: 0.5
+      w:
+      # for this model the weight variable is called "w"
+        dist: "exponential" # exponential, normal or uniform
+        beta: 5  # beta param for exponential
+        min:
+        max:
+      delay:
+        dist: "uniform" # exponential, normal or uniform
+        min: 0.1
+        max: 2.5
+      alpha:
+        dist: "uniform"
+        min: 0.5
+        max: 3.1
+      record: True
+  # excitatory -> inhibitory
+  ex_in:
+    # connection parameters
+    conn_spec:
+      allow_autapses: True # bool
+      allow_multapses: True # bool
+      rule: "pairwise_bernoulli"
+      p: 0.8  # 1 == all-to-all
+    # synaptic parameters
+    syn_spec:
+      synapse_model: "static_synapse"
+      params:
+        mu_minus:
+        mu_plus:
+        lambda:
+        alpha:
+      weight:
+        dist: "exponential" # exponential, normal or uniform
+        beta: 5  # beta param for exponential
+        min:
+        max:
+      delay:
+        dist: "uniform" # exponential, normal or uniform
+        min: 0.1
+        max: 2.5
+      alpha:
+        dist:
+        min:
+        max:
+      record: False
+  # inhibitory -> inhibitory
+  in_in:
+    # connection parameters
+    conn_spec:
+      allow_autapses: True # bool
+      allow_multapses: True # bool
+      rule: "pairwise_bernoulli"
+      p: 0.8  # 1 == all-to-all
+    # synaptic parameters
+    syn_spec:
+      synapse_model: "static_synapse"
+      params:
+        mu_minus:
+        mu_plus:
+        lambda:
+        alpha:
+      weight:
+        dist: "exponential" # exponential, normal or uniform
+        beta: 5  # beta param for exponential
+        min:
+        max:
+      delay:
+        dist: "uniform" # exponential, normal or uniform
+        min: 0.1
+        max: 2.5
+      alpha:
+        dist:
+        min:
+        max:
+      record: False
+  # inhibitory -> excitatory
+  in_ex:
+    # connection parameters
+    conn_spec:
+      allow_autapses: True # bool
+      allow_multapses: True # bool
+      rule: "pairwise_bernoulli"
+      p: 0.8  # 1 == all-to-all
+    # synaptic parameters
+    syn_spec:
+      synapse_model: "static_synapse"
+      params:
+        mu_minus:
+        mu_plus:
+        lambda:
+        alpha:
+      weight:
+        dist: "exponential" # exponential, normal or uniform
+        beta: 5  # beta param for exponential
+        min:
+        max:
+      delay:
+        dist: "uniform" # exponential, normal or uniform
+        min: 0.1
+        max: 2.5
+      alpha:
+        dist:
+        min:
+        max:
+      record: False
+  params:
+    stdp_decay: # for ATP dependent weights
+    weight_mask:
+    homeostatic_plasticity: False
+network_layout:
+  energy_dependent: True
+  n_neurons: 5
+  ex_in_ratio: 0.8 # n_exc = exc_inh_ratio*n_neurons
+  positions:
+    dist: "uniform"
+    dim: 2 # number of spatial dimensions (2 or 3)
+    pos_bounds:
+      # in mm
+      - -1
+      - 1
+external_source:
+  noise_type:
+  target_neurons_id:
+  target_neurons_subregion:
