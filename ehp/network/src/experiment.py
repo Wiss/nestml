@@ -3,8 +3,9 @@ experiment.py
     perform one experiment using the biophysical network and the yaml config
     file in config
 """
-import time
 import os
+import subprocess
+import time
 
 from src.logging.logging import logger
 import src.network as network
@@ -107,13 +108,17 @@ if __name__ == '__main__':
             if rec_k == 'weights':
                 weights_events = data
                 create_weights_figs(weights_events=weights_events,
-                                    fig_name='test',
-                                    output_path=PATH_TO_FIGS)
+                                    fig_name='weights',
+                                    output_path=PATH_TO_FIGS,
+                                    simtime=general['simtime'],
+                                    hlines=True,
+                                    cont_lines=True)
             save_data(PATH_TO_DATA, rec_k, data)
             logger.info("recordable %s recorded", rec_k)
 
-print("weights")
-print(weights_events)
+    # save logger into experiment folder
+    subprocess.run(['cp', 'src/last_experiment.log', f'{PATH_TO_OUTPUT}'])
+
     # generate figs (only if data is recorded)
     #for rec_k, rec_dict_v in rec_dict.items():
     #    if general['record'][rec_k]:
