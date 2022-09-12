@@ -1,5 +1,7 @@
 #import os
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import cm
+import numpy as np
 
 # parameters
 alpha = 0.6
@@ -16,69 +18,66 @@ fig_size = (12, 12)
 
 def create_weights_figs(weights_events: dict, fig_name: str, output_path: str,
                       **kargs):
+    kargs.setdefault('hlines', 0)
+    kargs.setdefault('cont_lines', 0)
     # This should be here, it's just a test
-    w = {}
-    valid_pair = []
-    for source, target, time, weight in zip(weights_events['ex_ex']['senders'],
-                                         weights_events['ex_ex']['targets'],
-                                         weights_events['ex_ex']['times'],
-                                         weights_events['ex_ex']['weights']):
+    for key, val in weights_events.items():
+        if val is not None:
+            w = {}
+            valid_pair = []
+            for source, target, time, weight in zip(weights_events['ex_ex']['senders'],
+                                                    weights_events['ex_ex']['targets'],
+                                                    weights_events['ex_ex']['times'],
+                                                    weights_events['ex_ex']['weights']):
 
-        valid_pair.append([source, target])
-        print('source')
-        print(source)
-        print('target')
-        print(target)
-        print('time')
-        print(time)
-        print('weight')
-        print(weight)
+                valid_pair.append([source, target])
+                print('source')
+                print(source)
+                print('target')
+                print(target)
+                print('time')
+                print(time)
+                print('weight')
+                print(weight)
 
-        #if source in w.keys():
-       # if not bool(w):
-       #     #if target in w[source].keys():
-       #     if bool(w[source]):
-       #         print(f'{target} key in w[source]')
-       #         w[source][target]['times'].append(time)
-       #         w[source][target]['weights'].append(weight)
-       #     else:
-       #         print(f'no {target} key in w[source]')
-       #         w[source][target] = {'times': [], 'weights': []}
-       # else:
-       #     print(f'no {source} key in w')
-       #     w[source] = dict
+                w.setdefault(str(source), {})
+                w[str(source)].setdefault(str(target), {})
+                w[str(source)][str(target)].setdefault('times', []).append(time)
+                w[str(source)][str(target)].setdefault('weights', []).append(weight)
 
-        w.setdefault(str(source), {})
-        w[str(source)].setdefault(str(target), {})
-        w[str(source)][str(target)].setdefault('times', []).append(time)
-        w[str(source)][str(target)].setdefault('weights', []).append(weight)
-
-    print(w)
-    plt.figure()
-    sources_set = weights_events['ex_ex']['senders']
-    target_set = weights_events['ex_ex']['targets']
-    #valid_pair_set = set(valid_pair)
-    valid_pair_set = [i for n, i in enumerate(valid_pair) if i not in valid_pair[:n]]
-    for s, t in valid_pair_set:
-        plt.plot(w[str(s)][str(t)]['times'], w[str(s)][str(t)]['weights'], '.', label=f'{s}->{t}')
-        plt.plot(w[str(s)][str(t)]['times'], w[str(s)][str(t)]['weights'])
-    #for s in sources_set:
-     #   for t in target_set:
-      #      try:
-       #         plt.plot(w['3'][t]['times'], w['3'][t]['weights'], label=f'{s}->{t}')
-       #     except:
-        #        pass
-    #plt.plot(w['3']['2']['times'], w['3']['2']['weights'], label=f'{3}->{2}')
-    #plt.plot(w['3']['2']['times'], w['3']['2']['weights'], '.', label=f'{3}->{2}')
-    #plt.plot(w['3']['3']['times'], w['3']['3']['weights'], label=f'{3}->{3}')
-    #plt.plot(w['3']['3']['times'], w['3']['3']['weights'], '.', label=f'{3}->{3}')
-    #plt.plot(w['3']['4']['times'], w['3']['4']['weights'], label=f'{3}->{4}')
-    #plt.plot(w['3']['4']['times'], w['3']['4']['weights'], '.', label=f'{3}->{4}')
-    plt.xlabel('times (ms)')
-    plt.ylabel('weights')
-    plt.legend()
-    plt.show()
-    pass
+            print(w)
+            # do not include repeated valid pairs
+            valid_pair_set = [i for n, i in enumerate(valid_pair) if i not in valid_pair[:n]]
+            color = iter(cm.rainbow(np.linspace(0, 1, len(valid_pair_set))))
+            fig, ax = plt.subplots(1, figsize=fig_size)
+            ax.set_title(f'weights {key.split("_")[0]} -> {key.split("_")[1]}',
+                            fontsize=fontsize_title)
+            for s, t in valid_pair_set:
+                c = next(color)
+                print(f'source {s}, target {t}')
+                ax.plot(w[str(s)][str(t)]['times'], w[str(s)][str(t)]['weights'], '.',
+                        color=c, label=f'{s}->{t}')
+                prev_time = 0.
+                last_time = kargs['simtime']
+                if kargs['hlines']:
+                    for n, weight in enumerate(w[str(s)][str(t)]['weights']):
+                        time = w[str(s)][str(t)]['times'][n]
+                        print(f'weight {weight}')
+                        print(f'time {time}')
+                        if n < len(w[str(s)][str(t)]['weights']) - 1:
+                            next_time = w[str(s)][str(t)]['times'][n+1]
+                            ax.hlines(y=weight, xmin=time, xmax=next_time, color=c)
+                        else:
+                            ax.hlines(y=weight, xmin=time, xmax=last_time, color=c)
+                        prev_time = time
+                if kargs['cont_lines']:
+                    ax.plot(w[str(s)][str(t)]['times'], w[str(s)][str(t)]['weights'],
+                            '--', color=c)
+            ax.set_ylabel('Weights TODO:units', fontsize=fontsize_label)
+            ax.set_xlabel('Time (ms)', fontsize=fontsize_label)
+            ax.legend(fontsize=fontsize_legend)
+            save_weights_fig =f'{output_path}/{fig_name}_{key}'
+            plt.savefig(save_weights_fig, dpi=500)
 
 def create_spikes_figs(spikes_events: dict, fig_name: str, output_path: str,
                      **kargs):
