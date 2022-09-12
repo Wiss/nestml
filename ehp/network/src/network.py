@@ -5,7 +5,8 @@
 #import sys
 
 from src.logging.logging import logger
-from src.utils.bionet_tools import (init_population,
+from src.utils.bionet_tools import (load_module,
+                                    init_population,
                                     connect_pops,
                                     reset_kernel,
                                     set_seed,
@@ -21,13 +22,15 @@ def measure():
     pass
 
 
-def init_network(seed: int, neurons: dict, connections: dict, network_layout: dict,
-               external_source: dict):
+def init_network(module: str, seed: int, neurons: dict, connections: dict,
+               network_layout: dict, external_source: dict):
     """
     Initialize network
 
     Parameters
     ----------
+    module:
+        nets module to be loaded
     seed:
         random seed
     neurons:
@@ -49,6 +52,8 @@ def init_network(seed: int, neurons: dict, connections: dict, network_layout: di
     # reset NEST
     logger.info("Resetting Nest")
     reset_kernel()
+    if module:
+        load_module(module_name=module)
     # set seed for simulation
     set_seed(seed)
     # init pops
