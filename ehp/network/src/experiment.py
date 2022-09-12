@@ -37,9 +37,15 @@ if __name__ == '__main__':
         external_source = load_config(config_path)
 
     ## folder for results
+    g_m_ex = neurons['ex']['params']['energy_params']['gamma']['mean']
+    g_s_ex = neurons['ex']['params']['energy_params']['gamma']['std']
+    g_m_in = neurons['in']['params']['energy_params']['gamma']['mean']
+    g_s_in = neurons['in']['params']['energy_params']['gamma']['std']
     PATH_TO_OUTPUT = os.path.join(
                     'results',
-                    f"ed_{network_layout['energy_dependent']}",
+                    f"ed_{network_layout['energy_dependent']}_" \
+                    f"gex_m_{g_m_ex}_s_{g_s_ex}_" \
+                    f"gin_m_{g_m_in}_s_{g_s_in}",
                     time.strftime("%Y_%m_%d_%H%M%S")+f"_seed_{general['seed']}")
     if general['record']['spikes'] or general['record']['weights']:
         create_folder(PATH_TO_OUTPUT)
@@ -55,6 +61,7 @@ if __name__ == '__main__':
     # setup network
     logger.info("setting up network")
     pop_dict, conn_dict, weight_rec_dict = network.init_network(
+                                            module=general['module'],
                                             seed=general['seed'],
                                             neurons=neurons,
                                             connections=connections,
@@ -99,9 +106,14 @@ if __name__ == '__main__':
                 multimeter_events = data
             if rec_k == 'weights':
                 weights_events = data
+                create_weights_figs(weights_events=weights_events,
+                                    fig_name='test',
+                                    output_path=PATH_TO_FIGS)
             save_data(PATH_TO_DATA, rec_k, data)
             logger.info("recordable %s recorded", rec_k)
 
+print("weights")
+print(weights_events)
     # generate figs (only if data is recorded)
     #for rec_k, rec_dict_v in rec_dict.items():
     #    if general['record'][rec_k]:
