@@ -28,7 +28,7 @@ def set_seed(seed: int):
 
 
 def reset_kernel():
-     nest.ResetKernel
+     nest.ResetKernel()
 
 
 def install_needed_modules():
@@ -41,26 +41,12 @@ def install_needed_modules():
     """
     pass
 
-def try_install_module(module_name, neuron_model):
+
+def load_module(module_name: str):
     """
-    try loading neuron model
+    load nest module
     """
-    try:
-        nest.Create(neuron_model)
-        logger.debug('model %s already loaded', neuron_model)
-    except:
-        nest.Install(module_name)
-        nest.Create(neuron_model)
-        logger.debug('model %s installed and loaded', neuron_model)
-    #else:
-        #nest.ResetKernel()
-        #generate_nest_target(input_path="models/neurons/" + neuron_model + ".nestml",
-        #                     target_path="/tmp/nestml-component",
-        #                     module_name=module_name,
-        #                     logging_level="INFO",
-        #                     codegen_opts={"nest_path":
-        #                                   NEST_SIMULATOR_INSTALL_LOCATION})
-        #nest.Install(module_name)
+    nest.Install(module_name)
 
 
 def init_population(position_dist: str, neuron_model: str, n_neurons: int,
@@ -84,12 +70,12 @@ def init_population(position_dist: str, neuron_model: str, n_neurons: int,
     # check if model is edlif
     # TODO: this should be fixed taking into account which neurons and
     # synapses are being used
-    if neuron_model == "edlif_psc_exp_percent":
-        module_name = "edlif_psc_exp" + "_module"
-        try_install_module(module_name, neuron_model)
-    elif neuron_model == "edlif_psc_alpha_percent":
-        module_name = "edlif_psc_alpha" + "_module"
-        try_install_module(module_name, neuron_model)
+    #if neuron_model == "edlif_psc_exp_percent":
+    #    module_name = "edlif_psc_exp" + "_module"
+    #    try_install_module(module_name, neuron_model)
+    #elif neuron_model == "edlif_psc_alpha_percent":
+    #    module_name = "edlif_psc_alpha" + "_module"
+    #    try_install_module(module_name, neuron_model)
 
     # define neuron positions
     if position_dist == "uniform":
@@ -206,7 +192,7 @@ def get_connections(pop_pre: nest.NodeCollection, pop_post: nest.NodeCollection,
 
 def update_syn_w_wr(syn: nest.NodeCollection, syn_spec: dict, label: str):
     """
-    uodate synaptic collection with weight recorder
+    uodate synaptic collection when weight recorder is used
 
     Parameters
     ----------
