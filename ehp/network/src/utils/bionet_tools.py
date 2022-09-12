@@ -138,21 +138,27 @@ def fix_syn_spec(syn_spec: dict, label: str):
     syn_spec_fixed = {}
     syn_spec_fixed["synapse_model"] = syn_spec["synapse_model"]
     # set weight, delay and alpha values
-    for key in ['weight', 'delay', 'alpha']:
-        logger.info('connection param "%s" with specifications: %s',
-                    key, syn_spec[key])
-        if syn_spec[key]['dist']:
-            if syn_spec[key]['dist'] == 'exponential':
-                syn_spec_fixed[key] = nest.random.exponential(
-                                            beta=syn_spec["weight"]["beta"])
-                # set megative weights if pop_pre is inhibitory
-                if label.split("_")[0] == "in" and key == 'weight':
-                    syn_spec_fixed["weight"] *= -1
+    for key in syn_spec.keys():
+        if key in ['weight', 'delay', 'alpha', 'w']:
+            logger.info('connection param "%s" with specifications: %s',
+                        key, syn_spec[key])
+            if syn_spec[key]['dist']:
+                if syn_spec[key]['dist'] == 'exponential':
+                    syn_spec_fixed[key] = nest.random.exponential(
+                                                beta=syn_spec[key]["beta"])
+                    # set megative weights if pop_pre is inhibitory
+                    if label.split("_")[0] == "in" and key in ['weight', 'w']:
+                        syn_spec_fixed[key] *= -1
 
-            elif syn_spec[key]['dist'] == 'uniform':
-                syn_spec_fixed[key] = nest.random.uniform(
-                                                min=syn_spec[key]["min"],
-                                                max=syn_spec[key]["max"])
+                elif syn_spec[key]['dist'] == 'uniform':
+                    syn_spec_fixed[key] = nest.random.uniform(
+                                                    min=syn_spec[key]["min"],
+                                                    max=syn_spec[key]["max"])
+            if (key == 'delay' and 'edlif' in
+                syn_spec['synapse_model'].split('_')):
+                # It's neccesary to do this, because ed_stpd cannot
+                # have a variable called delay
+                syn_spec_fixed['d'] = v
     return syn_spec_fixed
 
 def include_params(syn_spec: dict, params: dict):
@@ -189,6 +195,10 @@ def get_connections(pop_pre: nest.NodeCollection, pop_post: nest.NodeCollection,
     synapse_model:
         synapse model name
     """
+    #if "edlif" in synapse_model.split('_'):
+    #    param_list = ['source', 'target', 'synapse model', 'w', 'delay']
+    #else:
+    #    param_list = ['source', 'target', 'synapse model', 'weight', 'delay']
     syn_coll = nest.GetConnections(source=pop_pre,
                                    target=pop_post,
                                    synapse_model=synapse_model)
@@ -208,7 +218,7 @@ def update_syn_w_wr(syn: nest.NodeCollection, syn_spec: dict, label: str):
         connection label
     """
     for k, v in syn_spec.items():
-        if k in ['weight', 'delay', 'alpha'] and v:
+        if k in ['weight', 'w', 'delay', 'alpha'] and v:
             logger.info('connection param (wr) "%s" with specifications: %s',
                         k, syn_spec[k])
             for s in syn:
@@ -216,7 +226,7 @@ def update_syn_w_wr(syn: nest.NodeCollection, syn_spec: dict, label: str):
                     if syn_spec[k]['dist'] == 'exponential':
                         v = np.random.exponential(syn_spec[k]['beta'])
                         # negative weight if pop_pre is inh
-                        if label.split("_")[0] == "in" and k == 'weight':
+                        if label.split("_")[0] == "in" and k in ['weight', 'w']:
                             v *= -1
                     elif syn_spec[k]['dist'] == 'uniform':
                         v = np.random.uniform(low=syn_spec[k]['min'],
@@ -226,6 +236,13 @@ def update_syn_w_wr(syn: nest.NodeCollection, syn_spec: dict, label: str):
                     # update synapses
                     new_param_dict = {k: v}
                     nest.SetStatus(s, new_param_dict)
+                    if (k == 'delay' and 'edlif' in
+                        syn_spec['synapse_model'].split('_')):
+                        print("delay")
+                        print(v)
+                        # It's neccesary to do this, because ed_stpd cannot
+                        # have a variable called delay
+                        nest.SetStatus(s, {'d': v})
                 # if dist == None, continue
                 else:
                     continue
@@ -233,9 +250,9 @@ def update_syn_w_wr(syn: nest.NodeCollection, syn_spec: dict, label: str):
         elif k == 'params':
             for kp, vp in syn_spec[k].items():
                 if vp is not None:
+                    #for s in syn:
                     new_param_dict = {kp: vp}
                     nest.SetStatus(syn, new_param_dict)
-            # if v == None
         elif k in ['synapse_model', 'record']:
            continue
         else:
