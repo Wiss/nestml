@@ -7,11 +7,17 @@ import pytest
 from src.utils import bionet_tools
 
 
+#@pytest.fixture(scope='module')
+#def module():
+bionet_tools.reset_kernel()
+bionet_tools.load_module("edlif_psc_alpha_0_module")
+
 @pytest.fixture
 def population():
     pos_dist = "uniform"
     n_model = "iaf_psc_alpha"
-    n_model_edlif = "edlif_psc_alpha_percent"
+    #n_model_edlif = "edlif_psc_alpha_percent"
+    n_model_edlif = "edlif_psc_alpha_percent0_nestml__with_ed_stdp0_nestml"
     n_neurons = 10
     params = {"general_params":
               {"tau_m": {
@@ -79,7 +85,7 @@ def population():
                                               }
                                       }},
       [-1, 1], 2, 5),
-     ("uniform", "edlif_psc_alpha_percent", 5, {"general_params":
+     ("uniform", "edlif_psc_alpha_percent0_nestml__with_ed_stdp0_nestml", 5, {"general_params":
                                       {"tau_m": {
                                                 "mean": 20,
                                                 "std": 0.1
@@ -105,7 +111,7 @@ def population():
       [-1, 1], 2, 5)
      ],)
 def test__init_population__succeed(pos_dist, n_model, n_neurons, params,
-                                pos_bounds, dim, expected):
+                                 pos_bounds, dim, expected):
     """
     test population initialization
     """
@@ -206,7 +212,8 @@ def test__init_population__succeed(pos_dist, n_model, n_neurons, params,
       "in_ex",
          0),
      ],)
-def test__init_network__succeed(population, conn_spec, syn_spec, label, expected):
+def test__init_network__succeed(population, conn_spec, syn_spec, label,
+                              expected):
     """
     test connection initialization
     """
