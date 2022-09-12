@@ -1,3 +1,12 @@
+# modules
+
+If you want to run and energy dependent network with  `edlif_psc_alpha_percent`
+model, then load module:  
+`edlif_psc_alpha_0_module`
+
+If you want to use `edlif_psc_exp_percent`, then load:  
+`edlif_psc_exp_1_module`
+
 # Loading data
 
 ## examples
@@ -61,3 +70,9 @@ if weights[k] is not None:
         print('weights times')
         print(w_events['times'])
 ```
+
+# Relevant information
+
+For the `ed_stdp` model, the weight variable is called 'w' instead of 'weight' 
+(and 'v' instead of 'delay'), as for all the other models. For some reason it's not possible to change this 
+name in the code (I get build errors).
