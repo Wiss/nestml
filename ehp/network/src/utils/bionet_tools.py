@@ -224,8 +224,6 @@ def update_syn_w_wr(syn: nest.NodeCollection, syn_spec: dict, label: str):
                     nest.SetStatus(s, new_param_dict)
                     if (k == 'delay' and 'edlif' in
                         syn_spec['synapse_model'].split('_')):
-                        print("delay")
-                        print(v)
                         # It's neccesary to do this, because ed_stpd cannot
                         # have a variable called delay
                         nest.SetStatus(s, {'d': v})
