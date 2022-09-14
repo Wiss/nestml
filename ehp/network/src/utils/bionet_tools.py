@@ -49,6 +49,122 @@ def load_module(module_name: str):
     nest.Install(module_name)
 
 
+def subregion_pos(nx_electrodes: int, ny_electrodes: int, pos_bounds: list):
+    """
+    define grid positions
+
+    Parameters
+    ----------
+    nx_electrodes:
+        amount of electrodes in x axes
+    ny_electrodes:
+        amount of electrodes in y axes
+    pos_bounds:
+        position bounds
+
+    Returns
+    -------
+    sub_pos:
+        subregion center positions
+    """
+    sub_pos = nest.spatial.grid(shape=[nx_electrodes, ny_electrodes],
+                                extent=[pos_bounds[0], pos_bounds[1]])
+    logger.info('subregion positions %s', vars(sub_pos))
+    return sub_pos
+
+
+def connect_external_sources(external_sources: dict, pos_bounds: list,
+                           populations: dict):
+    logger.info('creating external sources')
+    #nx_electrodes = external_sources['target_subregion']['x_electrodes']
+    #ny_electrodes = external_sources['target_subregion']['y_electrodes']
+    #sub_pos = subregion_pos(nx_electrodes=nx_electrodes,
+    #                        ny_electrodes=ny_electrodes,
+    #                        pos_bounds=pos_bounds)
+    #radius = math.floor(abs(pos_bounds[1] - pos_bounds[0]) /
+    #                    (2 * nx_electrodes) * 100)/100
+    #print(radius)
+    external_srcs = []
+    target_subregion = external_sources['target_subregion']
+    for gen_key in target_subregion.keys():
+        if 'generator' in gen_key.split('_'):
+            source_type = target_subregion[gen_key]['type']
+            params = target_subregion[gen_key]['params']
+            radius = target_subregion[gen_key]['conn_spec']['radius']
+            anchor = target_subregion[gen_key]['conn_spec']['anchor']
+            external_srcs.append(nest.Create(source_type,
+                                params=params,
+                                positions=nest.spatial.grid(shape=[1, 1])))
+            conn_spec = {'rule': 'pairwise_bernoulli',
+                         'p': 1.0,
+                         'mask': {'circular': {'radius': radius},
+                                  'anchor': [anchor[0], anchor[1]]}}
+            for pop in populations.keys():
+                #nest.Connect(external_srcs[-1], populations[pop], conn_spec)
+                logger.info('generator %s for pop %s in -> %s position',
+                            gen_key.split('_')[1], pop, anchor)
+
+  #  for key in populations:
+
+
+    #for key in populations:
+    #    external_srcs[key] = nest.Create(source_type,
+    #                            params=external_sources['params'][source_type],
+    #                            positions=sub_pos)
+    #        conn_spec = {'rule': 'pairwise_bernoulli',
+    #                     'p': 1,
+    #                     'mask': {'circular': {'radius': radius}}
+    #                     }
+    #        nest.Connect(source, populations[key], conn_spec)
+        #for n, source in enumerate(external_srcs[key]):
+       #    source_pos = source.spatial
+       #     logger.info('external source %i for pop %s in -> %s position', n,
+       #                 key, source_pos)
+       #     conn_spec = {'rule': 'pairwise_bernoulli',
+       #                  'p': 1,
+       #                  'mask': {'circular': {'radius': radius}}
+       #                  }
+       #     nest.Connect(source, populations[key], conn_spec)
+
+    return external_srcs
+
+
+def connect_subregion_multimeters(external_sources: dict, pos_bounds: list,
+                                populations: dict):
+    """
+    create subregion multimeters for measuring subpopulation activity
+
+    """
+    pass
+    #logger.info('creating subregions multimeters')
+    #nx_electrodes = external_sources['target_subregion']['x_electrodes']
+    #ny_electrodes = external_sources['target_subregion']['y_electrodes']
+    #sub_pos = subregion_pos(nx_electrodes=nx_electrodes,
+    #                        ny_electrodes=ny_electrodes,
+    #                        pos_bounds=pos_bounds)
+    #radius = math.floor(abs(pos_bounds[1] - pos_bounds[0]) /
+    #                    (2 * nx_electrodes) * 100)/100
+    #print(radius)
+    #subregion_mults = {}
+    #for key in populations:
+    #    subregion_mults[key] = nest.Create('multimeter',
+    #                    params={
+    #                        'interval': external_sources['subregion_measurements']['record_rate'],
+    #                        'record_from': external_sources['subregion_measurements']['multimeter']
+    #                        },
+    #                    positions=sub_pos)
+    #    for n, mult in enumerate(subregion_mults[key]):
+    #        mult_pos = mult.spatial
+    #        logger.info('multimeter %i for pop %s in -> %s position', n, key,
+    #                    mult_pos)
+    #        conn_spec = {'rule': 'pairwise_bernoulli',
+    #                     'p': 1,
+    #                     'mask': {'circular': {'radius': radius}}
+    #                     }
+    #        nest.Connect(mult, populations[key], conn_spec=conn_spec)
+    #return subregion_mults
+
+
 def init_population(position_dist: str, neuron_model: str, n_neurons: int,
                   params: dict, pos_bounds: list, dim: int):
     """
