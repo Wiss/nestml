@@ -3,6 +3,7 @@ experiment.py
     perform one experiment using the biophysical network and the yaml config
     file in config
 """
+import copy
 import os
 import subprocess
 import time
@@ -100,14 +101,11 @@ if __name__ == '__main__':
                     data[key] = value.get('events')
             # get events for figures
             if rec_k == 'spikes':
-                spikes_events = data
-                create_spikes_figs(spikes_events=spikes_events,
-                                   fig_name='spikes',
-                                   output_path=PATH_TO_FIGS)
+                spikes_events = copy.deepcopy(data)
             elif rec_k == 'multimeter':
-                multimeter_events = data
+                multimeter_events = copy.deepcopy(data)
             if rec_k == 'weights':
-                weights_events = data
+                weights_events = copy.deepcopy(data)
                 create_weights_figs(weights_events=weights_events,
                                     fig_name='weights',
                                     output_path=PATH_TO_FIGS,
@@ -117,6 +115,16 @@ if __name__ == '__main__':
                                     legend=False)
             save_data(PATH_TO_DATA, rec_k, data)
             logger.info("recordable %s saved", rec_k)
+
+    # TODO inclide recording condigiont
+    create_spikes_figs(spikes_events=spikes_events,
+                    multimeter_events=multimeter_events,
+                    fig_name='spikes',
+                    output_path=PATH_TO_FIGS,
+                    mult_var=general['record']['multimeter'],
+                    alpha=0.2,
+                    multimeter_record_rate=general['record_rate'],
+                    simtime=general['simtime'])
 
     # save logger into experiment folder
     subprocess.run(['cp', 'src/last_experiment.log', f'{PATH_TO_OUTPUT}'])
