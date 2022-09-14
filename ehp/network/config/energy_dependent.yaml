@@ -279,16 +279,39 @@ connections:
     homeostatic_plasticity: False
 network_layout:
   energy_dependent: True
-  n_neurons: 5
-  ex_in_ratio: 0.8 # n_exc = exc_inh_ratio*n_neurons
+  n_neurons: 10
+  ex_in_ratio: 0.8  # n_exc = exc_inh_ratio*n_neurons
   positions:
     dist: "uniform"
     dim: 2 # number of spatial dimensions (2 or 3)
     pos_bounds:
       # in mm
-      - -1
-      - 1
-external_source:
-  noise_type:
+      - -0.5
+      - 0.5
+external_sources:
+  # subregions measurements
+  subregion_measurements:
+    record: True
+    multimeter:
+      - ATP
+    record_rate: 10
+    spike_recorder: True
+  # external sources
+  source_type: 'noise_generator' # TODO find all of them
   target_neurons_id:
-  target_neurons_subregion:
+  target_subregion:
+    #x_electrodes: 3  # how many electrodes in x axes?
+    #y_electrodes: 3  # how many electrodes in y axes?
+    # to include anew generator define a new generator_X key with respective
+    # parmas and conn_spec
+    generator_1:
+      type: 'noise_generator'
+      params:
+        mean: 1000  # pA
+        std: 100  # pA
+        dt: 1  # ms
+      conn_spec:
+        radius: 1.6
+        anchor:
+          - 0.3
+          - 0.3
