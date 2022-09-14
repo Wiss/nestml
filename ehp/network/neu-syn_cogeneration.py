@@ -42,7 +42,7 @@ def generate_code_for(nestml_synapse_model: str, kernel):
     # generate the code for neuron and synapse (co-generated)
     #module_name = "nestml_" + str(n_modules_generated) + "_module"
     module_name = f"edlif_psc_{kernel}_" + str(n_modules_generated) + "_module"
-    generate_nest_target(input_path=["models/neurons/"+ neuron_model
+    generate_nest_target(input_path=["models/neurons/" + neuron_model
                                      + str(n_modules_generated) + ".nestml",
                                      "models/synapses/" +
                                      nestml_synapse_model_name
