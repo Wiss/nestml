@@ -8,7 +8,7 @@ general:
       # define which variable do you want to record
       - ATP
   record_rate: 10 # record every x ms. Only for recorded variables
-  simtime: 100 # ms
+  simtime: 2000 # ms
   seed: 1
   module: "edlif_psc_alpha_0_module" 
 neurons:
@@ -22,7 +22,7 @@ neurons:
           std: 0
         # ATP production parameter
         K_ATP:
-          mean: 1
+          mean: 1.
           std: 0
         # action-potential energy consumption time-constant
         tau_ap:
@@ -56,7 +56,7 @@ neurons:
           std: 0
         # sensitivity to energy imbalance
         gamma:
-          mean: 0
+          mean: 10
           std: 0
       general_params:
         # synaptic time constants
@@ -79,8 +79,8 @@ neurons:
           mean: 2
           std: 0.1
         I_e:
-          mean: 2000
-          std: 500
+          mean: 0  #2000
+          std: 0  #500
   in:
     model: "edlif_psc_alpha_percent0_nestml__with_ed_stdp0_nestml"  # "edlif_psc_alpha_percent"
     params:
@@ -125,7 +125,7 @@ neurons:
           std: 0
         # sensitivity to energy imbalance
         gamma:
-          mean: 0
+          mean: 10
           std: 0
       general_params:
         # synaptic time constants
@@ -148,7 +148,7 @@ neurons:
           mean: 2
           std: 0.1
         I_e:
-          mean: 2000
+          mean: 0  #2000
           std: 0
 #  connecting populations
 connections:
@@ -297,21 +297,58 @@ external_sources:
     record_rate: 10
     spike_recorder: True
   # external sources
-  source_type: 'noise_generator' # TODO find all of them
   target_neurons_id:
   target_subregion:
-    #x_electrodes: 3  # how many electrodes in x axes?
-    #y_electrodes: 3  # how many electrodes in y axes?
-    # to include anew generator define a new generator_X key with respective
-    # parmas and conn_spec
-    generator_1:
-      type: 'noise_generator'
+    # here you can include different generators types with their own params
+    generator_general_poisson:
+      type: 'poisson_generator'
+      active: True  # activate in the simulation
       params:
-        mean: 1000  # pA
-        std: 100  # pA
-        dt: 1  # ms
+        rate: 100000  # mean rate Hz
+        start: 1100
       conn_spec:
-        radius: 1.6
+        radius: 1.5
+        anchor:
+          - 0.0
+          - 0.0
+    generator_general_poisson_ac:
+      type: 'sinusoidal_poisson_generator'
+      # f(t) = max(0, rate + amplitude * sin(2*pi*frequency*t + phase*pi/180))
+      active: True  # activate in the simulation
+      params:
+        rate: 110000  # mean rate spikes/second
+        amplitude: 50000  # Firing rate modulation in spikes/second
+        frequency: 5  # mod frequency Hz
+        phase: 0 # modulation phase in degree [0-360]
+        stop: 1000  # stop simulation
+        #individual_spike_trains: True  # if True, then all target neurons will
+        # receive different spike trains. If false, all neurons receive the
+        # same spike train
+      conn_spec:
+        radius: 1.5
+        anchor:
+          - 0.0
+          - 0.0
+    generator_general_ac:
+      type: 'ac_generator'
+      active: False  # activate in the simulation
+      params:
+        amplitude: 300  # amplitude of sine current pA
+        offset: 1800  # constant amplitud offse pA
+        frequency: 20 # in Hz
+        phase: 0  # phase of sine in degrees [0-360]
+      conn_spec:
+        radius: 1.5
+        anchor:
+          - 0.0
+          - 0.0
+    generator_1_poisson:
+      type: 'poisson_generator'
+      active: False  # activate in the simulation
+      params:
+        rate: 200000  # mean rate Hz
+      conn_spec:
+        radius: 0.16
         anchor:
           - 0.3
           - 0.3
