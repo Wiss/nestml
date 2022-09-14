@@ -8,22 +8,17 @@ from src.logging.logging import logger
 from src.utils.bionet_tools import (load_module,
                                     init_population,
                                     connect_pops,
+                                    connect_subregion_multimeters,
+                                    connect_external_sources,
                                     reset_kernel,
                                     set_seed,
                                     simulate)
 
 logger = logger.getChild(__name__)
 
-def connect_external_sources():
-    pass
-
-
-def measure():
-    pass
-
 
 def init_network(module: str, seed: int, neurons: dict, connections: dict,
-               network_layout: dict, external_source: dict):
+               network_layout: dict, external_sources: dict):
     """
     Initialize network
 
@@ -39,8 +34,8 @@ def init_network(module: str, seed: int, neurons: dict, connections: dict,
         connection parameters
     network_layout:
         network layout parameters
-    external_source:
-        external source parameters
+    external_sources:
+        external sources parameters
 
     Return
     ------
@@ -106,8 +101,21 @@ def init_network(module: str, seed: int, neurons: dict, connections: dict,
             logger.error("connection key unknown")
 
     # connect external sources
-    connect_external_sources()
-    return pop, conn, weight_rec
+    external_srcs = connect_external_sources(
+                        external_sources=external_sources,
+                        pos_bounds=network_layout['positions']['pos_bounds'],
+                        populations=pop)
+
+    # connect subregion multimeters
+    if external_sources['subregion_measurements']['record']:
+        subregion_mults = connect_subregion_multimeters(
+                        external_sources=external_sources,
+                        pos_bounds=network_layout['positions']['pos_bounds'],
+                        populations=pop)
+    else:
+        logger.info('No measurements per region')
+
+    return pop, conn, weight_rec, external_srcs, subregion_mults
 
 def run_network(simtime: float, record: dict, record_rate: float, pop_dict: dict,
               weight_rec_dict: dict):
