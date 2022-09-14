@@ -111,7 +111,11 @@ neuron edlif_psc_alpha_percent0:
     else:
       homeostatic_s_enabled = 1
     end
-    
+
+    if ATP <= 0:
+       ATP = 0
+    end
+
     if V_abs >= V_th: # threshold crossing
       # Voltage above threshold
       r = RefractoryCounts
