@@ -20,6 +20,8 @@ def create_weights_figs(weights_events: dict, fig_name: str, output_path: str,
                       **kargs):
     kargs.setdefault('hlines', 0)
     kargs.setdefault('cont_lines', 0)
+    kargs.setdefault('legend', 0)
+    kargs.setdefault('verbose', 0)
     # This should be here, it's just a test
     for key, val in weights_events.items():
         if val is not None:
@@ -31,14 +33,15 @@ def create_weights_figs(weights_events: dict, fig_name: str, output_path: str,
                                                     weights_events['ex_ex']['weights']):
 
                 valid_pair.append([source, target])
-                print('source')
-                print(source)
-                print('target')
-                print(target)
-                print('time')
-                print(time)
-                print('weight')
-                print(weight)
+                if kargs['verbose']:
+                    print('source')
+                    print(source)
+                    print('target')
+                    print(target)
+                    print('time')
+                    print(time)
+                    print('weight')
+                    print(weight)
 
                 w.setdefault(str(source), {})
                 w[str(source)].setdefault(str(target), {})
@@ -54,7 +57,8 @@ def create_weights_figs(weights_events: dict, fig_name: str, output_path: str,
                             fontsize=fontsize_title)
             for s, t in valid_pair_set:
                 c = next(color)
-                print(f'source {s}, target {t}')
+                if kargs['verbose']:
+                    print(f'source {s}, target {t}')
                 ax.plot(w[str(s)][str(t)]['times'], w[str(s)][str(t)]['weights'], '.',
                         color=c, label=f'{s}->{t}')
                 prev_time = 0.
@@ -62,8 +66,9 @@ def create_weights_figs(weights_events: dict, fig_name: str, output_path: str,
                 if kargs['hlines']:
                     for n, weight in enumerate(w[str(s)][str(t)]['weights']):
                         time = w[str(s)][str(t)]['times'][n]
-                        print(f'weight {weight}')
-                        print(f'time {time}')
+                        if kargs['verbose']:
+                            print(f'weight {weight}')
+                            print(f'time {time}')
                         if n < len(w[str(s)][str(t)]['weights']) - 1:
                             next_time = w[str(s)][str(t)]['times'][n+1]
                             ax.hlines(y=weight, xmin=time, xmax=next_time, color=c)
@@ -75,7 +80,8 @@ def create_weights_figs(weights_events: dict, fig_name: str, output_path: str,
                             '--', color=c)
             ax.set_ylabel('Weights TODO:units', fontsize=fontsize_label)
             ax.set_xlabel('Time (ms)', fontsize=fontsize_label)
-            ax.legend(fontsize=fontsize_legend)
+            if kargs['legend']:
+                ax.legend(fontsize=fontsize_legend)
             save_weights_fig =f'{output_path}/{fig_name}_{key}'
             plt.savefig(save_weights_fig, dpi=500)
 
