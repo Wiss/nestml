@@ -48,7 +48,6 @@ def create_weights_figs(weights_events: dict, fig_name: str, output_path: str,
                 w[str(source)][str(target)].setdefault('times', []).append(time)
                 w[str(source)][str(target)].setdefault('weights', []).append(weight)
 
-            print(w)
             # do not include repeated valid pairs
             valid_pair_set = [i for n, i in enumerate(valid_pair) if i not in valid_pair[:n]]
             color = iter(cm.rainbow(np.linspace(0, 1, len(valid_pair_set))))
@@ -85,16 +84,29 @@ def create_weights_figs(weights_events: dict, fig_name: str, output_path: str,
             save_weights_fig =f'{output_path}/{fig_name}_{key}'
             plt.savefig(save_weights_fig, dpi=500)
 
-def create_spikes_figs(spikes_events: dict, fig_name: str, output_path: str,
-                     **kargs):
+def create_spikes_figs(spikes_events: dict, multimeter_events: dict,
+                     fig_name: str, output_path: str, **kargs):
     """
     Raster plots
 
     Parameters
     ----------
-    spikes_dict:
+    spikes_events:
         dictionary with all spike's information (events)
+    multimeter_events:
+        dictionary with all multimeters information
+    fig_name:
+        figure name
+    output_path:
+        path to figure
+    kargs:
+        extra parameters to the funcion given as dictionary
     """
+    kargs.setdefault('mult_var', None)
+    kargs.setdefault('alpha', 1)
+    final_t = kargs['simtime']
+    mult_time = np.arange(start=kargs['multimeter_record_rate'], stop=final_t,
+                          step=kargs['multimeter_record_rate'])
     fig, ax = plt.subplots(2*len(spikes_events), figsize=fig_size, sharex=True)
     ax[-1].set_xlabel('time (ms)', fontsize=fontsize_label)
     n = 0
@@ -105,7 +117,6 @@ def create_spikes_figs(spikes_events: dict, fig_name: str, output_path: str,
         elif pop == 'in':
             color = 'b'
             p = 'inhibitory'
-        #fig, ax = plt.subplots(, figsize=fig_size)
         senders = spikes_events[pop]['senders']
         times = spikes_events[pop]['times']
         ax[n].plot(times, senders, '.', c=color)
@@ -121,9 +132,10 @@ def create_spikes_figs(spikes_events: dict, fig_name: str, output_path: str,
 
 
     # all together
-    fig, ax = plt.subplots(2, figsize=fig_size, sharex=True)
+    fig, ax = plt.subplots(3, figsize=fig_size, sharex=True)
     ax[0].set_title('Spikes', fontsize=fontsize_title)
-    ax[1].set_title('Synchronization', fontsize=fontsize_title)
+    ax[1].set_title('Firing rate and energy', fontsize=fontsize_title)
+    ax[2].set_title('Synchronization', fontsize=fontsize_title)
     ax[-1].set_xlabel('time (ms)', fontsize=fontsize_label)
     for pop, events in spikes_events.items():
         if pop == 'ex':
@@ -134,9 +146,31 @@ def create_spikes_figs(spikes_events: dict, fig_name: str, output_path: str,
             p = 'inhibitory'
         senders = spikes_events[pop]['senders']
         times = spikes_events[pop]['times']
+        atp_per_sender = {}
+        for sender, atp in zip(multimeter_events[pop]['senders'],
+                            multimeter_events[pop]['ATP']):
+            atp_per_sender.setdefault(str(sender), []).append(atp)
+        # spikes
         ax[0].plot(times, senders, '.', c=color, label=pop)
         ax[0].set_ylabel('Neuron ID', fontsize=fontsize_label)
         ax[0].legend(fontsize=fontsize_legend)
+        # ATP
+        for n, sender in enumerate(atp_per_sender):
+            if n == 0:
+                ax[1].plot(mult_time, atp_per_sender[sender], '.', c=color,
+                           label=pop, alpha=kargs['alpha'])
+                ax[1].plot(mult_time, atp_per_sender[sender], c=color,
+                           alpha=kargs['alpha'])
+            else:
+                ax[1].plot(mult_time, atp_per_sender[sender], '.', c=color,
+                           alpha=kargs['alpha'])
+                ax[1].plot(mult_time, atp_per_sender[sender], c=color,
+                           alpha=kargs['alpha'])
+        atp_total = [sum(t_atp) for t_atp in zip(*list(atp_per_sender.values()))]
+        ax[1].plot(mult_time, [atp_t/len(atp_per_sender) for atp_t in atp_total],
+                   c=color, label=pop + '_mean', lw=3)
+        ax[1].set_ylabel('ATP (%)', fontsize=fontsize_label)
+        ax[1].legend(fontsize=fontsize_legend)
     # save image
     save_spikes_j_fig =f'{output_path}/{fig_name}_joint'
     plt.savefig(save_spikes_j_fig, dpi=500)
