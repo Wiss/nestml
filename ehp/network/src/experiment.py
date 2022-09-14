@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
     ## CONFIG
     general, neurons, connections, network_layout, \
-        external_source = load_config(config_path)
+        external_sources = load_config(config_path)
 
     ## folder for results
     g_m_ex = neurons['ex']['params']['energy_params']['gamma']['mean']
@@ -61,13 +61,14 @@ if __name__ == '__main__':
 
     # setup network
     logger.info("setting up network")
-    pop_dict, conn_dict, weight_rec_dict = network.init_network(
+    pop_dict, conn_dict, weight_rec_dict, external_srcs, \
+                            subregion_mults = network.init_network(
                                             module=general['module'],
                                             seed=general['seed'],
                                             neurons=neurons,
                                             connections=connections,
                                             network_layout=network_layout,
-                                            external_source=external_source)
+                                            external_sources=external_sources)
 
     # run network
     logger.info("running network")
@@ -112,9 +113,10 @@ if __name__ == '__main__':
                                     output_path=PATH_TO_FIGS,
                                     simtime=general['simtime'],
                                     hlines=True,
-                                    cont_lines=True)
+                                    cont_lines=True,
+                                    legend=False)
             save_data(PATH_TO_DATA, rec_k, data)
-            logger.info("recordable %s recorded", rec_k)
+            logger.info("recordable %s saved", rec_k)
 
     # save logger into experiment folder
     subprocess.run(['cp', 'src/last_experiment.log', f'{PATH_TO_OUTPUT}'])
