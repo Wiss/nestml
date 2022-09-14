@@ -76,18 +76,11 @@ def subregion_pos(nx_electrodes: int, ny_electrodes: int, pos_bounds: list):
 def connect_external_sources(external_sources: dict, pos_bounds: list,
                            populations: dict):
     logger.info('creating external sources')
-    #nx_electrodes = external_sources['target_subregion']['x_electrodes']
-    #ny_electrodes = external_sources['target_subregion']['y_electrodes']
-    #sub_pos = subregion_pos(nx_electrodes=nx_electrodes,
-    #                        ny_electrodes=ny_electrodes,
-    #                        pos_bounds=pos_bounds)
-    #radius = math.floor(abs(pos_bounds[1] - pos_bounds[0]) /
-    #                    (2 * nx_electrodes) * 100)/100
-    #print(radius)
     external_srcs = []
     target_subregion = external_sources['target_subregion']
     for gen_key in target_subregion.keys():
-        if 'generator' in gen_key.split('_'):
+        if ('generator' in gen_key.split('_') and
+            target_subregion[gen_key].setdefault('active', False)):
             source_type = target_subregion[gen_key]['type']
             params = target_subregion[gen_key]['params']
             radius = target_subregion[gen_key]['conn_spec']['radius']
@@ -100,32 +93,11 @@ def connect_external_sources(external_sources: dict, pos_bounds: list,
                          'mask': {'circular': {'radius': radius},
                                   'anchor': [anchor[0], anchor[1]]}}
             for pop in populations.keys():
-                #nest.Connect(external_srcs[-1], populations[pop], conn_spec)
-                logger.info('generator %s for pop %s in -> %s position',
-                            gen_key.split('_')[1], pop, anchor)
-
-  #  for key in populations:
-
-
-    #for key in populations:
-    #    external_srcs[key] = nest.Create(source_type,
-    #                            params=external_sources['params'][source_type],
-    #                            positions=sub_pos)
-    #        conn_spec = {'rule': 'pairwise_bernoulli',
-    #                     'p': 1,
-    #                     'mask': {'circular': {'radius': radius}}
-    #                     }
-    #        nest.Connect(source, populations[key], conn_spec)
-        #for n, source in enumerate(external_srcs[key]):
-       #    source_pos = source.spatial
-       #     logger.info('external source %i for pop %s in -> %s position', n,
-       #                 key, source_pos)
-       #     conn_spec = {'rule': 'pairwise_bernoulli',
-       #                  'p': 1,
-       #                  'mask': {'circular': {'radius': radius}}
-       #                  }
-       #     nest.Connect(source, populations[key], conn_spec)
-
+                nest.Connect(external_srcs[-1], populations[pop],
+                             conn_spec=conn_spec)
+                logger.info('generator %s for pop %s in -> %s center position'\
+                            ' and %.2f radius',
+                            gen_key.split('_')[1], pop, anchor, radius)
     return external_srcs
 
 
@@ -462,7 +434,6 @@ def simulate(simtime: float, record: dict, record_rate: int, pop_dict: dict,
     # record multimeter
     mult = {}
     if record['multimeter']:
-        print(record['multimeter'])
         for pop_k, pop_v in pop_dict.items():
             if (sum([var in nest.GetDefaults(pop_v[0].model)['recordables']
                      for var in record['multimeter']]) ==
