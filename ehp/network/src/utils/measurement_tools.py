@@ -69,13 +69,20 @@ def population_avg_order_param(i_phase_pop: dict) -> dict:
     del[i_phase_pop_copy['times']]
     n_senders = 0
     for sender in i_phase_pop_copy:
-        pop_avg_order_param['o_param'] += np.e ** (1j * i_phase_pop[sender])
+        # add both arrays treating NaNs as zeros
+        pop_avg_order_param['o_param'] = np.nansum(
+                                            np.dstack((
+                                            pop_avg_order_param['o_param'],
+                                            np.e ** (1j *
+                                            i_phase_pop_copy[sender])
+                                            )), axis=2)
         n_senders += 1
     pop_avg_order_param['o_param'] = abs(pop_avg_order_param['o_param'] /
                                          n_senders)
+    #pop_avg_order_param['o_param'].reshape(-1)
     return pop_avg_order_param
 
-def phase_coherence(spikes_events: dict, final_t: float) -> dict:
+def phase_coherence(spikes_events: dict, final_t: float) -> (dict, dict):
     """
     calculates phase coherence
 
@@ -101,10 +108,5 @@ def phase_coherence(spikes_events: dict, final_t: float) -> dict:
         pop_average_order_param[pop] = population_avg_order_param(
                                                 i_phase_pop=i_phase[pop])
 
-        #pop_average_order_param[pop] = population_avg_order_param()
         #global_inst_order_param[pop] = global_inst_order_param()
-    print('inst. phase')
-    print(i_phase)
-    print('pop avg order param')
-    print(pop_average_order_param)
-    return pop_average_order_param
+    return i_phase, pop_average_order_param
