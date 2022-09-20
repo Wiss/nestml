@@ -124,7 +124,9 @@ if __name__ == '__main__':
                     mult_var=general['record']['multimeter'],
                     alpha=0.2,
                     multimeter_record_rate=general['record_rate'],
-                    simtime=general['simtime'])
+                    simtime=general['simtime'],
+                    n_neurons=network_layout['n_neurons'],
+                    ex_in_ratio=network_layout['ex_in_ratio'])
 
     # save logger into experiment folder
     subprocess.run(['cp', 'src/last_experiment.log', f'{PATH_TO_OUTPUT}'])

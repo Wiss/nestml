@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 import numpy as np
 
+import src.utils.measurement_tools as tools
+
 # parameters
 alpha = 0.6
 fontsize_title = 14
@@ -103,14 +105,15 @@ def create_spikes_figs(spikes_events: dict, multimeter_events: dict,
         extra parameters to the funcion given as dictionary
     """
     kargs.setdefault('mult_var', None)
-    kargs.setdefault('alpha', 1)
+    kargs.setdefault('alpha', 0.5)
+    kargs.setdefault('mean_lw', 3)
     final_t = kargs['simtime']
     mult_time = np.arange(start=kargs['multimeter_record_rate'], stop=final_t,
                           step=kargs['multimeter_record_rate'])
     fig, ax = plt.subplots(2*len(spikes_events), figsize=fig_size, sharex=True)
     ax[-1].set_xlabel('time (ms)', fontsize=fontsize_label)
     n = 0
-    for pop, events in spikes_events.items():
+    for pop in spikes_events:
         if pop == 'ex':
             color = 'r'
             p = 'excitatory'
@@ -135,7 +138,8 @@ def create_spikes_figs(spikes_events: dict, multimeter_events: dict,
     fig, ax = plt.subplots(3, figsize=fig_size, sharex=True)
     ax[0].set_title('Spikes', fontsize=fontsize_title)
     ax[1].set_title('Firing rate and energy', fontsize=fontsize_title)
-    ax[2].set_title('Synchronization', fontsize=fontsize_title)
+    ax[2].set_title('Synchronization: Population avergae order parameter',
+                    fontsize=fontsize_title)
     ax[-1].set_xlabel('time (ms)', fontsize=fontsize_label)
     for pop, events in spikes_events.items():
         if pop == 'ex':
@@ -152,8 +156,6 @@ def create_spikes_figs(spikes_events: dict, multimeter_events: dict,
             atp_per_sender.setdefault(str(sender), []).append(atp)
         # spikes
         ax[0].plot(times, senders, '.', c=color, label=pop)
-        ax[0].set_ylabel('Neuron ID', fontsize=fontsize_label)
-        ax[0].legend(fontsize=fontsize_legend)
         # ATP
         for n, sender in enumerate(atp_per_sender):
             if n == 0:
@@ -168,9 +170,31 @@ def create_spikes_figs(spikes_events: dict, multimeter_events: dict,
                            alpha=kargs['alpha'])
         atp_total = [sum(t_atp) for t_atp in zip(*list(atp_per_sender.values()))]
         ax[1].plot(mult_time, [atp_t/len(atp_per_sender) for atp_t in atp_total],
-                   c=color, label=pop + '_mean', lw=3)
-        ax[1].set_ylabel('ATP (%)', fontsize=fontsize_label)
-        ax[1].legend(fontsize=fontsize_legend)
+                   c=color, label=pop + '_mean', lw=kargs['mean_lw'])
+        # phase coherence
+        phase_coherence = tools.phase_coherence(spikes_events=spikes_events,
+                                                final_t=final_t)
+        ax[2].plot(phase_coherence[pop]['times'],
+                phase_coherence[pop]['o_param'],
+                   c=color, label=pop, lw=kargs['mean_lw'],
+                   alpha=alpha)
+
+    ## phase coherence for all
+    n_neurons_ex = int(kargs['n_neurons'] * kargs['ex_in_ratio'])
+    n_neurons_in = kargs['n_neurons'] - n_neurons_ex
+    all_phase_coherence = (phase_coherence['ex']['o_param'] * n_neurons_ex  +
+                           phase_coherence['in']['o_param'] * n_neurons_in) / \
+                           (n_neurons_in + n_neurons_ex)
+    #ax[2].plot(phase_coherence['ex']['times'],
+    #           all_phase_coherence,
+    #           c='k', label='all', lw=kargs['mean_lw'], alpha=alpha)
+
+    ax[0].set_ylabel('Neuron ID', fontsize=fontsize_label)
+    ax[0].legend(fontsize=fontsize_legend)
+    ax[1].set_ylabel('ATP (%)', fontsize=fontsize_label)
+    ax[1].legend(fontsize=fontsize_legend)
+    ax[2].set_ylabel('R', fontsize=fontsize_label)
+    ax[2].legend(fontsize=fontsize_legend)
     # save image
     save_spikes_j_fig =f'{output_path}/{fig_name}_joint'
     plt.savefig(save_spikes_j_fig, dpi=500)

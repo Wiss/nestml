@@ -8,7 +8,7 @@ general:
       # define which variable do you want to record
       - ATP
   record_rate: 10 # record every x ms. Only for recorded variables
-  simtime: 2000 # ms
+  simtime: 1500 # ms
   seed: 1
   module: "edlif_psc_alpha_0_module" 
 neurons:
