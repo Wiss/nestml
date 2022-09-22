@@ -225,32 +225,45 @@ def fix_syn_spec(syn_spec: dict, label: str):
                         syn_spec_fixed[key] *= -1
 
                 elif syn_spec[key]['dist'] == 'uniform':
-                    syn_spec_fixed[key] = nest.random.uniform(
+                    if 'edlif' in syn_spec['synapse_model'].split('_'):
+                        syn_spec_fixed['d'] = nest.random.uniform(
                                                     min=syn_spec[key]["min"],
                                                     max=syn_spec[key]["max"])
-            if (key == 'delay' and 'edlif' in
-                syn_spec['synapse_model'].split('_')):
+                       # syn_spec_fixed['d'] = nest.random.uniform(
+                       #                             min=syn_spec[key]["min"],
+                       #                             max=syn_spec[key]["max"])
+                        syn_spec_fixed[key] = nest.random.uniform(
+                                                    min=syn_spec[key]["min"],
+                                                    max=syn_spec[key]["max"])
+                    else:
+                        syn_spec_fixed[key] = nest.random.uniform(
+                                                    min=syn_spec[key]["min"],
+                                                    max=syn_spec[key]["max"])
+            #if (key == 'delay' and 'edlif' in
+            #    syn_spec['synapse_model'].split('_')):
                 # It's neccesary to do this, because ed_stpd cannot
                 # have a variable called delay
-                syn_spec_fixed['d'] = v
+            #    print(syn_spec_fixed[key])
+            #    syn_spec_fixed['d'] = syn_spec_fixed[key]
     return syn_spec_fixed
 
-def include_params(syn_spec: dict, params: dict):
-    """
-    include syn_spec['params'] (from config file) into syn_spec
-
-    Parameters
-    ----------
-    syn_spec:
-        synapses specifications dict
-    params:
-        extra params from config file
-    """
-    for k, v in params.items():
-        if v is not None:
-            logger.debug("including param %s = %f in syn_spec dict", k, v)
-            syn_spec[k] = v
-    return syn_spec
+# DEPRECATED
+#def include_params(syn_spec: dict, params: dict):
+#    """
+#    include syn_spec['params'] (from config file) into syn_spec
+#
+#    Parameters
+#    ----------
+#    syn_spec:
+#        synapses specifications dict
+#    params:
+#        extra params from config file
+#    """
+#    for k, v in params.items():
+#        if v is not None:
+#            logger.debug("including param %s = %f in syn_spec dict", k, v)
+#            syn_spec[k] = v
+#    return syn_spec
 
 def get_connections(pop_pre: nest.NodeCollection, pop_post: nest.NodeCollection,
                   synapse_model: str) -> dict:
@@ -418,16 +431,34 @@ def connect_pops(pop_pre: nest.NodeCollection, pop_post: nest.NodeCollection,
         syn_spec_fixed = fix_syn_spec(syn_spec, label)
         # include syn_spec["params"] from config file if we have plasticity
         if syn_spec['synapse_model'] != 'static_synapse':
-            # FIX
-            include_params(syn_spec_fixed, syn_spec['params'])
-        nest.Connect(pop_pre,
-                     pop_post,
-                     conn_spec=conn_spec,
-                     syn_spec=syn_spec_fixed)
+            nest.CopyModel(syn_spec['synapse_model'],
+                        f"{label}_copy")
+            nest.Connect(pop_pre, pop_post,
+                        conn_spec=conn_spec,
+                        syn_spec={'synapse_model': f'{label}_copy'})
+            logger.info("new weight copy for %s label created", label)
+            # get syn object
+            syn = get_connections(pop_pre=pop_pre,
+                                pop_post=pop_post,
+                                synapse_model=f'{label}_copy')
+            # update synapses with param from config file
+            # this is necessary when working with syn objects
+            update_syn_w_wr(syn=syn,
+                            syn_spec=syn_spec,
+                            label=label)
+            logger.info("parameters for weight copy %s_copy updated", label)
+            conn = get_connections(pop_pre=pop_pre,
+                                pop_post=pop_post,
+                                synapse_model=f'{label}_copy')
+        else:
+            nest.Connect(pop_pre,
+                        pop_post,
+                        conn_spec=conn_spec,
+                        syn_spec=syn_spec_fixed)
 
-        conn = get_connections(pop_pre=pop_pre,
-                               pop_post=pop_post,
-                               synapse_model=syn_spec['synapse_model'])
+            conn = get_connections(pop_pre=pop_pre,
+                                pop_post=pop_post,
+                                synapse_model=syn_spec['synapse_model'])
         logger.debug("connections for %s generated", label)
         logger.debug(conn)
     return conn, weight_rec_list[-1]
