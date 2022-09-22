@@ -225,45 +225,15 @@ def fix_syn_spec(syn_spec: dict, label: str):
                         syn_spec_fixed[key] *= -1
 
                 elif syn_spec[key]['dist'] == 'uniform':
+                    syn_spec_fixed[key] = nest.random.uniform(
+                                                min=syn_spec[key]["min"],
+                                                max=syn_spec[key]["max"])
                     if 'edlif' in syn_spec['synapse_model'].split('_'):
                         syn_spec_fixed['d'] = nest.random.uniform(
                                                     min=syn_spec[key]["min"],
                                                     max=syn_spec[key]["max"])
-                       # syn_spec_fixed['d'] = nest.random.uniform(
-                       #                             min=syn_spec[key]["min"],
-                       #                             max=syn_spec[key]["max"])
-                        syn_spec_fixed[key] = nest.random.uniform(
-                                                    min=syn_spec[key]["min"],
-                                                    max=syn_spec[key]["max"])
-                    else:
-                        syn_spec_fixed[key] = nest.random.uniform(
-                                                    min=syn_spec[key]["min"],
-                                                    max=syn_spec[key]["max"])
-            #if (key == 'delay' and 'edlif' in
-            #    syn_spec['synapse_model'].split('_')):
-                # It's neccesary to do this, because ed_stpd cannot
-                # have a variable called delay
-            #    print(syn_spec_fixed[key])
-            #    syn_spec_fixed['d'] = syn_spec_fixed[key]
     return syn_spec_fixed
 
-# DEPRECATED
-#def include_params(syn_spec: dict, params: dict):
-#    """
-#    include syn_spec['params'] (from config file) into syn_spec
-#
-#    Parameters
-#    ----------
-#    syn_spec:
-#        synapses specifications dict
-#    params:
-#        extra params from config file
-#    """
-#    for k, v in params.items():
-#        if v is not None:
-#            logger.debug("including param %s = %f in syn_spec dict", k, v)
-#            syn_spec[k] = v
-#    return syn_spec
 
 def get_connections(pop_pre: nest.NodeCollection, pop_post: nest.NodeCollection,
                   synapse_model: str) -> dict:
