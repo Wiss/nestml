@@ -14,9 +14,6 @@ linewidth = 2
 pointsize = 20
 fig_size = (12, 12)
 
-#from pynestml.frontend.pynestml_frontend import generate_nest_target
-#NEST_SIMULATOR_INSTALL_LOCATION = nest.ll_api.sli_func("statusdict/prefix ::")
-
 
 def create_weights_figs(weights_events: dict, fig_name: str, output_path: str,
                       **kargs):
@@ -29,10 +26,10 @@ def create_weights_figs(weights_events: dict, fig_name: str, output_path: str,
         if val is not None:
             w = {}
             valid_pair = []
-            for source, target, time, weight in zip(weights_events['ex_ex']['senders'],
-                                                    weights_events['ex_ex']['targets'],
-                                                    weights_events['ex_ex']['times'],
-                                                    weights_events['ex_ex']['weights']):
+            for source, target, time, weight in zip(weights_events[key]['senders'],
+                                                    weights_events[key]['targets'],
+                                                    weights_events[key]['times'],
+                                                    weights_events[key]['weights']):
 
                 valid_pair.append([source, target])
                 if kargs['verbose']:
@@ -106,38 +103,88 @@ def create_spikes_figs(spikes_events: dict, multimeter_events: dict,
     """
     kargs.setdefault('mult_var', None)
     kargs.setdefault('plot_i_phase', False)
+    kargs.setdefault('time_window', 30)
     kargs.setdefault('alpha', 0.3)
     kargs.setdefault('mean_lw', 3)
     kargs.setdefault('plot_pop_p_coherence_with_all', False)
+    kargs.setdefault('plot_each_n_atp', False)
     final_t = kargs['simtime']
+    atp_stck = {}
+    atp_stack = {}
+    atp_mean = {}
+    atp_std = {}
     mult_time = np.arange(start=kargs['multimeter_record_rate'], stop=final_t,
                           step=kargs['multimeter_record_rate'])
+    firing_rate = tools.pop_firing_rate(spikes_events=spikes_events,
+                                        time_window=kargs['time_window'],
+                                        final_t=final_t)
     i_phase, phase_coherence = tools.phase_coherence(
                                             spikes_events=spikes_events,
                                             final_t=final_t)
-    fig, ax = plt.subplots(2*len(spikes_events), figsize=fig_size, sharex=True)
-    ax[-1].set_xlabel('time (ms)', fontsize=fontsize_label)
-    n = 0
     for pop in spikes_events:
+        fig, ax = plt.subplots(3, figsize=fig_size, sharex=True)
+        ax[-1].set_xlabel('time (ms)', fontsize=fontsize_label)
         if pop == 'ex':
-            color = 'r'
+            color = 'darkred'
             p = 'excitatory'
         elif pop == 'in':
-            color = 'b'
+            color = 'steelblue'
             p = 'inhibitory'
         senders = spikes_events[pop]['senders']
         times = spikes_events[pop]['times']
-        ax[n].plot(times, senders, '.', c=color)
-        ax[n].set_title('Spikes from ' + p + ' population',
+        ax[0].set_title('Spikes from ' + p + ' population',
                         fontsize=fontsize_title)
-        ax[n].set_ylabel('Neuron ID', fontsize=fontsize_label)
-
+        ax[1].set_title('Available energy and firing rate from ' + p + \
+                        ' population', fontsize=fontsize_title)
+        ax[2].set_title('Synchronization: Phase coherence from ' + p + \
+                        ' population',
+                        fontsize=fontsize_title)
+        ax[0].set_ylabel('Neuron ID', fontsize=fontsize_label)
+        ax[1].set_ylabel('ATP (%)', fontsize=fontsize_label,
+                         color='darkgreen')
+        ax[2].set_ylabel('R', fontsize=fontsize_label)
+        # spikes
+        ax[0].plot(times, senders, '.', c=color)
+        # ATP and firing rate
+        atp_per_sender = {}
+        for sender, atp in zip(multimeter_events[pop]['senders'],
+                            multimeter_events[pop]['ATP']):
+            atp_per_sender.setdefault(str(sender), []).append(atp)
+        atp_stck[pop] = [np.array(atp_s) for atp_s in atp_per_sender.values()]
+        atp_stack[pop] = np.stack(atp_stck[pop])
+        atp_mean[pop] = np.mean(atp_stack[pop], axis=0)
+        atp_std[pop] = np.std(atp_stack[pop], axis=0)
+        ax[1].plot(mult_time,
+                   atp_mean[pop],
+                   c='darkgreen',
+                   lw=kargs['mean_lw'],
+                   label=pop + ' mean')
+        ax[1].fill_between(mult_time,
+                           atp_mean[pop] - atp_std[pop],
+                           atp_mean[pop] + atp_std[pop],
+                           edgecolor='darkgreen',
+                           color='darkgreen',
+                           label=pop + ' sd',
+                           alpha=kargs['alpha'])
+        ax[1].legend(fontsize=fontsize_legend)
+        # second axes for firing rate
+        ax_1_2 = ax[1].twinx()
+        ax_1_2.plot(firing_rate['times'],
+                    firing_rate[pop]['rates'],
+                    c='darkorange',
+                    lw=kargs['mean_lw'],
+                    label=pop + ' fr',
+                    alpha=0.5)
+        ax_1_2.set_ylabel('Firing rate (Hz)',
+                          fontsize=fontsize_legend,
+                          color='darkorange')
+        #ax_1_2.legend(fontsize=fontsize_legend)
         # phase coherence
-        ax[n+1].set_ylabel('Syncronization: Phase coherence',
-                           fontsize=fontsize_label)
-        ax[n+1].plot(phase_coherence[pop]['times'],
-                     phase_coherence[pop]['o_param'].reshape(-1),
-                     c=color, label=pop, lw=kargs['mean_lw'])
+        ax[2].set_ylabel('R',
+                         fontsize=fontsize_label)
+        ax[2].plot(phase_coherence[pop]['times'],
+                   phase_coherence[pop]['o_param'].reshape(-1),
+                   c='darkgrey', label=pop, lw=kargs['mean_lw'])
         if kargs['plot_i_phase']:
             for sender in i_phase[pop]:
                 if sender != 'times':
@@ -145,79 +192,103 @@ def create_spikes_figs(spikes_events: dict, multimeter_events: dict,
                             i_phase[pop][sender],
                             c=color, label=pop + 'inst_phase',
                             lw=kargs['mean_lw'], alpha=alpha)
-        n += 2
-    # save image
-    save_spikes_s_fig =f'{output_path}/{fig_name}_separate'
-    plt.savefig(save_spikes_s_fig, dpi=500)
+        # save image
+        save_spikes_s_fig =f'{output_path}/{fig_name}_{pop}_separate'
+        plt.savefig(save_spikes_s_fig, dpi=500)
 
 
     # all together
     fig, ax = plt.subplots(3, figsize=fig_size, sharex=True)
     ax[0].set_title('Spikes', fontsize=fontsize_title)
-    ax[1].set_title('Firing rate and energy', fontsize=fontsize_title)
+    ax[1].set_title('Available energy and firing rate',
+                    fontsize=fontsize_title)
     ax[2].set_title('Synchronization: Phase coherence',
                     fontsize=fontsize_title)
     ax[-1].set_xlabel('time (ms)', fontsize=fontsize_label)
     for pop, events in spikes_events.items():
         if pop == 'ex':
-            color = 'r'
+            color = 'darkred'
             p = 'excitatory'
         elif pop == 'in':
-            color = 'b'
+            color = 'steelblue'
             p = 'inhibitory'
         senders = spikes_events[pop]['senders']
         times = spikes_events[pop]['times']
-        atp_per_sender = {}
-        for sender, atp in zip(multimeter_events[pop]['senders'],
-                            multimeter_events[pop]['ATP']):
-            atp_per_sender.setdefault(str(sender), []).append(atp)
         # spikes
         ax[0].plot(times, senders, '.', c=color, label=pop)
         # ATP
-        for n, sender in enumerate(atp_per_sender):
-            if n == 0:
-                ax[1].plot(mult_time, atp_per_sender[sender], '.', c=color,
-                           label=pop, alpha=kargs['alpha'])
-                ax[1].plot(mult_time, atp_per_sender[sender], c=color,
-                           alpha=kargs['alpha'])
-            else:
-                ax[1].plot(mult_time, atp_per_sender[sender], '.', c=color,
-                           alpha=kargs['alpha'])
-                ax[1].plot(mult_time, atp_per_sender[sender], c=color,
-                           alpha=kargs['alpha'])
-        atp_total = [sum(t_atp) for t_atp in zip(*list(atp_per_sender.values()))]
-        ax[1].plot(mult_time, [atp_t/len(atp_per_sender) for atp_t in atp_total],
-                   '*-', c=color, label=pop + '_mean', lw=kargs['mean_lw'])
+        if kargs['plot_each_n_atp']:
+            for n, sender in enumerate(atp_per_sender):
+                if n == 0:
+                    ax[1].plot(mult_time, atp_per_sender[sender],
+                               '.', c=color, label=pop, alpha=kargs['alpha'])
+                    ax[1].plot(mult_time, atp_per_sender[sender], c=color,
+                            alpha=kargs['alpha'])
+                else:
+                    ax[1].plot(mult_time, atp_per_sender[sender],
+                               '.', c=color, alpha=kargs['alpha'])
+                    ax[1].plot(mult_time, atp_per_sender[sender], c=color,
+                            alpha=kargs['alpha'])
         # phase coherence
         if kargs['plot_pop_p_coherence_with_all']:
             ax[2].plot(phase_coherence[pop]['times'],
                     phase_coherence[pop]['o_param'].reshape(-1),
-                    c=color, label=pop, lw=kargs['mean_lw'],
+                    c='darkgrey', label=pop, lw=kargs['mean_lw'],
                     alpha=alpha)
         if kargs['plot_i_phase']:
             for sender in i_phase[pop]:
                 if sender != 'times':
                     ax[2].plot(i_phase[pop]['times'],
-                            i_phase[pop][sender],
-                            c=color, label=pop + 'inst_phase',
-                            lw=kargs['mean_lw'], alpha=alpha)
+                               i_phase[pop][sender],
+                               c=color, label=pop + 'inst_phase',
+                               lw=kargs['mean_lw'], alpha=alpha)
 
     ## phase coherence for all
-    n_neurons_ex = int(kargs['n_neurons'] * kargs['ex_in_ratio'])
-    n_neurons_in = kargs['n_neurons'] - n_neurons_ex
-    all_phase_coherence = (phase_coherence['ex']['o_param'] * n_neurons_ex  +
-                           phase_coherence['in']['o_param'] * n_neurons_in) / \
-                           (n_neurons_in + n_neurons_ex)
-    ax[2].plot(phase_coherence['ex']['times'],
-               all_phase_coherence.reshape(-1),
-               c='k', lw=kargs['mean_lw'], alpha=alpha)
+    #n_neurons_ex = int(kargs['n_neurons'] * kargs['ex_in_ratio'])
+    #n_neurons_in = kargs['n_neurons'] - n_neurons_ex
+    #all_phase_coherence = (phase_coherence['ex']['o_param'] * n_neurons_ex  +
+    #                       phase_coherence['in']['o_param'] * n_neurons_in) / \
+    #                       (n_neurons_in + n_neurons_ex)
+    # ATP
+    atp_stack['all'] = np.stack(atp_stck['ex'] + atp_stck['in'])
+    atp_mean['all'] = np.mean(atp_stack['all'], axis=0)
+    atp_std['all'] = np.std(atp_stack['all'], axis=0)
+    ax[1].plot(mult_time,
+                atp_mean['all'],
+                c='darkgreen',
+                lw=kargs['mean_lw'],
+                label='mean')
+    ax[1].fill_between(mult_time,
+                        atp_mean['all'] - atp_std['all'],
+                        atp_mean['all'] + atp_std['all'],
+                        edgecolor='darkgreen',
+                        color='darkgreen',
+                        label='sd',
+                        alpha=kargs['alpha'])
+    # second axes for firing rate
+    ax_1_2 = ax[1].twinx()
+    ax_1_2.plot(firing_rate['times'],
+                firing_rate['all']['rates'],
+                c='darkorange',
+                lw=kargs['mean_lw'],
+                label='fr',
+                alpha=0.5)
+    ax_1_2.set_ylabel('Firing rate (Hz)',
+                      fontsize=fontsize_legend,
+                      color='darkorange')
+    #ax_1_2.legend(fontsize=fontsize_legend)
+    # phase coherence
+    ax[2].plot(phase_coherence['all']['times'],
+               phase_coherence['all']['o_param'].reshape(-1),
+               c='darkgrey', lw=kargs['mean_lw'])  # , alpha=alpha)
 
     ax[0].set_ylabel('Neuron ID', fontsize=fontsize_label)
     ax[0].legend(fontsize=fontsize_legend)
-    ax[1].set_ylabel('ATP (%)', fontsize=fontsize_label)
+    ax[1].set_ylabel('ATP (%)', fontsize=fontsize_label,
+                     color='darkgreen')
     ax[1].legend(fontsize=fontsize_legend)
     ax[2].set_ylabel('R', fontsize=fontsize_label)
-    ax[2].legend(fontsize=fontsize_legend)
+    #ax[2].legend(fontsize=fontsize_legend)
     # save image
     save_spikes_j_fig =f'{output_path}/{fig_name}_joint'
     plt.savefig(save_spikes_j_fig, dpi=500)
@@ -228,9 +299,9 @@ def create_pops_figs(pop: dict, fig_name: str, output_path: str, **kargs):
     ax.set_title('Neurons positions')
     for key in pop.keys():
         if key == 'ex':
-            color = 'r'
+            color = 'darkred'
         elif key == 'in':
-            color = 'b'
+            color = 'steelblue'
         pos = pop[key].spatial['positions']
         for n, p in enumerate(pos):
             if n == 0:
