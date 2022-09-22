@@ -348,10 +348,8 @@ def weights_before_after_hist(weights_init: dict, weights_fin: dict,
         for axes in ax:
             axes.set_ylabel('Frequency', fontsize=fontsize_label)
             axes.set_xlabel('Weight', fontsize=fontsize_label)
-        if 'rec' in w_v.get("synapse_model")[0].split('_'):
-            # the condition above is note the proper one, because we really
-            # want to check if the synapse model is an energy_dependent (ed)
-            # one or not
+        if any(item in w_v.get('synapse_model')[0].split('_') \
+               for item in ['edlif', 'rec', 'copy']):
             w_key = 'w'
         else:
             w_key = 'weight'

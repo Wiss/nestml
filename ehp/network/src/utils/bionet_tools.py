@@ -498,10 +498,8 @@ def simulate(simtime: float, record: dict, record_rate: int, pop_dict: dict,
     # get initial weights
     for con_k, con_v in conn_dict.items():
         logger.info("getting intial information from %s connection", con_k)
-        if 'rec' in con_v.get('synapse_model')[0].split('_'):
-            # the condition above is note the proper one, because we really
-            # want to check if the synapse model is an energy_dependent (ed)
-            # one or not
+        if any(item in con_v.get('synapse_model')[0].split('_') \
+               for item in ['edlif', 'rec', 'copy']):
             weights_init[con_k] = get_connections_info(con_v,
                                                        weight='w')
         else:
@@ -513,7 +511,8 @@ def simulate(simtime: float, record: dict, record_rate: int, pop_dict: dict,
     # get final weights
     for con_k, con_v in conn_dict.items():
         logger.info("getting final information from %s connection", con_k)
-        if 'rec' in con_v.get('synapse_model')[0].split('_'):
+        if any(item in con_v.get('synapse_model')[0].split('_') \
+               for item in ['edlif', 'rec', 'copy']):
             weights_fin[con_k] = get_connections_info(con_v,
                                                       weight='w')
         else:
