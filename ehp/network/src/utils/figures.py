@@ -176,7 +176,7 @@ def create_spikes_figs(spikes_events: dict, multimeter_events: dict,
                     label=pop + ' fr',
                     alpha=0.5)
         ax_1_2.set_ylabel('Firing rate (Hz)',
-                          fontsize=fontsize_legend,
+                          fontsize=fontsize_label,
                           color='darkorange')
         #ax_1_2.legend(fontsize=fontsize_legend)
         # phase coherence
