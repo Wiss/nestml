@@ -322,3 +322,49 @@ def create_multimeter_figs(multimeter_events: dict, fig_name: str,
 
 def create_graph_figs():
     pass
+
+
+def weights_before_after_hist(weights_init: dict, weights_fin: dict,
+                            output_path: str, **kargs):
+    """
+    for each key in weights_init and weight_fin plot weight values histogram
+
+    Parameters
+    ----------
+    weights_init:
+        initial weights before simulation
+    weight_fin
+        final weights after simulation
+    """
+    kargs.setdefault('facecolor', 'steelblue')
+    kargs.setdefault('n_bins', 20)
+    kargs.setdefault('rwidth', 0.9)
+    for w_k, w_v in weights_init.items():
+        fig, ax = plt.subplots(2, figsize=fig_size, sharex=True,
+                               sharey=True)
+        fig.suptitle(f'Histogram: {w_k} connections with ' \
+                     f'{w_v.get("synapse_model")[0]} synapse type',
+                     fontsize=fontsize_title)
+        for axes in ax:
+            axes.set_ylabel('Frequency', fontsize=fontsize_label)
+            axes.set_xlabel('Weight', fontsize=fontsize_label)
+        if 'rec' in w_v.get("synapse_model")[0].split('_'):
+            # the condition above is note the proper one, because we really
+            # want to check if the synapse model is an energy_dependent (ed)
+            # one or not
+            w_key = 'w'
+        else:
+            w_key = 'weight'
+        ax[0].set_title('Before',
+                        fontsize=fontsize_title)
+        ax[1].set_title('After',
+                        fontsize=fontsize_title)
+        ax[0].hist(weights_init[w_k][w_key], bins=kargs['n_bins'],
+                   facecolor=kargs['facecolor'],
+                   rwidth=kargs['rwidth'])
+        ax[1].hist(weights_fin[w_k][w_key], bins=kargs['n_bins'],
+                   facecolor=kargs['facecolor'],
+                   rwidth=kargs['rwidth'])
+        # save image
+        save_weights_fig =f'{output_path}/{w_k}_before_after_hist'
+        plt.savefig(save_weights_fig, dpi=500)

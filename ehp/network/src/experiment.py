@@ -14,7 +14,8 @@ from src.utils.figures import (create_weights_figs,
                                create_spikes_figs,
                                create_graph_figs,
                                create_pops_figs,
-                               create_multimeter_figs)
+                               create_multimeter_figs,
+                               weights_before_after_hist)
 from src.utils.manage_files import (create_folder,
                                     load_config,
                                     save_config,
@@ -73,11 +74,13 @@ if __name__ == '__main__':
 
     # run network
     logger.info("running network")
-    spikes, multimeter, weights = network.run_network(
+    spikes, multimeter, weights, weights_init, weights_fin = \
+                                            network.run_network(
                                             simtime=general['simtime'],
                                             record=general['record'],
                                             record_rate=general['record_rate'],
                                             pop_dict=pop_dict,
+                                            conn_dict=conn_dict,
                                             weight_rec_dict=weight_rec_dict)
 
     logger.info("simulation finished successfully")
@@ -116,7 +119,18 @@ if __name__ == '__main__':
             save_data(PATH_TO_DATA, rec_k, data)
             logger.info("recordable %s saved", rec_k)
 
-    # TODO inclide recording condigiont
+    # record inital weights
+    save_data(PATH_TO_DATA, 'weights_init', weights_init)
+    logger.info("recordable weights_init saved")
+    # record final weights
+    save_data(PATH_TO_DATA, 'weights_fin', weights_fin)
+    logger.info("recordable weights_fin saved")
+
+    weights_before_after_hist(weights_init=weights_init,
+                              weights_fin=weights_fin,
+                              output_path=PATH_TO_FIGS)
+
+    # TODO include recording condition
     create_spikes_figs(spikes_events=spikes_events,
                     multimeter_events=multimeter_events,
                     fig_name='spikes',

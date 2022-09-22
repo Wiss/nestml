@@ -118,7 +118,8 @@ def init_network(module: str, seed: int, neurons: dict, connections: dict,
     return pop, conn, weight_rec, external_srcs, subregion_mults
 
 def run_network(simtime: float, record: dict, record_rate: float, pop_dict: dict,
-              weight_rec_dict: dict):
+              conn_dict: dict, weight_rec_dict: dict) -> (dict, dict,
+                                                          dict, dict, dict):
     """
     run network
 
@@ -140,9 +141,11 @@ def run_network(simtime: float, record: dict, record_rate: float, pop_dict: dict
     sim_results: dict
 
     """
-    sr, mult, weights = simulate(simtime=simtime,
-                                 record=record,
-                                 record_rate=record_rate,
-                                 pop_dict=pop_dict,
-                                 weight_rec_dict=weight_rec_dict)
-    return sr, mult, weights
+    sr, mult, weights_rec, weights_init, weights_fin = simulate(
+                                            simtime=simtime,
+                                            record=record,
+                                            record_rate=record_rate,
+                                            pop_dict=pop_dict,
+                                            conn_dict=conn_dict,
+                                            weight_rec_dict=weight_rec_dict)
+    return sr, mult, weights_rec, weights_init, weights_fin

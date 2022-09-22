@@ -253,7 +253,7 @@ def include_params(syn_spec: dict, params: dict):
     return syn_spec
 
 def get_connections(pop_pre: nest.NodeCollection, pop_post: nest.NodeCollection,
-                  synapse_model: str):
+                  synapse_model: str) -> dict:
     """
     read all weights values from pop_pre to pop_post
 
@@ -268,15 +268,44 @@ def get_connections(pop_pre: nest.NodeCollection, pop_post: nest.NodeCollection,
         postsynaptic (sub)population
     synapse_model:
         synapse model name
+
+    Returns
+    -------
+    syn_coll:
+        synaptic collection
     """
-    #if "edlif" in synapse_model.split('_'):
-    #    param_list = ['source', 'target', 'synapse model', 'w', 'delay']
-    #else:
-    #    param_list = ['source', 'target', 'synapse model', 'weight', 'delay']
     syn_coll = nest.GetConnections(source=pop_pre,
-                                   target=pop_post,
-                                   synapse_model=synapse_model)
+                                    target=pop_post,
+                                    synapse_model=synapse_model)
     return syn_coll
+
+def get_connections_info(syn_coll: nest.NodeCollection, **get_keys) -> dict:
+    """
+    returns all synaptic collection relevant information
+
+    Parameters
+    ----------
+
+    syn_coll:
+        synaptic collection
+    get_keys:
+        (optional)
+        which keys to get from connection
+
+    Returns
+    -------
+    syn_coll_output:
+        specific data from synaptic collection
+    """
+    get_keys.setdefault('weight', 'weight')
+    syn_coll_outputs = syn_coll.get(('source',
+                                     'target',
+                                     'synapse_model',
+                                     get_keys['weight'],
+                                     'delay'))
+    logger.info('getting information from %s synapse model',
+                syn_coll_outputs['synapse_model'][0])
+    return syn_coll_outputs
 
 def update_syn_w_wr(syn: nest.NodeCollection, syn_spec: dict, label: str):
     """
@@ -304,7 +333,7 @@ def update_syn_w_wr(syn: nest.NodeCollection, syn_spec: dict, label: str):
                             v *= -1
                     elif syn_spec[k]['dist'] == 'uniform':
                         v = np.random.uniform(low=syn_spec[k]['min'],
-                                            high=syn_spec[k]['max'])
+                                              high=syn_spec[k]['max'])
                     else:
                         raise KeyError(f'"{k}" key not supported yet')
                     # update synapses
@@ -400,11 +429,11 @@ def connect_pops(pop_pre: nest.NodeCollection, pop_post: nest.NodeCollection,
                                pop_post=pop_post,
                                synapse_model=syn_spec['synapse_model'])
         logger.debug("connections for %s generated", label)
-    logger.debug(conn)
+        logger.debug(conn)
     return conn, weight_rec_list[-1]
 
 def simulate(simtime: float, record: dict, record_rate: int, pop_dict: dict,
-           weight_rec_dict: dict):
+           conn_dict: dict, weight_rec_dict: dict):
     """
     simulate the network
 
@@ -418,8 +447,23 @@ def simulate(simtime: float, record: dict, record_rate: int, pop_dict: dict,
         recording rate
     pop_dict:
         dictionary with populations
+    conn_dict:
+        connection dictionary
     weight_rec_dict:
         dictionary with weight recorders
+
+    Returns
+    -------
+    sr:
+        spike recorder information
+    mult:
+        multimeter recorded information
+    weights_rec:
+        weights recorded information
+    weights_init:
+        initial weights information
+    weights_fin:
+        final weights information
     """
     # record spikes
     sr = {}
@@ -448,8 +492,30 @@ def simulate(simtime: float, record: dict, record_rate: int, pop_dict: dict,
             else:
                 mult[pop_k] = None
 
-    weights = weight_rec_dict
+    weights_rec = weight_rec_dict
+    weights_init = {}  # initial weights values
+    weights_fin = {}  # final weight values
+    # get initial weights
+    for con_k, con_v in conn_dict.items():
+        logger.info("getting intial information from %s connection", con_k)
+        if 'rec' in con_v.get('synapse_model')[0].split('_'):
+            # the condition above is note the proper one, because we really
+            # want to check if the synapse model is an energy_dependent (ed)
+            # one or not
+            weights_init[con_k] = get_connections_info(con_v,
+                                                       weight='w')
+        else:
+            weights_init[con_k] = get_connections_info(con_v)
 
     logger.info("running simulation")
     nest.Simulate(simtime)
-    return sr, mult, weights
+
+    # get final weights
+    for con_k, con_v in conn_dict.items():
+        logger.info("getting final information from %s connection", con_k)
+        if 'rec' in con_v.get('synapse_model')[0].split('_'):
+            weights_fin[con_k] = get_connections_info(con_v,
+                                                      weight='w')
+        else:
+            weights_fin[con_k] = get_connections_info(con_v)
+    return sr, mult, weights_rec, weights_init, weights_fin
