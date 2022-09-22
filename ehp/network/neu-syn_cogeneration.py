@@ -133,7 +133,7 @@ def ed_stdp_model_as_str():
 
     onReceive(pre_spikes):
         # depress synapse
-        # no energy-dependence fro drepress synapses yet
+        # no energy-dependence for drepress synapses yet
         energy_factor_ real = 1 # post_ATP/100
         w_ real = Wmax * (w / Wmax - (energy_factor_ * alpha * lambda * (w / Wmax) ** mu_minus * post_trace))
         w = max(Wmin, w_)
