@@ -229,9 +229,7 @@ def fix_syn_spec(syn_spec: dict, label: str):
                                                 min=syn_spec[key]["min"],
                                                 max=syn_spec[key]["max"])
                     if 'edlif' in syn_spec['synapse_model'].split('_'):
-                        syn_spec_fixed['d'] = nest.random.uniform(
-                                                    min=syn_spec[key]["min"],
-                                                    max=syn_spec[key]["max"])
+                        syn_spec_fixed['d'] = syn_spec_fixed[key]
     return syn_spec_fixed
 
 
