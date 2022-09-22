@@ -15,6 +15,7 @@ from src.utils.figures import (create_weights_figs,
                                create_graph_figs,
                                create_pops_figs,
                                create_multimeter_figs,
+                               delays_hist,
                                weights_before_after_hist)
 from src.utils.manage_files import (create_folder,
                                     load_config,
@@ -129,6 +130,9 @@ if __name__ == '__main__':
     weights_before_after_hist(weights_init=weights_init,
                               weights_fin=weights_fin,
                               output_path=PATH_TO_FIGS)
+
+    delays_hist(weights_init=weights_init,
+                output_path=PATH_TO_FIGS)
 
     # TODO include recording condition
     create_spikes_figs(spikes_events=spikes_events,

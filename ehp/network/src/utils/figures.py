@@ -368,3 +368,38 @@ def weights_before_after_hist(weights_init: dict, weights_fin: dict,
         # save image
         save_weights_fig =f'{output_path}/{w_k}_before_after_hist'
         plt.savefig(save_weights_fig, dpi=500)
+
+
+def delays_hist(weights_init, output_path: str, **kargs):
+    """
+    for each key in weights_init and weight_fin plot weight values histogram
+
+    Parameters
+    ----------
+    weights_init:
+        initial weights before simulation
+    """
+    kargs.setdefault('facecolor', 'steelblue')
+    kargs.setdefault('n_bins', 20)
+    kargs.setdefault('rwidth', 0.9)
+    for w_k, w_v in weights_init.items():
+        fig, ax = plt.subplots(1, figsize=fig_size, sharex=True,
+                               sharey=True)
+        fig.suptitle(f'Histogram: {w_k} connections with ' \
+                     f'{w_v.get("synapse_model")[0]} synapse type',
+                     fontsize=fontsize_title)
+        ax.set_ylabel('Frequency', fontsize=fontsize_label)
+        ax.set_xlabel('Delays', fontsize=fontsize_label)
+        if any(item in w_v.get('synapse_model')[0].split('_') \
+               for item in ['edlif', 'rec', 'copy']):
+            w_key = 'delay'
+        else:
+            w_key = 'delay'
+        ax.set_title('Distribution of delays',
+                        fontsize=fontsize_title)
+        ax.hist(weights_init[w_k][w_key], bins=kargs['n_bins'],
+                   facecolor=kargs['facecolor'],
+                   rwidth=kargs['rwidth'])
+        # save image
+        save_weights_fig =f'{output_path}/{w_k}_delays_hist'
+        plt.savefig(save_weights_fig, dpi=500)
