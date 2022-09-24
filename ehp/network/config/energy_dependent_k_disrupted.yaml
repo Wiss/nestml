@@ -178,10 +178,10 @@ connections:
         dist: "uniform" # exponential, normal or uniform
         min: 0.1
         max: 2.5
-      alpha:
-        dist: "uniform"
-        min: 0.5
-        max: 3.1
+      alpha: # asymmetry parameter (scales depressing increments as alpha*lambda)
+        dist: None
+        min:
+        max:
       record: True
   # excitatory -> inhibitory
   ex_in:

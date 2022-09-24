@@ -3,14 +3,16 @@ notes: "Energy dependent"
 general:
   record:
     spikes: True
-    weights: True
+    weights: False
     multimeter:
       # define which variable do you want to record
       - ATP
   record_rate: 10 # record every x ms. Only for recorded variables
-  simtime: 1500 # ms
+  simtime: 500 # ms
+  resolution: 0.1
   seed: 1
-  module: "edlif_psc_alpha_0_module" 
+  module: "edlif_psc_alpha_0_module"  # nest module to be loaded
+  adj_threshold: 0  # threshold for calculating adjacency matrix from weights
 neurons:
   ex:
     model: "edlif_psc_alpha_percent0_nestml__with_ed_stdp0_nestml"  # "edlif_psc_alpha_percent"
@@ -162,12 +164,15 @@ connections:
       p: 0.8  # 1 == all-to-all
     # synaptic parameters
     syn_spec:
-      synapse_model: "ed_stdp0_nestml__with_edlif_psc_alpha_percent0_nestml"  
+      synapse_model: "ed_stdp0_nestml__with_edlif_psc_alpha_percent0_nestml"
       params:
-        mu_minus: 0
-        mu_plus: 0
-        lambda: 0.01
-        alpha: 0.5
+        # this params will be the same for all synapses
+        mu_minus: 0 # weight dependence exponent, potentiation (real)
+        mu_plus: 0 # weight dependence exponent, depression (real)
+        lambda: 0.01  # step size
+        Wmax:  # maximum allowed weight (real)
+      # for using default values for synapses instead of distributins,
+      # just leave the dictionary value empty
       w:
       # for this model the weight variable is called "w"
         dist: "exponential" # exponential, normal or uniform
@@ -176,13 +181,14 @@ connections:
         max:
       delay:
         dist: "uniform" # exponential, normal or uniform
-        min: 0.1
-        max: 2.5
-      alpha:
+        min: 0.1  # ms
+        max: 2.5  # ms # max_axon_length / propagation_velocity (100 mm/ms)
+      alpha:  # asymmetry parameter
+      # (scales depressing increments as alpha*lambda) (real)
         dist: "uniform"
-        min: 0.5
-        max: 3.1
-      record: True
+        min: 0.3
+        max: 0.9
+      record: False
   # excitatory -> inhibitory
   ex_in:
     # connection parameters
@@ -206,38 +212,8 @@ connections:
         max:
       delay:
         dist: "uniform" # exponential, normal or uniform
-        min: 0.1
-        max: 2.5
-      alpha:
-        dist:
-        min:
-        max:
-      record: False
-  # inhibitory -> inhibitory
-  in_in:
-    # connection parameters
-    conn_spec:
-      allow_autapses: True # bool
-      allow_multapses: True # bool
-      rule: "pairwise_bernoulli"
-      p: 0.8  # 1 == all-to-all
-    # synaptic parameters
-    syn_spec:
-      synapse_model: "static_synapse"
-      params:
-        mu_minus:
-        mu_plus:
-        lambda:
-        alpha:
-      weight:
-        dist: "exponential" # exponential, normal or uniform
-        beta: 5  # beta param for exponential
-        min:
-        max:
-      delay:
-        dist: "uniform" # exponential, normal or uniform
-        min: 0.1
-        max: 2.5
+        min: 0.1  # ms
+        max: 2.5  # ms # max_axon_length / propagation_velocity (100 mm/ms)
       alpha:
         dist:
         min:
@@ -266,8 +242,8 @@ connections:
         max:
       delay:
         dist: "uniform" # exponential, normal or uniform
-        min: 0.1
-        max: 2.5
+        min: 0.1  # ms
+        max: 2.5  # ms # max_axon_length / propagation_velocity (100 mm/ms)
       alpha:
         dist:
         min:
@@ -277,9 +253,39 @@ connections:
     stdp_decay: # for ATP dependent weights
     weight_mask:
     homeostatic_plasticity: False
+  # inhibitory -> inhibitory
+  in_in:
+    # connection parameters
+    conn_spec:
+      allow_autapses: True # bool
+      allow_multapses: True # bool
+      rule: "pairwise_bernoulli"
+      p: 0.8  # 1 == all-to-all
+    # synaptic parameters
+    syn_spec:
+      synapse_model: "static_synapse"
+      params:
+        mu_minus:
+        mu_plus:
+        lambda:
+        alpha:
+      weight:
+        dist: "exponential" # exponential, normal or uniform
+        beta: 5  # beta param for exponential
+        min:
+        max:
+      delay:
+        dist: "uniform" # exponential, normal or uniform
+        min: 0.1  # ms
+        max: 2.5  # ms # max_axon_length / propagation_velocity (100 mm/ms)
+      alpha:
+        dist:
+        min:
+        max:
+      record: False
 network_layout:
   energy_dependent: True
-  n_neurons: 30
+  n_neurons: 100
   ex_in_ratio: 0.8  # n_exc = exc_inh_ratio*n_neurons
   positions:
     dist: "uniform"
