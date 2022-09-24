@@ -1,6 +1,9 @@
 #import os
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
+import matplotlib.gridspec as gridspec
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from mpl_toolkits.axes_grid1 import ImageGrid
 import numpy as np
 
 import src.utils.measurement_tools as tools
@@ -109,6 +112,7 @@ def create_spikes_figs(spikes_events: dict, multimeter_events: dict,
     kargs.setdefault('plot_pop_p_coherence_with_all', False)
     kargs.setdefault('plot_each_n_atp', False)
     final_t = kargs['simtime']
+    resolution = kargs['resolution']
     atp_stck = {}
     atp_stack = {}
     atp_mean = {}
@@ -245,12 +249,6 @@ def create_spikes_figs(spikes_events: dict, multimeter_events: dict,
                                c=color, label=pop + 'inst_phase',
                                lw=kargs['mean_lw'], alpha=alpha)
 
-    ## phase coherence for all
-    #n_neurons_ex = int(kargs['n_neurons'] * kargs['ex_in_ratio'])
-    #n_neurons_in = kargs['n_neurons'] - n_neurons_ex
-    #all_phase_coherence = (phase_coherence['ex']['o_param'] * n_neurons_ex  +
-    #                       phase_coherence['in']['o_param'] * n_neurons_in) / \
-    #                       (n_neurons_in + n_neurons_ex)
     # ATP
     atp_stack['all'] = np.stack(atp_stck['ex'] + atp_stck['in'])
     atp_mean['all'] = np.mean(atp_stack['all'], axis=0)
@@ -276,7 +274,7 @@ def create_spikes_figs(spikes_events: dict, multimeter_events: dict,
                 label='fr',
                 alpha=0.5)
     ax_1_2.set_ylabel('Firing rate (Hz)',
-                      fontsize=fontsize_legend,
+                      fontsize=fontsize_label,
                       color='darkorange')
     #ax_1_2.legend(fontsize=fontsize_legend)
     # phase coherence
@@ -322,8 +320,81 @@ def create_multimeter_figs(multimeter_events: dict, fig_name: str,
                          output_path: str, **kargs):
     pass
 
-def create_graph_figs():
-    pass
+def create_graph_measure_figs(measure: dict, output_path: str, **kargs):
+    """
+    create graph measurement figures
+
+
+    Parameters
+    ----------
+    measure:
+        measurement informations
+    """
+    kargs.setdefault('facecolor', 'steelblue')
+    kargs.setdefault('n_bins', 20)
+    kargs.setdefault('rwidth', 0.9)
+    measuremnt = kargs['fig_name'].split('_')[0]
+    if measuremnt == 'strength':
+        symbol = 'S'
+    elif measuremnt == 'degree':
+        symbol = 'K'
+
+    for m_k, w_v in measure.items():
+        fig, ax = plt.subplots(2, figsize=fig_size, sharex=True,
+                               sharey=True)
+        fig.suptitle(f'{kargs["title"]}', fontsize=fontsize_title)
+        for axes in ax:
+            axes.set_ylabel('Frequency', fontsize=fontsize_label)
+            axes.set_xlabel(f'{symbol}', fontsize=fontsize_label)
+        ax[0].set_title('In',
+                        fontsize=fontsize_title)
+        ax[1].set_title('Out',
+                        fontsize=fontsize_title)
+        ax[0].hist(measure['in'], bins=kargs['n_bins'],
+                   facecolor=kargs['facecolor'],
+                   rwidth=kargs['rwidth'])
+        ax[1].hist(measure['out'], bins=kargs['n_bins'],
+                   facecolor=kargs['facecolor'],
+                   rwidth=kargs['rwidth'])
+        # save image
+        save_measurement_fig =f'{output_path}/{kargs["fig_name"]}'
+        plt.savefig(save_measurement_fig, dpi=500)
+
+
+def create_matrices_figs(matrix: dict,
+                             output_path: str, **kargs):
+    """
+    plot matrices (weight, strengh and degree) for each connection
+    between populations
+    """
+    kargs.setdefault('pad', '5%')
+    kargs.setdefault('cmap', 'jet')  # jet
+    figsize = (10, 10)
+    fig = plt.figure(figsize=figsize)
+    fig.suptitle(kargs['title'], fontsize=fontsize_title)
+    gs = gridspec.GridSpec(4, 4)
+    ax1 = plt.subplot(gs[:-1, :-1])
+    ax2 = plt.subplot(gs[:-1, -1])
+    ax3 = plt.subplot(gs[-1, :-1])
+    ax4 = plt.subplot(gs[-1, -1])
+    ax_list = [ax1, ax2, ax3, ax4]
+    for n, key in enumerate(matrix):
+        ax = ax_list[n]
+        divider = make_axes_locatable(ax)
+        ax_cb = divider.append_axes('right', size="5%", pad=kargs['pad'])
+        fig = ax.get_figure()
+        fig.add_axes(ax_cb)
+        w = matrix[key]
+        im = ax.imshow(w)
+        im.set_cmap(kargs['cmap'])
+        plt.colorbar(im, cax=ax_cb)
+        ax.set_title(f'{key.split("_")[0]} -> {key.split("_")[1]}')
+        plt.tight_layout()
+        ax_cb.yaxis.set_tick_params(labelright=True)
+
+    # save image
+    save_weights_m_fig =f'{output_path}/{kargs["fig_name"]}'
+    plt.savefig(save_weights_m_fig, pad_inches=0, dpi=500)
 
 
 def weights_before_after_hist(weights_init: dict, weights_fin: dict,
@@ -355,9 +426,9 @@ def weights_before_after_hist(weights_init: dict, weights_fin: dict,
             w_key = 'w'
         else:
             w_key = 'weight'
-        ax[0].set_title('Before',
+        ax[0].set_title('Initial',
                         fontsize=fontsize_title)
-        ax[1].set_title('After',
+        ax[1].set_title('Final',
                         fontsize=fontsize_title)
         ax[0].hist(weights_init[w_k][w_key], bins=kargs['n_bins'],
                    facecolor=kargs['facecolor'],

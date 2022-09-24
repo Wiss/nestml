@@ -12,9 +12,10 @@ from src.logging.logging import logger
 import src.network as network
 from src.utils.figures import (create_weights_figs,
                                create_spikes_figs,
-                               create_graph_figs,
                                create_pops_figs,
                                create_multimeter_figs,
+                               create_matrices_figs,
+                               create_graph_measure_figs,
                                delays_hist,
                                weights_before_after_hist)
 from src.utils.manage_files import (create_folder,
@@ -22,6 +23,9 @@ from src.utils.manage_files import (create_folder,
                                     save_config,
                                     save_data,
                                     load_data)
+from src.utils.measurement_tools import (get_weight_matrix,
+                                         get_adjacency_matrix,
+                                         get_graph_measurement)
 
 from src.logging.logging import logger
 
@@ -121,20 +125,6 @@ if __name__ == '__main__':
             save_data(PATH_TO_DATA, rec_k, data)
             logger.info("recordable %s saved", rec_k)
 
-    # record inital weights
-    save_data(PATH_TO_DATA, 'weights_init', weights_init)
-    logger.info("recordable weights_init saved")
-    # record final weights
-    save_data(PATH_TO_DATA, 'weights_fin', weights_fin)
-    logger.info("recordable weights_fin saved")
-
-    weights_before_after_hist(weights_init=weights_init,
-                              weights_fin=weights_fin,
-                              output_path=PATH_TO_FIGS)
-
-    delays_hist(weights_init=weights_init,
-                output_path=PATH_TO_FIGS)
-
     # TODO include recording condition
     create_spikes_figs(spikes_events=spikes_events,
                     multimeter_events=multimeter_events,
@@ -144,8 +134,120 @@ if __name__ == '__main__':
                     alpha=0.2,
                     multimeter_record_rate=general['record_rate'],
                     simtime=general['simtime'],
+                    resolution=general['resolution'],
                     n_neurons=network_layout['n_neurons'],
                     ex_in_ratio=network_layout['ex_in_ratio'])
+
+    # record inital weights
+    save_data(PATH_TO_DATA, 'weights_init', weights_init)
+    logger.info("recordable weights_init saved")
+    # record final weights
+    save_data(PATH_TO_DATA, 'weights_fin', weights_fin)
+    logger.info("recordable weights_fin saved")
+
+    ## Matrices
+    # get and record init weight maxtrices
+    w_matrix_init = get_weight_matrix(pop=pop_dict,
+                                      weights=weights_init)
+    # get and record init weight maxtrices
+    w_matrix_fin = get_weight_matrix(pop=pop_dict,
+                                     weights=weights_fin)
+    # plot w_matrices
+    # for every 'matrix type' save it inm the <matrices> dict with
+    # <type>_matrix_<when>
+    # <type> could be: weight, adjacency
+    # <when> could be: init and fin
+    adj_threshold = general['adj_threshold']
+    adj_matrix_init = get_adjacency_matrix(
+                           weight_matrix=w_matrix_init,
+                           threshold=adj_threshold)
+    adj_matrix_fin = get_adjacency_matrix(
+                                 weight_matrix=w_matrix_fin,
+                                 threshold=adj_threshold)
+    matrices = {'weight_matrix_init': w_matrix_init,
+                'weight_matrix_fin': w_matrix_fin,
+                'adjacency_matrix_init': adj_matrix_init,
+                'adjacency_matrix_fin': adj_matrix_fin
+                }
+    for matrix_k, matrix_v in matrices.items():
+        # save
+        save_data(PATH_TO_DATA, matrix_k, matrix_v)
+        logger.info("recordable '%s' saved", matrix_k)
+        # plot
+        title = matrix_k.split('_')[0].capitalize() + ' '\
+            + matrix_k.split('_')[1]
+        logger.info('ploting %s figure', title)
+        create_matrices_figs(matrix=matrix_v,
+                                   output_path=PATH_TO_FIGS,
+                                   fig_name=matrix_k,
+                                   title=title)
+
+    # plot histrograms
+    # for every 'measurement type' save it in the <measurement> dict with
+    # <type>_measurement_<when>
+    # <type> could be: strengh, degree
+    # <when> could be: init and fin
+    strength_ex = {}
+    strength_in = {}
+    degree_ex = {}
+    degree_in = {}
+    #measurement_list = [strenght_ex, strenght_in, degree_ex, degree_in]
+    #matrix_list = [w_matrix_init, stre, degree_ex, degree_in]
+   # for measurement, matrix in zip(measurement_list, matrix_lisi):
+   #     for pop_k in ['ex', 'in']
+   #         for when_k in ['init', 'fin']:
+   #             measurement[when_k] = get_graph_measurement(
+    #                                            matrices=w_matrix_init,
+    #                                           pop='ex')
+    strength_ex['init'] = get_graph_measurement(matrices=w_matrix_init,
+                                                pop='ex')
+    strength_ex['fin'] = get_graph_measurement(matrices=w_matrix_fin,
+                                               pop='ex')
+    strength_in['init'] = get_graph_measurement(matrices=w_matrix_init,
+                                                pop='in')
+    strength_in['fin'] = get_graph_measurement(matrices=w_matrix_fin,
+                                               pop='in')
+    degree_ex['init'] = get_graph_measurement(matrices=adj_matrix_init,
+                                              pop='ex')
+    degree_ex['fin'] = get_graph_measurement(matrices=adj_matrix_fin,
+                                             pop='ex')
+    degree_in['init'] = get_graph_measurement(matrices=adj_matrix_init,
+                                              pop='in')
+    degree_in['fin'] = get_graph_measurement(matrices=adj_matrix_fin,
+                                             pop='in')
+    measurements = {'strength_measurement_ex_init': strength_ex['init'],
+                    'strength_measurement_ex_fin': strength_ex['fin'],
+                    'strength_measurement_in_init': strength_in['init'],
+                    'strength_measurement_in_fin': strength_in['fin'],
+                    'degree_measurement_ex_init': degree_ex['init'],
+                    'degree_measurement_ex_fin': degree_ex['fin'],
+                    'degree_measurement_in_init': degree_in['init'],
+                    'degree_measurement_in_fin': degree_in['fin'],
+                    }
+    for measure_k, measure_v in measurements.items():
+        # save
+        save_data(PATH_TO_DATA, measure_k, measure_v)
+        logger.info("recordable '%s' saved", measure_k)
+        # plot
+        splited_key = measure_k.split('_')
+        pop_pre = splited_key[2]
+        measure = splited_key[0]
+        title = f'Histogram: {pop_pre} {measure}'
+        logger.info('ploting %s figure', title)
+        create_graph_measure_figs(measure=measure_v,
+                                  output_path=PATH_TO_FIGS,
+                                  fig_name=measure_k,
+                                  title=title)
+
+    # plot init and fin weights histograms
+    weights_before_after_hist(weights_init=weights_init,
+                              weights_fin=weights_fin,
+                              output_path=PATH_TO_FIGS)
+
+    # plot delays histograms
+    delays_hist(weights_init=weights_init,
+                output_path=PATH_TO_FIGS)
+
 
     # save logger into experiment folder
     subprocess.run(['cp', 'src/last_experiment.log', f'{PATH_TO_OUTPUT}'])

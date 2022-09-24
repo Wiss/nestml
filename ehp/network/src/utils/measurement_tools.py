@@ -189,3 +189,121 @@ def pop_firing_rate(spikes_events: dict, time_window: int, final_t: float,
                         )
         firing_rate[key]['rates'] *= 1000 / time_window / firing_rate[key]['n_neurons']
     return firing_rate
+
+def get_weight_matrix(pop: dict, weights: dict) -> dict:
+    """
+    return weight matrix with
+
+    Parameters
+    ----------
+    pop:
+        dictionary with population
+    weights:
+        weights dictionary
+
+    Returns
+    -------
+    weight_matrix:
+        weight matrix for possible connections between population's present
+        in pop
+    """
+
+    w_matrix = {}
+    # init weight matrix with zeros
+    for n, con_key in enumerate(weights):
+        pre = con_key.split('_')[0]
+        post = con_key.split('_')[1]
+        w_matrix[con_key] = np.zeros([len(pop[pre]), len(pop[post])])
+        min_pre_pop_idx = min(pop[pre].tolist())
+        min_post_pop_idx = min(pop[post].tolist())
+        weights_source = weights[con_key]['source']
+        weights_target = weights[con_key]['target']
+        if any(item in weights[con_key].get('synapse_model')[0].split('_') \
+               for item in ['edlif', 'rec', 'copy']):
+            w_key = 'w'
+        else:
+            w_key = 'weight'
+        # fill w_matrix
+        for idx in range(len(weights[con_key][w_key])):
+            # re-number axes to start with idx==0 instead of 'source' values
+            w_matrix[con_key][weights_source[idx] - min_pre_pop_idx,
+                              weights_target[idx] - min_post_pop_idx] += \
+                                  weights[con_key][w_key][idx]
+    return w_matrix
+
+def get_adjacency_matrix(weight_matrix: dict, threshold: float,
+                       **kargs) -> dict:
+    """
+    given weight_matrix it returns adjacency matrix
+
+    Parameters
+    ----------
+    weigth_matirx:
+        weight matrix dictionary
+    trheshold:
+        threhold to calculate a_ij = w_ij * [w_ij> thresold]
+
+    Returns
+    -------
+    adj_matrix: dict
+        dictionary with adjacency matices
+    """
+    adj_matrix = {}
+    kargs.setdefault('verbose', 0)
+    for w_k, w_v in weight_matrix.items():
+        adj_matrix[w_k] = (abs(weight_matrix[w_k]) > threshold) * 1
+        if kargs['verbose'] > 0:
+            print('adj_matrix[w_k] type')
+            print(type(adj_matrix[w_k]))
+            if kargs['verbose'] > 1:
+                print('w_v')
+                print(w_v)
+                print('weight_matrix')
+                print(weight_matrix[w_k])
+                print('adj_matrix')
+                print(adj_matrix[w_k])
+    return adj_matrix
+
+def get_graph_measurement(matrices: dict, pop: str, **kargs) -> dict:
+    """
+    given matrix (weight, adjacency) return strengh or degree, respectively
+
+    Parameters
+    ----------
+    matrices:
+        dictionary associated with matrices between populations
+    pop:
+        string indicating over which population the measurement is calculated
+    """
+    kargs.setdefault('verbose', 1)
+    measured = {}
+    neuron_i = {}
+    n, m = 0, 0
+    for matrix_k, matrix_v in matrices.items():
+        pop_pre = matrix_k.split('_')[0]
+        pop_post = matrix_k.split('_')[1]
+        print('pop_pre')
+        print(pop_pre)
+        print('pop_post')
+        print(pop_post)
+        if pop_pre == pop:
+            if n == 0:
+                neuron_i['in'] = np.sum(matrix_v, axis=1)*0
+            neuron_i['in'] += np.sum(matrix_v, axis=1)
+            n += 1
+            if kargs['verbose'] > 0:
+                print('pop pre')
+                print(pop_pre)
+                print('neuron_in')
+                print(neuron_i['in'])
+        if pop_post == pop:
+            if m == 0:
+                neuron_i['out'] = np.sum(matrix_v, axis=0)*0
+            neuron_i['out'] += np.sum(matrix_v, axis=0)
+            m += 1
+            if kargs['verbose'] > 0:
+                print('pop_post')
+                print(pop_post)
+                print('neuron_out')
+                print(neuron_i['out'])
+    return neuron_i
