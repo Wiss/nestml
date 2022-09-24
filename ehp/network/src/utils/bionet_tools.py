@@ -173,6 +173,7 @@ def init_population(position_dist: str, neuron_model: str, n_neurons: int,
     #    try_install_module(module_name, neuron_model)
 
     # define neuron positions
+
     if position_dist == "uniform":
         pop_pos = nest.spatial.free(
                         nest.random.uniform(min=min(pos_bounds),
@@ -241,7 +242,7 @@ def fix_syn_spec(syn_spec: dict, label: str):
 
 
 def get_connections(pop_pre: nest.NodeCollection, pop_post: nest.NodeCollection,
-                  synapse_model: str) -> dict:
+                  synapse_model: str = None) -> dict:
     """
     read all weights values from pop_pre to pop_post
 
@@ -263,11 +264,13 @@ def get_connections(pop_pre: nest.NodeCollection, pop_post: nest.NodeCollection,
         synaptic collection
     """
     syn_coll = nest.GetConnections(source=pop_pre,
-                                    target=pop_post,
-                                    synapse_model=synapse_model)
+                                   target=pop_post,
+                                   synapse_model=synapse_model)
     return syn_coll
 
-def get_connections_info(syn_coll: nest.NodeCollection, **get_keys) -> dict:
+def get_connections_info(pop_pre: nest.NodeCollection,
+                       pop_post: nest.NodeCollection,
+                       synapse_model: str = None, **get_keys) -> dict:
     """
     returns all synaptic collection relevant information
 
@@ -285,16 +288,61 @@ def get_connections_info(syn_coll: nest.NodeCollection, **get_keys) -> dict:
     syn_coll_output:
         specific data from synaptic collection
     """
+    syn_coll = get_connections(pop_pre=pop_pre,
+                               pop_post=pop_post)
     get_keys.setdefault('weight', 'weight')
+    if get_keys['weight'] == 'weight':
+        get_keys['delay'] = 'delay'
+    elif get_keys['weight'] == 'w':
+        get_keys['delay'] = 'delay'
     syn_coll_outputs = syn_coll.get(('source',
                                      'target',
                                      'synapse_model',
                                      get_keys['weight'],
-                                     'delay'))
+                                     get_keys['delay']))
     logger.info('getting information from %s synapse model',
                 syn_coll_outputs['synapse_model'][0])
     return syn_coll_outputs
 
+
+def get_weights(conn_dict: dict, pop_dict: dict) -> dict:
+    """
+    get weight values from connections
+
+    Parameters
+    ----------
+    conn_dict:
+        connection dictionary
+    pop_dict:
+        population dictionary
+
+    Returns
+    -------
+    weights:
+        weights in dictionary with key==conn_key
+    """
+    weights = {}
+    for con_k, con_v in conn_dict.items():
+        pop_pre = con_k.split('_')[0]
+        pop_post = con_k.split('_')[1]
+        logger.info("getting weights from %s connection", con_k)
+        if any(item in con_v.get('synapse_model')[0].split('_') \
+               for item in ['edlif', 'rec', 'copy']):
+            weights[con_k] = get_connections_info(pop_pre=pop_dict[pop_pre],
+                                                  pop_post=pop_dict[pop_post],
+                                                  weight='w')
+        else:
+            weights[con_k] = get_connections_info(pop_pre=pop_dict[pop_pre],
+                                                  pop_post=pop_dict[pop_post])
+        if pop_pre == pop_post:
+            assert all([target in set(weights[con_k]['source']) for target in \
+                        set(weights[con_k]['target'])])
+        # the opposite is true if both populations are different
+        if pop_pre != pop_post:
+            assert not all([target in set(weights[con_k]['source']) \
+                           for target in set(weights[con_k]['target'])])
+
+    return weights
 def update_syn_w_wr(syn: nest.NodeCollection, syn_spec: dict, label: str):
     """
     uodate synaptic collection when weight recorder is used
@@ -323,7 +371,8 @@ def update_syn_w_wr(syn: nest.NodeCollection, syn_spec: dict, label: str):
                         v = np.random.uniform(low=syn_spec[k]['min'],
                                               high=syn_spec[k]['max'])
                     else:
-                        raise KeyError(f'"{k}" key not supported yet')
+                        raise KeyError(f'"{k}" key with "{syn_spec[k]["dist"]}"' \
+                                       'dist not supported yet')
                     # update synapses
                     new_param_dict = {k: v}
                     nest.SetStatus(s, new_param_dict)
@@ -409,13 +458,13 @@ def connect_pops(pop_pre: nest.NodeCollection, pop_post: nest.NodeCollection,
             nest.CopyModel(syn_spec['synapse_model'],
                         f"{label}_copy")
             nest.Connect(pop_pre, pop_post,
-                        conn_spec=conn_spec,
-                        syn_spec={'synapse_model': f'{label}_copy'})
+                         conn_spec=conn_spec,
+                         syn_spec={'synapse_model': f'{label}_copy'})
             logger.info("new weight copy for %s label created", label)
             # get syn object
             syn = get_connections(pop_pre=pop_pre,
-                                pop_post=pop_post,
-                                synapse_model=f'{label}_copy')
+                                  pop_post=pop_post,
+                                  synapse_model=f'{label}_copy')
             # update synapses with param from config file
             # this is necessary when working with syn objects
             update_syn_w_wr(syn=syn,
@@ -423,17 +472,30 @@ def connect_pops(pop_pre: nest.NodeCollection, pop_post: nest.NodeCollection,
                             label=label)
             logger.info("parameters for weight copy %s_copy updated", label)
             conn = get_connections(pop_pre=pop_pre,
-                                pop_post=pop_post,
-                                synapse_model=f'{label}_copy')
+                                   pop_post=pop_post,
+                                   synapse_model=f'{label}_copy')
         else:
             nest.Connect(pop_pre,
-                        pop_post,
-                        conn_spec=conn_spec,
-                        syn_spec=syn_spec_fixed)
+                         pop_post,
+                         conn_spec=conn_spec,
+                         syn_spec=syn_spec_fixed)
 
             conn = get_connections(pop_pre=pop_pre,
-                                pop_post=pop_post,
-                                synapse_model=syn_spec['synapse_model'])
+                                   pop_post=pop_post,
+                                   synapse_model=syn_spec['synapse_model'])
+
+        # if connections have same pre and post population
+        # then all target nodes should be present in source nodes
+        if pop_pre == pop_post:
+            assert all([source in pop_pre.tolist() for source in set(conn.source)])
+            assert all([target in pop_post.tolist() for target in set(conn.target)])
+            assert all([target in set(conn.source) for target in set(conn.target)])
+        # the opposite is true if both populations are different
+        if pop_pre != pop_post:
+            assert all([source in pop_pre.tolist() for source in set(conn.source)])
+            assert all([target in pop_post.tolist() for target in set(conn.target)])
+            assert not all([target in set(conn.source) for target in set(conn.target)])
+
         logger.debug("connections for %s generated", label)
         logger.debug(conn)
     return conn, weight_rec_list[-1]
@@ -489,8 +551,8 @@ def simulate(simtime: float, record: dict, record_rate: int, pop_dict: dict,
                      for var in record['multimeter']]) ==
                     len(record['multimeter'])):
                 mult[pop_k] = nest.Create('multimeter',
-                                        params={'interval': record_rate,
-                                        'record_from': record['multimeter']})
+                                          params={'interval': record_rate,
+                                          'record_from': record['multimeter']})
                 nest.Connect(mult[pop_k], pop_v)
                 logger.info("reading %s from %s population",
                             record['multimeter'], pop_k)
@@ -502,25 +564,14 @@ def simulate(simtime: float, record: dict, record_rate: int, pop_dict: dict,
     weights_init = {}  # initial weights values
     weights_fin = {}  # final weight values
     # get initial weights
-    for con_k, con_v in conn_dict.items():
-        logger.info("getting intial information from %s connection", con_k)
-        if any(item in con_v.get('synapse_model')[0].split('_') \
-               for item in ['edlif', 'rec', 'copy']):
-            weights_init[con_k] = get_connections_info(con_v,
-                                                       weight='w')
-        else:
-            weights_init[con_k] = get_connections_info(con_v)
-
+    logger.info('getting initial weights value')
+    weights_init = get_weights(conn_dict=conn_dict,
+                               pop_dict=pop_dict)
     logger.info("running simulation")
     nest.Simulate(simtime)
 
     # get final weights
-    for con_k, con_v in conn_dict.items():
-        logger.info("getting final information from %s connection", con_k)
-        if any(item in con_v.get('synapse_model')[0].split('_') \
-               for item in ['edlif', 'rec', 'copy']):
-            weights_fin[con_k] = get_connections_info(con_v,
-                                                      weight='w')
-        else:
-            weights_fin[con_k] = get_connections_info(con_v)
+    logger.info('getting final weights value')
+    weights_fin = get_weights(conn_dict=conn_dict,
+                               pop_dict=pop_dict)
     return sr, mult, weights_rec, weights_init, weights_fin
