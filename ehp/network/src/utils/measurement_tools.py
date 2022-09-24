@@ -1,6 +1,7 @@
 import numpy as np
 
-def instantaneous_phase(activity: dict, final_t: float) -> dict:
+def instantaneous_phase(activity: dict, final_t: float,
+                      resolution: float) -> dict:
     """
     calculate instantaneous phase
 
@@ -10,14 +11,15 @@ def instantaneous_phase(activity: dict, final_t: float) -> dict:
         dictinary with senders and time information
     final_t:
         simulaton final time
+    resolution:
+        simulation resolution in ms
 
     Returns
     -------
     instantaneous_phase:
         dictionary with senders and ins_phase information
     """
-    step = 0.1
-    # TODO fix step = 0.1, this value should come from the config file
+    step = resolution
     instantaneous_phase = {}
     last_spike_time = {}
     instantaneous_phase['times'] = np.arange(start=0,
@@ -79,7 +81,8 @@ def population_avg_order_param(i_phase_pop: dict) -> dict:
         n_senders += 1
     return pop_avg_order_param, n_senders
 
-def phase_coherence(spikes_events: dict, final_t: float) -> (dict, dict):
+def phase_coherence(spikes_events: dict, final_t: float,
+                  resolution:float) -> (dict, dict):
     """
     calculates phase coherence
 
@@ -90,6 +93,8 @@ def phase_coherence(spikes_events: dict, final_t: float) -> (dict, dict):
     final_t:
         simulations final time (this is total time,
         assuming we start at time zero)
+    resolution:
+        simulation resolution in ms
 
     Returns
     -------
@@ -102,7 +107,8 @@ def phase_coherence(spikes_events: dict, final_t: float) -> (dict, dict):
     n_senders = {'all': 0}
     for pop, activity in spikes_events.items():
         i_phase[pop] = instantaneous_phase(activity=activity,
-                                           final_t=final_t)
+                                           final_t=final_t,
+                                           resolution=resolution)
         pop_average_order_param[pop], n_senders[pop] = \
                                             population_avg_order_param(
                                                 i_phase_pop=i_phase[pop])
@@ -125,7 +131,8 @@ def phase_coherence(spikes_events: dict, final_t: float) -> (dict, dict):
         #global_inst_order_param[pop] = global_inst_order_param()
     return i_phase, pop_average_order_param
 
-def pop_firing_rate(spikes_events: dict, time_window: int, final_t: float) -> dict:
+def pop_firing_rate(spikes_events: dict, time_window: int, final_t: float,
+                  resolution: float) -> dict:
     """
     calculates population average firing rate
 
@@ -137,10 +144,11 @@ def pop_firing_rate(spikes_events: dict, time_window: int, final_t: float) -> di
         size of time window calculate average firing rate in ms
     final_t:
         final simulation time in ms
+    resolution:
+        simulation resolution in ms
     """
-    step = 0.1
+    step = resolution
     idx_from_time_window = int(time_window / step)
-    # TODO fix step = 0.1, this value should come from the config file
     firing_rate = {}
     firing_rate['times'] = np.arange(start=0,
                                      stop=final_t + step,

@@ -11,19 +11,23 @@ from src.utils.bionet_tools import (load_module,
                                     connect_subregion_multimeters,
                                     connect_external_sources,
                                     reset_kernel,
+                                    set_resolution,
                                     set_seed,
                                     simulate)
 
 logger = logger.getChild(__name__)
 
 
-def init_network(module: str, seed: int, neurons: dict, connections: dict,
-               network_layout: dict, external_sources: dict):
+def init_network(resolution: float, module: str, seed: int, neurons: dict,
+               connections: dict, network_layout: dict,
+               external_sources: dict):
     """
     Initialize network
 
     Parameters
     ----------
+    resolution:
+        simulation's resolution time in ms
     module:
         nets module to be loaded
     seed:
@@ -45,8 +49,8 @@ def init_network(module: str, seed: int, neurons: dict, connections: dict,
         dictionary with connection specifications
     """
     # reset NEST
-    logger.info("Resetting Nest")
     reset_kernel()
+    set_resolution(resolution)
     if module:
         load_module(module_name=module)
     # set seed for simulation

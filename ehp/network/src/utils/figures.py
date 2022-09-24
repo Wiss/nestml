@@ -117,10 +117,12 @@ def create_spikes_figs(spikes_events: dict, multimeter_events: dict,
                           step=kargs['multimeter_record_rate'])
     firing_rate = tools.pop_firing_rate(spikes_events=spikes_events,
                                         time_window=kargs['time_window'],
-                                        final_t=final_t)
+                                        final_t=final_t,
+                                        resolution=resolution)
     i_phase, phase_coherence = tools.phase_coherence(
                                             spikes_events=spikes_events,
-                                            final_t=final_t)
+                                            final_t=final_t,
+                                            resolution=resolution)
     for pop in spikes_events:
         fig, ax = plt.subplots(3, figsize=fig_size, sharex=True)
         ax[-1].set_xlabel('time (ms)', fontsize=fontsize_label)

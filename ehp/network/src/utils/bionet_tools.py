@@ -27,9 +27,16 @@ def set_seed(seed: int):
     np.random.seed(seed)
 
 
-def reset_kernel():
-     nest.ResetKernel()
+def reset_kernel() -> None:
+    logger.info("Resetting Nest kernel")
+    nest.ResetKernel()
 
+def set_resolution(resolution: float) -> None:
+    """
+    set simulation's resolution
+    """
+    logger.info("Setting simulation resolution = %f", resolution)
+    nest.resolution = resolution
 
 def install_needed_modules():
     """

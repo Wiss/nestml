@@ -66,6 +66,7 @@ if __name__ == '__main__':
     logger.info("setting up network")
     pop_dict, conn_dict, weight_rec_dict, external_srcs, \
                             subregion_mults = network.init_network(
+                                            resolution=general['resolution'],
                                             module=general['module'],
                                             seed=general['seed'],
                                             neurons=neurons,
