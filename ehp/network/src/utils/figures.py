@@ -86,13 +86,16 @@ def create_weights_figs(weights_events: dict, fig_name: str, output_path: str,
             save_weights_fig =f'{output_path}/{fig_name}_{key}'
             plt.savefig(save_weights_fig, dpi=500)
 
-def create_spikes_figs(spikes_events: dict, multimeter_events: dict,
-                     fig_name: str, output_path: str, **kargs):
+def create_spikes_figs(pop_dict: dict, spikes_events: dict,
+                     multimeter_events: dict, fig_name: str,
+                     output_path: str, **kargs):
     """
     Raster plots
 
     Parameters
     ----------
+    pop_dict:
+        dictionary with populations
     spikes_events:
         dictionary with all spike's information (events)
     multimeter_events:
@@ -119,11 +122,13 @@ def create_spikes_figs(spikes_events: dict, multimeter_events: dict,
     atp_std = {}
     mult_time = np.arange(start=kargs['multimeter_record_rate'], stop=final_t,
                           step=kargs['multimeter_record_rate'])
-    firing_rate = tools.pop_firing_rate(spikes_events=spikes_events,
+    firing_rate = tools.pop_firing_rate(pop_dict=pop_dict,
+                                        spikes_events=spikes_events,
                                         time_window=kargs['time_window'],
                                         final_t=final_t,
                                         resolution=resolution)
     i_phase, phase_coherence = tools.phase_coherence(
+                                            pop_dict=pop_dict,
                                             spikes_events=spikes_events,
                                             final_t=final_t,
                                             resolution=resolution)

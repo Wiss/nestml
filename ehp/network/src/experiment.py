@@ -126,17 +126,18 @@ if __name__ == '__main__':
             logger.info("recordable %s saved", rec_k)
 
     # TODO include recording condition
-    create_spikes_figs(spikes_events=spikes_events,
-                    multimeter_events=multimeter_events,
-                    fig_name='spikes',
-                    output_path=PATH_TO_FIGS,
-                    mult_var=general['record']['multimeter'],
-                    alpha=0.2,
-                    multimeter_record_rate=general['record_rate'],
-                    simtime=general['simtime'],
-                    resolution=general['resolution'],
-                    n_neurons=network_layout['n_neurons'],
-                    ex_in_ratio=network_layout['ex_in_ratio'])
+    create_spikes_figs(pop_dict=pop_dict,
+                       spikes_events=spikes_events,
+                       multimeter_events=multimeter_events,
+                       fig_name='spikes',
+                       output_path=PATH_TO_FIGS,
+                       mult_var=general['record']['multimeter'],
+                       alpha=0.2,
+                       multimeter_record_rate=general['record_rate'],
+                       simtime=general['simtime'],
+                       resolution=general['resolution'],
+                       n_neurons=network_layout['n_neurons'],
+                       ex_in_ratio=network_layout['ex_in_ratio'])
 
     # record inital weights
     save_data(PATH_TO_DATA, 'weights_init', weights_init)
