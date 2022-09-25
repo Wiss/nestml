@@ -304,7 +304,7 @@ def get_adjacency_matrix(weight_matrix: dict, threshold: float,
     weigth_matirx:
         weight matrix dictionary
     trheshold:
-        threhold to calculate a_ij = w_ij * [w_ij> thresold]
+        threhold to calculate a_ij = w_ij * [w_ij> threshold]
 
     Returns
     -------
@@ -334,7 +334,8 @@ def get_graph_measurement(matrices: dict, pop: str, **kargs) -> dict:
     Parameters
     ----------
     matrices:
-        dictionary associated with matrices between populations
+        dictionary associated with matrices between populations.
+        M_{ij} represent connection from neuron i to neuron j
     pop:
         string indicating over which population the measurement is calculated
     """
