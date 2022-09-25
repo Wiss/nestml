@@ -5,14 +5,15 @@ general:
     spikes: True
     weights: False
     multimeter:
-      # define which variable do you want to record
+      # define which variable do you want to record (ATP, V_m, etc)
       - ATP
   record_rate: 10 # record every x ms. Only for recorded variables
-  simtime: 500 # ms
+  simtime: 2000 # ms
   resolution: 0.1
   seed: 1
   module: "edlif_psc_alpha_0_module"  # nest module to be loaded
-  adj_threshold: 0  # threshold for calculating adjacency matrix from weights
+  firing_rate_window: 200 # window for firing rate calculation
+  adj_threshold: 5  # threshold for calculating adjacency matrix from weights
 neurons:
   ex:
     model: "edlif_psc_alpha_percent0_nestml__with_ed_stdp0_nestml"  # "edlif_psc_alpha_percent"
@@ -187,7 +188,7 @@ connections:
       # (scales depressing increments as alpha*lambda) (real)
         dist: "uniform"
         min: 0.3
-        max: 0.9
+        max: 1.9
       record: False
   # excitatory -> inhibitory
   ex_in:
@@ -196,7 +197,7 @@ connections:
       allow_autapses: True # bool
       allow_multapses: True # bool
       rule: "pairwise_bernoulli"
-      p: 0.8  # 1 == all-to-all
+      p: 0.2  # 1 == all-to-all
     # synaptic parameters
     syn_spec:
       synapse_model: "static_synapse"
@@ -226,7 +227,7 @@ connections:
       allow_autapses: True # bool
       allow_multapses: True # bool
       rule: "pairwise_bernoulli"
-      p: 0.8  # 1 == all-to-all
+      p: 0.2  # 1 == all-to-all
     # synaptic parameters
     syn_spec:
       synapse_model: "static_synapse"
@@ -285,7 +286,7 @@ connections:
       record: False
 network_layout:
   energy_dependent: True
-  n_neurons: 100
+  n_neurons: 200
   ex_in_ratio: 0.8  # n_exc = exc_inh_ratio*n_neurons
   positions:
     dist: "uniform"
@@ -310,7 +311,7 @@ external_sources:
       type: 'poisson_generator'
       active: True  # activate in the simulation
       params:
-        rate: 100000  # mean rate Hz
+        rate: 9000  # mean rate Hz
         start: 1100
       conn_spec:
         radius: 1.5
@@ -322,8 +323,8 @@ external_sources:
       # f(t) = max(0, rate + amplitude * sin(2*pi*frequency*t + phase*pi/180))
       active: True  # activate in the simulation
       params:
-        rate: 110000  # mean rate spikes/second
-        amplitude: 50000  # Firing rate modulation in spikes/second
+        rate: 76000  # mean rate spikes/second
+        amplitude: 35000  # Firing rate modulation in spikes/second
         frequency: 5  # mod frequency Hz
         phase: 0 # modulation phase in degree [0-360]
         stop: 1000  # stop simulation
