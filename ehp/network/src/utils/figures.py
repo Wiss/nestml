@@ -335,32 +335,77 @@ def create_graph_measure_figs(measure: dict, output_path: str, **kargs):
     measure:
         measurement informations
     """
+    kargs.setdefault('density', True)
+    kargs.setdefault('cumulative', -1) # True -> cumulative, -1 reversed cumulative
+    kargs.setdefault('histtype', 'bar')
+    kargs.setdefault('logscale', False)
     kargs.setdefault('facecolor', 'steelblue')
-    kargs.setdefault('n_bins', 20)
+    kargs.setdefault('n_bins', 50)
     kargs.setdefault('rwidth', 0.9)
+    if kargs['logscale'] and not kargs['cumulative']:
+        # only plot logscale if disitrbution is cumulative
+        raise ValueError(f'if logscale is {kargs["logscale"]}, ' \
+                         'then "cumulative" must be "True"')
     measuremnt = kargs['fig_name'].split('_')[0]
     if measuremnt == 'strength':
         symbol = 'S'
     elif measuremnt == 'degree':
         symbol = 'K'
+    if kargs['cumulative'] in [True, -1]:
+        eq_sym = '>'
+        kargs['histtype'] = 'step'
+        kargs['n_bins'] = 50
+    else:
+        eq_sym = '='
+    if kargs['density']:
+        y_label = f'P({measuremnt}{eq_sym}{symbol})'
+        kargs['rwidth'] = 1
+    else:
+        y_label = 'Frequency'
 
     for m_k, w_v in measure.items():
         fig, ax = plt.subplots(2, figsize=fig_size, sharex=True,
                                sharey=True)
         fig.suptitle(f'{kargs["title"]}', fontsize=fontsize_title)
         for axes in ax:
-            axes.set_ylabel('Frequency', fontsize=fontsize_label)
+            axes.set_ylabel(y_label, fontsize=fontsize_label)
             axes.set_xlabel(f'{symbol}', fontsize=fontsize_label)
-        ax[0].set_title('In',
+        ax[0].set_title(f'In-{measuremnt}',
                         fontsize=fontsize_title)
-        ax[1].set_title('Out',
+        ax[1].set_title(f'Out-{measuremnt}',
                         fontsize=fontsize_title)
-        ax[0].hist(measure['in'], bins=kargs['n_bins'],
+        _hist_in, bins_in = np.histogram(measure['in'],
+                                         bins=kargs['n_bins'])
+        _hist_out, bins_out = np.histogram(measure['out'],
+                                           bins=kargs['n_bins'])
+        # a little dirty. Could be improve!
+        if kargs['logscale']:
+            logbins_in = np.logspace(np.log10(bins_in[0]),
+                                     np.log10(bins_in[-1]),
+                                     len(bins_in))
+            logbins_out = np.logspace(np.log10(bins_out[0]),
+                                      np.log10(bins_out[-1]),
+                                      len(bins_out))
+        else:
+            logbins_in = bins_in
+            logbins_out = bins_out
+        ax[0].hist(measure['in'], bins=logbins_in,
                    facecolor=kargs['facecolor'],
-                   rwidth=kargs['rwidth'])
-        ax[1].hist(measure['out'], bins=kargs['n_bins'],
+                   rwidth=kargs['rwidth'],
+                   density=kargs['density'],
+                   cumulative=kargs['cumulative'],
+                   histtype=kargs['histtype'])
+        ax[1].hist(measure['out'], bins=logbins_out,
                    facecolor=kargs['facecolor'],
-                   rwidth=kargs['rwidth'])
+                   rwidth=kargs['rwidth'],
+                   density=kargs['density'],
+                   cumulative=kargs['cumulative'],
+                   histtype=kargs['histtype'])
+        if kargs['logscale']:
+            ax[0].set_xscale('log')
+            ax[0].set_yscale('log')
+            ax[1].set_xscale('log')
+            ax[1].set_yscale('log')
         # save image
         save_measurement_fig =f'{output_path}/{kargs["fig_name"]}'
         plt.savefig(save_measurement_fig, dpi=500)
