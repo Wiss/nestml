@@ -344,10 +344,19 @@ def get_graph_measurement(matrices: dict, pop: str, **kargs) -> dict:
     for matrix_k, matrix_v in matrices.items():
         pop_pre = matrix_k.split('_')[0]
         pop_post = matrix_k.split('_')[1]
+        matrix_v_wo_diag = matrix_v
+        if pop_pre == pop_post:
+            # take out diagonal if we are analyzing the same pre and post pops
+            np.fill_diagonal(matrix_v_wo_diag, 0)
+        else:
+            pass
+            # matrix_v_wo_diag = matrix_v
         if pop_pre == pop:
+            # from pop_pre I can get outgoing connections
+            # K_{pre_i}^{out} = \sum_j A_{ij}
             if n == 0:
-                neuron_i['in'] = np.sum(matrix_v, axis=1)*0
-            neuron_i['in'] += np.sum(matrix_v, axis=1)
+                neuron_i['out'] = np.sum(matrix_v_wo_diag, axis=1)*0
+            neuron_i['out'] += np.sum(matrix_v_wo_diag, axis=1)
             n += 1
             if kargs['verbose'] > 0:
                 print('pop pre')
@@ -355,9 +364,11 @@ def get_graph_measurement(matrices: dict, pop: str, **kargs) -> dict:
                 print('neuron_in')
                 print(neuron_i['in'])
         if pop_post == pop:
+                # from pop_post I can get incoming connections
+                # K_{post_i}^{in} = \sum_j A_{ji}
             if m == 0:
-                neuron_i['out'] = np.sum(matrix_v, axis=0)*0
-            neuron_i['out'] += np.sum(matrix_v, axis=0)
+                neuron_i['in'] = np.sum(matrix_v_wo_diag, axis=0)*0
+            neuron_i['in'] += np.sum(matrix_v_wo_diag, axis=0)
             m += 1
             if kargs['verbose'] > 0:
                 print('pop_post')
