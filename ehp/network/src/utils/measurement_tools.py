@@ -268,6 +268,7 @@ def get_weight_matrix(pop: dict, weights: dict) -> dict:
     weight_matrix:
         weight matrix for possible connections between population's present
         in pop
+        M_{ij} represents connection from neuron i to neuron j
     """
 
     w_matrix = {}
