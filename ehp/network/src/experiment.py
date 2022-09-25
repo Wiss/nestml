@@ -175,9 +175,10 @@ if __name__ == '__main__':
         # save
         save_data(PATH_TO_DATA, matrix_k, matrix_v)
         logger.info("recordable '%s' saved", matrix_k)
-        # plot
-        title = matrix_k.split('_')[0].capitalize() + ' '\
-            + matrix_k.split('_')[1]
+        # plot = matrix_k.split('_')[0].capitalize()
+        matrix_name = matrix_k.split('_')[0].capitalize()
+        matrix_str = matrix_k.split('_')[1]
+        title = matrix_name + ' ' + matrix_str
         logger.info('ploting %s figure', title)
         create_matrices_figs(matrix=matrix_v,
                                    output_path=PATH_TO_FIGS,
@@ -233,13 +234,26 @@ if __name__ == '__main__':
         # plot
         splited_key = measure_k.split('_')
         pop_pre = splited_key[2]
+        if pop_pre == 'ex':
+            pop_pre = 'excitatory'
+        elif pop_pre == 'in':
+            pop_pre = 'inhibitory'
         measure = splited_key[0]
-        title = f'Histogram: {pop_pre} {measure}'
+        title = f'Histogram: {pop_pre} population {measure}'
         logger.info('ploting %s figure', title)
         create_graph_measure_figs(measure=measure_v,
                                   output_path=PATH_TO_FIGS,
                                   fig_name=measure_k,
-                                  title=title)
+                                  title=title,
+                                  cumulative=False)
+        if measure == 'degree':
+            # only for degree bc strenght has negative values
+            create_graph_measure_figs(measure=measure_v,
+                                    output_path=PATH_TO_FIGS,
+                                    fig_name=measure_k,
+                                    title=title,
+                                    logscale=True,
+                                    cumulative=-1)
 
     # plot init and fin weights histograms
     weights_before_after_hist(weights_init=weights_init,
