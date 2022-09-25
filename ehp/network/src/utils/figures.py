@@ -301,7 +301,7 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
 def create_pops_figs(pop: dict, fig_name: str, output_path: str, **kargs):
     # all together
     fig, ax = plt.subplots(1, figsize=fig_size, sharex=True)
-    ax.set_title('Neurons positions')
+    ax.set_title('Neurons positions', fontsize=fontsize_title)
     for key in pop.keys():
         if key == 'ex':
             color = 'darkred'

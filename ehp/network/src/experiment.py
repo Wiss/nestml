@@ -137,7 +137,8 @@ if __name__ == '__main__':
                        simtime=general['simtime'],
                        resolution=general['resolution'],
                        n_neurons=network_layout['n_neurons'],
-                       ex_in_ratio=network_layout['ex_in_ratio'])
+                       ex_in_ratio=network_layout['ex_in_ratio'],
+                       time_window=general['firing_rate_window'])
 
     # record inital weights
     save_data(PATH_TO_DATA, 'weights_init', weights_init)
