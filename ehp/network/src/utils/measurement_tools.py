@@ -29,7 +29,7 @@ def instantaneous_phase(pop, activity: dict, final_t: float,
     instantaneous_phase = {}
     last_spike_time = {}
     instantaneous_phase['times'] = np.arange(start=0,
-                                             stop=final_t,
+                                             stop=final_t + step/2, # to include final_t
                                              step=step)
     for neuron in pop.tolist():
         instantaneous_phase.setdefault(neuron,
@@ -46,23 +46,14 @@ def instantaneous_phase(pop, activity: dict, final_t: float,
     if kargs['verbose'] > 0:
         print('instantaneous_phase')
         print(instantaneous_phase)
-
-    #for sender in set(activity['senders']):
-    #    instantaneous_phase.setdefault(sender,
-    #                                   np.empty(
-    #                                       len(instantaneous_phase['times'])
-    #                                   ))
-    #    instantaneous_phase[sender].fill(np.nan)
-        # for recording last time that sender had an spike
-    #   last_spike_time.setdefault(sender, 0)
-
     # only update neurons present in activity[senders]
     for spike_time, sender in zip(activity['times'], activity['senders']):
         if kargs['verbose'] > 0:
             print('sender')
             print(sender)
         if last_spike_time[sender] == 0:
-            pass
+            last_spike_time[sender] = spike_time
+            continue
         else:
             start_idx_from_last_spk_time = int(last_spike_time[sender] /
                                              step)
@@ -74,11 +65,14 @@ def instantaneous_phase(pop, activity: dict, final_t: float,
                                 last_spike_time[sender]) / (spike_time -
                                 last_spike_time[sender])
         last_spike_time[sender] = spike_time
+        if kargs['verbose'] > 1:
+            print('instantaneous_phase[sender]')
+            print(instantaneous_phase[sender])
     return instantaneous_phase
 
-def population_avg_order_param(i_phase_pop: dict, **kargs) -> dict:
+def population_order_param(i_phase_pop: dict, **kargs) -> dict:
     """
-    calculate population average order parameter
+    calculate population order parameter
 
     Parameter
     ---------
@@ -87,29 +81,34 @@ def population_avg_order_param(i_phase_pop: dict, **kargs) -> dict:
 
     Returns
     -------
-    pop_avg_order_param:
-        population average order parameter
+    pop_order_param:
+        population order parameter
     """
     kargs.setdefault('verbose', 0)
     i_phase_pop_copy = i_phase_pop.copy()
-    pop_avg_order_param = {}
-    pop_avg_order_param['times'] = i_phase_pop_copy['times']
-    pop_avg_order_param['o_param'] = np.zeros(len(i_phase_pop['times'])) * 1j
+    pop_order_param = {}
+    pop_order_param['times'] = i_phase_pop_copy['times']
+    #pop_avg_order_param['o_param'] = np.zeros(len(i_phase_pop['times'])) * 1j
+    pop_order_param['o_param'] = np.empty(len(i_phase_pop['times'])) * 1j
+    pop_order_param['o_param'].fill(np.nan)
     del[i_phase_pop_copy['times']]
     neuron_count = 0
     for neuron in i_phase_pop_copy:
         # add both arrays treating NaNs as zeros
-        pop_avg_order_param['o_param'] = np.nansum(
+        pop_order_param['o_param'] = np.nansum(
                                             np.dstack((
-                                            pop_avg_order_param['o_param'],
+                                            pop_order_param['o_param'],
                                             np.e ** (1j *
                                             i_phase_pop_copy[neuron])
                                             )), axis=2)
+
         neuron_count += 1
     if kargs['verbose'] > 0:
-        print('neuron count in pop_avg_order_param')
+        print('neuron count in pop_order_param')
         print(neuron_count)
-    return pop_avg_order_param, neuron_count
+        print('pop_order_param[o_param]')
+        print(pop_order_param['o_param'])
+    return pop_order_param, neuron_count
 
 def phase_coherence(pop_dict: dict, spikes_events: dict, final_t: float,
                   resolution: float, **kargs) -> (dict, dict):
@@ -138,7 +137,14 @@ def phase_coherence(pop_dict: dict, spikes_events: dict, final_t: float,
     pop_average_order_param = {}
     #global_inst_order_param = {}
     neuron_count = {'all': 0}
-    #for pop, activity in spikes_events.items():
+    # set default values for 'all' case
+    pop_average_order_param.setdefault('all', {})
+    #pop_average_order_param['all'].setdefault('o_param',
+    #                            np.zeros((1, len(i_phase[pop]['times']))) * 1j)
+    first_spike = {}
+    last_spike = {}
+    first_spike_idx = {}
+    last_spike_idx = {}
     for pop in pop_dict:
         activity = spikes_events[pop]
         i_phase[pop] = instantaneous_phase(pop=pop_dict[pop],
@@ -146,29 +152,52 @@ def phase_coherence(pop_dict: dict, spikes_events: dict, final_t: float,
                                            final_t=final_t,
                                            resolution=resolution)
         pop_average_order_param[pop], neuron_count[pop] = \
-                                            population_avg_order_param(
+                                            population_order_param(
                                                 i_phase_pop=i_phase[pop])
         if kargs['verbose'] > 0:
+            print(f'i_phase for pop {pop}')
+            print(i_phase[pop])
             print(f'pop_average_order_param for {pop} pop')
+            print(pop_average_order_param[pop])
             print(neuron_count[pop])
-        # set default values for 'all' case
-        pop_average_order_param.setdefault('all', {})
+        #pop_average_order_param['all'].np.fill(np.nan)
         pop_average_order_param['all'].setdefault('o_param',
-                                    np.zeros((1, len(i_phase[pop]['times']))) * 1j)
+                                    np.zeros((1, len(i_phase['ex']['times'])))
+                                     * 1j)
         pop_average_order_param['all']['o_param'] += \
                                     pop_average_order_param[pop]['o_param']
         neuron_count['all'] += neuron_count[pop]
-        # obtain fasor lenght (phase coherence) per pop
+        #  average and obtain fasor lenght (phase coherence) per pop
         pop_average_order_param[pop]['o_param'] = abs(
                                     pop_average_order_param[pop]['o_param'] /
                                     neuron_count[pop])
+        # average order param is not define for t<first_spike
+        # neither for t>last_spike
+        if not all(activity['times']):
+            # The following two lines allow to have a
+            # pop_average_order_param[pop] filled with nan values
+            first_spike[pop] = max(pop_average_order_param[pop]['times'])
+            last_spike[pop] = 0
+        else:
+            first_spike[pop] = min(activity['times'])
+            last_spike[pop] = max(activity['times'])
+        first_spike_idx[pop] = int(first_spike[pop] / resolution)
+        last_spike_idx[pop] = int(last_spike[pop] / resolution)
+        pop_average_order_param[pop]['o_param'][:, 0:first_spike_idx[pop]] = np.nan
+        pop_average_order_param[pop]['o_param'][:, last_spike_idx[pop]:-1] = np.nan
+
+    # calculate average
     pop_average_order_param['all']['times'] = \
                                     pop_average_order_param['ex']['times']
     pop_average_order_param['all']['o_param'] = abs(
                                     pop_average_order_param['all']['o_param'] /
                                     neuron_count['all'])
+    first_spike_idx['all'] = min(first_spike_idx.values())
+    last_spike_idx['all'] = max(last_spike_idx.values())
+    pop_average_order_param['all']['o_param'][:, 0: first_spike_idx['all']] = np.nan
+    pop_average_order_param['all']['o_param'][:, last_spike_idx['all']: -1] = np.nan
     if kargs['verbose'] > 0:
-        print('total neurons inside phase coherence')
+        print('total neurons considered for phase coherence calculation')
         print(neuron_count)
         #global_inst_order_param[pop] = global_inst_order_param()
     return i_phase, pop_average_order_param
@@ -196,7 +225,7 @@ def pop_firing_rate(pop_dict: dict, spikes_events: dict, time_window: int,
     idx_from_time_window = int(time_window / step)
     firing_rate = {}
     firing_rate['times'] = np.arange(start=0,
-                                     stop=final_t + step,
+                                     stop=final_t + step/2,
                                      step=step)
 
     for pop in pop_dict:
@@ -301,10 +330,10 @@ def get_weight_matrix(pop: dict, weights: dict, **kargs) -> (dict, np.array):
             # re-number axes to start with idx==0 instead of 'source' values
             if kargs['w_abs']:
                 weight_value = abs(weights[con_key][w_key][idx])
-                logger.info('weight matrix caculation get abs(w_ij)')
+                #logger.info('weight matrix caculation get abs(w_ij)')
             else:
                 weight_value = weights[con_key][w_key][idx]
-                logger.info('weight matrix caculation get w_ij (with sign)')
+                #logger.info('weight matrix caculation get w_ij (with sign)')
 
             w_matrix[con_key][weights_source[idx] - min_pre_pop_idx,
                               weights_target[idx] - min_post_pop_idx] += \
