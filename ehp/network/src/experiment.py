@@ -7,6 +7,7 @@ import copy
 import os
 import subprocess
 import time
+import igraph as ig
 
 from src.logging.logging import logger
 import src.network as network
@@ -15,6 +16,7 @@ from src.utils.figures import (create_weights_figs,
                                create_pops_figs,
                                create_multimeter_figs,
                                create_matrices_figs,
+                               create_full_matrix_figs,
                                create_graph_measure_figs,
                                delays_hist,
                                weights_before_after_hist)
@@ -25,7 +27,8 @@ from src.utils.manage_files import (create_folder,
                                     load_data)
 from src.utils.measurement_tools import (get_weight_matrix,
                                          get_adjacency_matrix,
-                                         get_graph_measurement)
+                                         get_graph_measurement,
+                                         get_clustering_coeff)
 
 from src.logging.logging import logger
 
@@ -264,6 +267,41 @@ if __name__ == '__main__':
     delays_hist(weights_init=weights_init,
                 output_path=PATH_TO_FIGS)
 
+    clustering_coeff_init, mean_clustering_coeff_init = \
+            get_clustering_coeff(w_matrix=full_w_matrix_init,
+                                 adj_matrix=full_adj_matrix_init)
+    clustering_coeff_fin, mean_clustering_coeff_fin = \
+            get_clustering_coeff(w_matrix=full_w_matrix_fin,
+                                 adj_matrix=full_adj_matrix_fin)
+    logger.info('initial mean clustering coefficient %f',
+                                    mean_clustering_coeff_init)
+    print('initial mean clustering coefficient',
+                                    mean_clustering_coeff_init)
+    logger.info('final mean clustering coefficient %f',
+                                    mean_clustering_coeff_fin)
+    print('final mean clustering coefficient',
+                                    mean_clustering_coeff_fin)
+
+    ## igraph measurements
+    ## I can use this package to compute some stuff
+   # g_weight_init = ig.Graph.Weighted_Adjacency(full_w_matrix_init)
+   # print('g_weight_init matrix (igraph)')
+   # print(g_weight_init)
+   # print('w_matrix_init_degree (igraph)')
+   # print(g_weight_init.degree())
+   # print('w_matrix_init_indegree (igraph)')
+   # print(g_weight_init.indegree())
+   # print('w_matrix_out_indegree (igraph)')
+   # print(g_weight_init.outdegree())
+   # g_weight_fin = ig.Graph.Weighted_Adjacency(full_w_matrix_fin)
+   # g_adj_init = ig.Graph.Adjacency(full_adj_matrix_init)
+   # print('adj_matrix_init_degree (igraph)')
+   # print(g_adj_init.degree())
+   # print('adj_matrix_init_indegree (igraph)')
+   # print(g_adj_init.indegree())
+   # print('adj_matrix_out_indegree (igraph)')
+   # print(g_adj_init.outdegree())
+   # g_adj_fin = ig.Graph.Adjacency(full_adj_matrix_fin)
 
     # save logger into experiment folder
     subprocess.run(['cp', 'src/last_experiment.log', f'{PATH_TO_OUTPUT}'])
