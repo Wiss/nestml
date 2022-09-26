@@ -1,5 +1,5 @@
 # Initial configuration file for doing experiments with Biophysical network
-notes: "Energy dependent"
+notes: "Energy dependent with disrupted K"
 general:
   record:
     spikes: True
@@ -8,12 +8,13 @@ general:
       # define which variable do you want to record (ATP, V_m, etc)
       - ATP
   record_rate: 10 # record every x ms. Only for recorded variables
-  simtime: 2000 # ms
+  simtime: 1500  # ms
   resolution: 0.1
   seed: 1
   module: "edlif_psc_alpha_0_module"  # nest module to be loaded
-  firing_rate_window: 200 # window for firing rate calculation
-  adj_threshold: -1  # threshold for calculating adjacency matrix from weights
+  firing_rate_window: 50 # window for firing rate calculation
+  adj_threshold: 5  # threshold for calculating adjacency matrix from weights
+  w_matrix_abs: True # calculate weight matrix using abs(w_ij)
 neurons:
   ex:
     model: "edlif_psc_alpha_percent0_nestml__with_ed_stdp0_nestml"  # "edlif_psc_alpha_percent"
@@ -25,7 +26,7 @@ neurons:
           std: 0
         # ATP production parameter
         K_ATP:
-          mean: 1.
+          mean: 0.1
           std: 0
         # action-potential energy consumption time-constant
         tau_ap:
@@ -40,26 +41,26 @@ neurons:
           std: 0
         # resting-potential consumption percent/ms
         E_rp:
-          mean: 0  # %
+          mean: 5  # %
           std: 0
         # housekeeping consumption percent/ms
         E_hk:
-          mean: 0  # %
+          mean: 5  # %
           std: 0
         # action potential consumption percent/spike
         E_ap:
-          mean: 0  # %
+          mean: 15  # %
           std: 0
         #synaptic consumption percent/spike
         E_syn_ex:
-          mean: 0  # %
+          mean: 8  # %
           std: 0
         E_syn_in:
-          mean: 0  # %
+          mean: 5  # %
           std: 0
         # sensitivity to energy imbalance
         gamma:
-          mean: 0
+          mean: 10
           std: 0
       general_params:
         # synaptic time constants
@@ -82,8 +83,8 @@ neurons:
           mean: 2
           std: 0.1
         I_e:
-          mean: 960  #2000
-          std: 900  #500
+          mean: 0  #2000
+          std: 0  #500
   in:
     model: "edlif_psc_alpha_percent0_nestml__with_ed_stdp0_nestml"  # "edlif_psc_alpha_percent"
     params:
@@ -94,7 +95,7 @@ neurons:
           std: 0
         # ATP production parameter
         K_ATP:
-          mean: 1
+          mean: 0.1
           std: 0
         # action-potential energy consumption time-constant
         tau_ap:
@@ -109,26 +110,26 @@ neurons:
           std: 0
         # resting-potential consumption percent/ms
         E_rp:
-          mean: 0  # %
+          mean: 5  # %
           std: 0
         # housekeeping consumption percent/ms
         E_hk:
-          mean: 0  # %
+          mean: 5  # %
           std: 0
         # action potential consumption percent/spike
         E_ap:
-          mean: 0  # %
+          mean: 15  # %
           std: 0
         #synaptic consumption percent/spike
         E_syn_ex:
-          mean: 0  # %
+          mean: 8  # %
           std: 0
         E_syn_in:
-          mean: 0  # %
+          mean: 5  # %
           std: 0
         # sensitivity to energy imbalance
         gamma:
-          mean: 0
+          mean: 10
           std: 0
       general_params:
         # synaptic time constants
@@ -151,8 +152,8 @@ neurons:
           mean: 2
           std: 0.1
         I_e:
-          mean: 960  #2000
-          std: 900
+          mean: 0  #2000
+          std: 0
 #  connecting populations
 connections:
   # excitatory -> excitatory
@@ -286,7 +287,7 @@ connections:
       record: False
 network_layout:
   energy_dependent: True
-  n_neurons: 500
+  n_neurons: 200
   ex_in_ratio: 0.8  # n_exc = exc_inh_ratio*n_neurons
   positions:
     dist: "uniform"
@@ -309,9 +310,9 @@ external_sources:
     # here you can include different generators types with their own params
     generator_general_poisson:
       type: 'poisson_generator'
-      active: False  # activate in the simulation
+      active: True  # activate in the simulation
       params:
-        rate: 100000  # mean rate Hz
+        rate: 9000  # mean rate Hz
         start: 1100
       conn_spec:
         radius: 1.5
@@ -321,10 +322,10 @@ external_sources:
     generator_general_poisson_ac:
       type: 'sinusoidal_poisson_generator'
       # f(t) = max(0, rate + amplitude * sin(2*pi*frequency*t + phase*pi/180))
-      active: False  # activate in the simulation
+      active: True  # activate in the simulation
       params:
-        rate: 110000  # mean rate spikes/second
-        amplitude: 50000  # Firing rate modulation in spikes/second
+        rate: 47000  # mean rate spikes/second
+        amplitude: 53810  # Firing rate modulation in spikes/second
         frequency: 5  # mod frequency Hz
         phase: 0 # modulation phase in degree [0-360]
         stop: 1000  # stop simulation

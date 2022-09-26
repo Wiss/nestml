@@ -8,12 +8,13 @@ general:
       # define which variable do you want to record (ATP, V_m, etc)
       - ATP
   record_rate: 10 # record every x ms. Only for recorded variables
-  simtime: 2000 # ms
+  simtime: 1500  # ms
   resolution: 0.1
   seed: 1
   module: "edlif_psc_alpha_0_module"  # nest module to be loaded
-  firing_rate_window: 200 # window for firing rate calculation
+  firing_rate_window: 50 # window for firing rate calculation
   adj_threshold: 5  # threshold for calculating adjacency matrix from weights
+  w_matrix_abs: True # calculate weight matrix using abs(w_ij)
 neurons:
   ex:
     model: "edlif_psc_alpha_percent0_nestml__with_ed_stdp0_nestml"  # "edlif_psc_alpha_percent"
@@ -197,7 +198,7 @@ connections:
       allow_autapses: True # bool
       allow_multapses: True # bool
       rule: "pairwise_bernoulli"
-      p: 0.2  # 1 == all-to-all
+      p: 0.8  # 1 == all-to-all
     # synaptic parameters
     syn_spec:
       synapse_model: "static_synapse"
@@ -227,7 +228,7 @@ connections:
       allow_autapses: True # bool
       allow_multapses: True # bool
       rule: "pairwise_bernoulli"
-      p: 0.2  # 1 == all-to-all
+      p: 0.8  # 1 == all-to-all
     # synaptic parameters
     syn_spec:
       synapse_model: "static_synapse"
@@ -323,8 +324,8 @@ external_sources:
       # f(t) = max(0, rate + amplitude * sin(2*pi*frequency*t + phase*pi/180))
       active: True  # activate in the simulation
       params:
-        rate: 76000  # mean rate spikes/second
-        amplitude: 35000  # Firing rate modulation in spikes/second
+        rate: 47000  # mean rate spikes/second
+        amplitude: 53810  # Firing rate modulation in spikes/second
         frequency: 5  # mod frequency Hz
         phase: 0 # modulation phase in degree [0-360]
         stop: 1000  # stop simulation
