@@ -270,11 +270,18 @@ def get_weight_matrix(pop: dict, weights: dict, **kargs) -> (dict, np.array):
     -------
     weight_matrix:
         weight matrix for possible connections between population's present
-        in pop
+        in pop (ex_ex, ex_in, in_ex, in_in)
         M_{ij} represents connection from neuron i to neuron j
+    full_weight_matrix:
+        full weight matrix for networks
+        EE|EI
+        IE|II
     """
-
+    kargs.setdefault('verbose', 0)
+    kargs.setdefault('w_abs', True)
     w_matrix = {}
+    tot_pop = len(pop['ex']) + len(pop['in'])
+    full_w_matrix = np.zeros([tot_pop, tot_pop])
     # init weight matrix with zeros
     for n, con_key in enumerate(weights):
         pre = con_key.split('_')[0]
@@ -292,30 +299,94 @@ def get_weight_matrix(pop: dict, weights: dict, **kargs) -> (dict, np.array):
         # fill w_matrix
         for idx in range(len(weights[con_key][w_key])):
             # re-number axes to start with idx==0 instead of 'source' values
+            if kargs['w_abs']:
+                weight_value = abs(weights[con_key][w_key][idx])
+                logger.info('weight matrix caculation get abs(w_ij)')
+            else:
+                weight_value = weights[con_key][w_key][idx]
+                logger.info('weight matrix caculation get w_ij (with sign)')
+
             w_matrix[con_key][weights_source[idx] - min_pre_pop_idx,
                               weights_target[idx] - min_post_pop_idx] += \
-                                  weights[con_key][w_key][idx]
-    return w_matrix
+                                  weight_value
 
-def get_adjacency_matrix(weight_matrix: dict, threshold: float,
-                       **kargs) -> dict:
+        # fill full matrix
+        # calculate indexs offset to construct matrix
+        if con_key == 'ex_ex':
+            offset_pre = 0
+            offset_post = 0
+        elif con_key == 'ex_in':
+            offset_pre = 0
+            offset_post = len(w_matrix['ex_ex'][0, :])
+            #len_prev_pre_submatrix = len(w_matrix['ex_ex'][0, :])
+            #len_prev_post_submatrix = len(w_matrix['ex_ex'][:, 0])
+        elif con_key == 'in_ex':
+            offset_pre = len(w_matrix['ex_ex'][:, 0])
+            offset_post = 0
+            #len_prev_pre_submatrix = len(w_matrix['ex_ex'][0, :])
+            #len_prev_post_submatrix = len(w_matrix['ex_ex'][:, 0])
+        elif con_key == 'in_in':
+            offset_pre = len(w_matrix['ex_ex'][:, 0])
+            offset_post = len(w_matrix['ex_ex'][0, :])
+            #len_prev_pre_submatrix = len(w_matrix['ex_ex'][0, :])
+            #len_prev_post_submatrix = len(w_matrix['ex_ex'][:, 0])
+        pre_min_idx = offset_pre
+        pre_max_idx = len(w_matrix[con_key][:, 0]) + offset_pre
+        post_min_idx = offset_post
+        post_max_idx = len(w_matrix[con_key][0, :]) + offset_post
+        if kargs['verbose'] > 0:
+            print('connection')
+            print(con_key)
+            print('min_pre_pop_idx')
+            print(min_pre_pop_idx)
+            print('min_post_pop_idx')
+            print(min_post_pop_idx)
+            print('pre_min_idx')
+            print(pre_min_idx)
+            print('pre_max_idx')
+            print(pre_max_idx)
+            print('post_min_idx')
+            print(post_min_idx)
+            print('post_max_idx')
+            print(post_max_idx)
+            print('pre-offset')
+            print(offset_pre)
+            print('post-offset')
+            print(offset_post)
+        full_w_matrix[pre_min_idx:pre_max_idx,
+                      post_min_idx:post_max_idx] = w_matrix[con_key]
+        if kargs['verbose'] > 0:
+            print('w_matrix per pop')
+            print(w_matrix[con_key])
+            print('full_w_matrix')
+            print(full_w_matrix)
+    return w_matrix, full_w_matrix
+
+def get_adjacency_matrix(weight_matrix: dict, full_weight_matrix: np.array,
+                       threshold: float, **kargs) -> dict:
     """
     given weight_matrix it returns adjacency matrix
 
     Parameters
     ----------
     weigth_matirx:
-        weight matrix dictionary
+        weight matrix dictionary per connection
+    full_weigth_matirx:
+        full weight matrix darray
     trheshold:
         threhold to calculate a_ij = w_ij * [w_ij> threshold]
 
     Returns
     -------
     adj_matrix: dict
-        dictionary with adjacency matices
+        dictionary with adjacency matices per connected pops (ex_ex, ex_in,
+        in_ex and in_in)
+    full_adj_matrix:
+        adjacent matrix for the whole network's matrix
     """
     adj_matrix = {}
     kargs.setdefault('verbose', 0)
+    logger.info('adjacent matrix caculation uses abs(w_ij)')
     for w_k, w_v in weight_matrix.items():
         adj_matrix[w_k] = (abs(weight_matrix[w_k]) > threshold) * 1
         if kargs['verbose'] > 0:
