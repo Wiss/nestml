@@ -449,7 +449,32 @@ def create_matrices_figs(matrix: dict,
     # save image
     save_weights_m_fig =f'{output_path}/{kargs["fig_name"]}'
     plt.savefig(save_weights_m_fig, pad_inches=0, dpi=500)
+    plt.close(fig)
 
+
+def create_full_matrix_figs(matrix: np.array, output_path: str, **kargs):
+    """
+    plot full matrix
+    """
+    kargs.setdefault('pad', '5%')
+    kargs.setdefault('cmap', 'jet')  # jet
+    figsize = (10, 10)
+    fig, ax = plt.subplots(figsize=figsize)
+    fig.suptitle(kargs['title'], fontsize=fontsize_title)
+    divider = make_axes_locatable(ax)
+    ax_cb = divider.append_axes('right', size="5%", pad=kargs['pad'])
+    fig.add_axes(ax_cb)
+    w = matrix
+    im = ax.imshow(w)
+    im.set_cmap(kargs['cmap'])
+    plt.colorbar(im, cax=ax_cb)
+    plt.tight_layout()
+    ax_cb.yaxis.set_tick_params(labelright=True)
+
+    # save image
+    save_weights_f_m_fig =f'{output_path}/{kargs["fig_name"]}'
+    plt.savefig(save_weights_f_m_fig, dpi=500)
+    plt.close(fig)
 
 def weights_before_after_hist(weights_init: dict, weights_fin: dict,
                             output_path: str, **kargs):
