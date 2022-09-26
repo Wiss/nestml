@@ -381,3 +381,64 @@ def get_graph_measurement(matrices: dict, pop: str, **kargs) -> dict:
                 print('neuron_out')
                 print(neuron_i['out'])
     return neuron_i
+
+def get_clustering_coeff(w_matrix: np.array,
+                       adj_matrix: np.array) -> (list, float):
+    """
+    calculate clustering coefficient for weighted directed graph
+    c^w_i = 2/(k_i * (k_i - 1)) * sum_{j,h} (w_ij*w_jh*w_hi)^(1/3) (original
+    with w_ij meaning weight connection j -> i)
+    c^w_i = 2/(k_i * (k_i - 1)) * sum_{j,h} (w_ji*w_hj*w_ih)^(1/3) (w_ij means
+    weight connection i -> j)
+    Reference:
+    Chapter 8 - Motifs, Small Worlds, and Network Economy,
+    Editor(s): Alex Fornito, Andrew Zalesky, Edward T. Bullmore,
+    Fundamentals of Brain Network Analysis,
+    Academic Press,
+    2016,
+    Pages 257-301,
+    ISBN 9780124079083,
+    https://doi.org/10.1016/B978-0-12-407908-3.00008-X.
+    (https://www.sciencedirect.com/science/article/pii/B978012407908300008X)
+
+    Parameters
+    ----------
+    w_matrix:
+        matrix with weights values
+    adj_matrix:
+        adjacent matrix for calculating degree
+
+    Returns
+    -------
+    clustering_coeff:
+        array with clustering coefficient per neuron
+    clustering_coeff_mean:
+        mean clustering coefficient for the network
+    """
+    degree = []
+    clustering_coeff = []
+    adj_matrix_wo_diag = adj_matrix
+    # take out diagonal if for calculating degree
+    np.fill_diagonal(adj_matrix_wo_diag, 0)
+    # normalize weights
+    norm_w_matrix = w_matrix / np.max(w_matrix)
+    for neuron_i in range(len(w_matrix[:, 0])):
+        in_deg = np.sum(adj_matrix_wo_diag[:, neuron_i])
+        out_deg = np.sum(adj_matrix_wo_diag[neuron_i, :])
+        degree.append(in_deg + out_deg)
+        # restart sum_j,h (w_ij*w_jh*w_hi)^(1/3)
+        sum_w_3_root = 0
+        if degree[-1] <= 1:
+            clustering_coeff.append(0)
+            continue
+        else:
+            for neuron_j in range(len(w_matrix[:, 0])):
+                for neuron_h in range(len(w_matrix[:, 0])):
+                    sum_w_3_root += (norm_w_matrix[neuron_j, neuron_i] * \
+                                     norm_w_matrix[neuron_h, neuron_j] * \
+                                     norm_w_matrix[neuron_i, neuron_h])**(1/3)
+            # clustering coeff
+            clustering_coeff.append(
+                2/(degree[-1] * (degree[-1] - 1)) * (sum_w_3_root))
+    clustering_coeff_mean = np.mean(clustering_coeff)
+    return clustering_coeff, clustering_coeff_mean
