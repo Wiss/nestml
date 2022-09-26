@@ -152,23 +152,29 @@ if __name__ == '__main__':
 
     ## Matrices
     # get and record init weight maxtrices
-    w_matrix_init = get_weight_matrix(pop=pop_dict,
-                                      weights=weights_init)
+    w_matrix_init, full_w_matrix_init = get_weight_matrix(
+                                                pop=pop_dict,
+                                                weights=weights_init,
+                                                w_abs=general['w_matrix_abs'])
     # get and record init weight maxtrices
-    w_matrix_fin = get_weight_matrix(pop=pop_dict,
-                                     weights=weights_fin)
+    w_matrix_fin, full_w_matrix_fin = get_weight_matrix(
+                                                pop=pop_dict,
+                                                weights=weights_fin,
+                                                w_abs=general['w_matrix_abs'])
     # plot w_matrices
     # for every 'matrix type' save it inm the <matrices> dict with
     # <type>_matrix_<when>
     # <type> could be: weight, adjacency
     # <when> could be: init and fin
     adj_threshold = general['adj_threshold']
-    adj_matrix_init = get_adjacency_matrix(
-                           weight_matrix=w_matrix_init,
-                           threshold=adj_threshold)
-    adj_matrix_fin = get_adjacency_matrix(
-                                 weight_matrix=w_matrix_fin,
-                                 threshold=adj_threshold)
+    adj_matrix_init, full_adj_matrix_init = get_adjacency_matrix(
+                                        weight_matrix=w_matrix_init,
+                                        full_weight_matrix=full_w_matrix_init,
+                                        threshold=adj_threshold)
+    adj_matrix_fin, full_adj_matrix_fin = get_adjacency_matrix(
+                                        weight_matrix=w_matrix_fin,
+                                        full_weight_matrix=full_w_matrix_fin,
+                                        threshold=adj_threshold)
     matrices = {'weight_matrix_init': w_matrix_init,
                 'weight_matrix_fin': w_matrix_fin,
                 'adjacency_matrix_init': adj_matrix_init,
@@ -184,9 +190,19 @@ if __name__ == '__main__':
         title = matrix_name + ' ' + matrix_str
         logger.info('ploting %s figure', title)
         create_matrices_figs(matrix=matrix_v,
-                                   output_path=PATH_TO_FIGS,
-                                   fig_name=matrix_k,
-                                   title=title)
+                             output_path=PATH_TO_FIGS,
+                             fig_name=matrix_k,
+                             title=title)
+    full_matrices = {'weight_matrix_full_init': full_w_matrix_init,
+                     'weight_matrix_full_fin': full_w_matrix_fin,
+                     'adjacency_matrix_full_init': full_adj_matrix_init,
+                     'adjacency_matrix_full_fin': full_adj_matrix_fin
+                     }
+    for f_matrix_k, f_matrix_v in full_matrices.items():
+        create_full_matrix_figs(matrix=f_matrix_v,
+                                output_path=PATH_TO_FIGS,
+                                fig_name=f_matrix_k,
+                                title=f_matrix_k)
 
     # plot histrograms
     # for every 'measurement type' save it in the <measurement> dict with
@@ -197,14 +213,6 @@ if __name__ == '__main__':
     strength_in = {}
     degree_ex = {}
     degree_in = {}
-    #measurement_list = [strenght_ex, strenght_in, degree_ex, degree_in]
-    #matrix_list = [w_matrix_init, stre, degree_ex, degree_in]
-   # for measurement, matrix in zip(measurement_list, matrix_lisi):
-   #     for pop_k in ['ex', 'in']
-   #         for when_k in ['init', 'fin']:
-   #             measurement[when_k] = get_graph_measurement(
-    #                                            matrices=w_matrix_init,
-    #                                           pop='ex')
     strength_ex['init'] = get_graph_measurement(matrices=w_matrix_init,
                                                 pop='ex')
     strength_ex['fin'] = get_graph_measurement(matrices=w_matrix_fin,
@@ -249,9 +257,8 @@ if __name__ == '__main__':
                                   fig_name=measure_k,
                                   title=title,
                                   cumulative=False)
-        if measure == 'degree':
-            # only for degree bc strenght has negative values
-            create_graph_measure_figs(measure=measure_v,
+        # create plots with cumulative distribution
+        create_graph_measure_figs(measure=measure_v,
                                     output_path=PATH_TO_FIGS,
                                     fig_name=measure_k,
                                     title=title,
