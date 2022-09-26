@@ -1,5 +1,8 @@
 import numpy as np
 
+from src.logging.logging import logger
+logger = logger.getChild(__name__)
+
 def instantaneous_phase(pop, activity: dict, final_t: float,
                       resolution: float, **kargs) -> dict:
     """
@@ -252,7 +255,7 @@ def pop_firing_rate(pop_dict: dict, spikes_events: dict, time_window: int,
         firing_rate[key]['rates'] *= 1000 / time_window / firing_rate[key]['n_neurons']
     return firing_rate
 
-def get_weight_matrix(pop: dict, weights: dict) -> dict:
+def get_weight_matrix(pop: dict, weights: dict, **kargs) -> (dict, np.array):
     """
     return weight matrix with
 
