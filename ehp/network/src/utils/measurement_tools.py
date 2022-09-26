@@ -328,11 +328,23 @@ def get_adjacency_matrix(weight_matrix: dict, threshold: float,
                 print(weight_matrix[w_k])
                 print('adj_matrix')
                 print(adj_matrix[w_k])
-    return adj_matrix
+    full_adj_matrix = (abs(full_weight_matrix) > threshold) * 1
+    return adj_matrix, full_adj_matrix
+
 
 def get_graph_measurement(matrices: dict, pop: str, **kargs) -> dict:
     """
     given matrix (weight, adjacency) return strengh or degree, respectively
+    Reference:
+    Chapter 4 - Node Degree and Strength,
+    Editor(s): Alex Fornito, Andrew Zalesky, Edward T. Bullmore,
+    Fundamentals of Brain Network Analysis,
+    Academic Press,
+    2016,
+    Pages 115-136,
+    ISBN 9780124079083,
+    https://doi.org/10.1016/B978-0-12-407908-3.00004-2.
+    (https://www.sciencedirect.com/science/article/pii/B9780124079083000042)
 
     Parameters
     ----------
