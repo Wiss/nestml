@@ -155,6 +155,9 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
         ax[1].set_ylabel('ATP (%)', fontsize=fontsize_label,
                          color='darkgreen')
         ax[2].set_ylabel('R', fontsize=fontsize_label)
+        ax[0].grid(axis='x')
+        ax[1].grid(axis='x')
+        ax[2].grid(axis='x')
         # spikes
         ax[0].plot(times, senders, '.', c=color)
         # ATP and firing rate
@@ -218,6 +221,9 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
     ax[2].set_title('Synchronization: Phase coherence',
                     fontsize=fontsize_title)
     ax[-1].set_xlabel('time (ms)', fontsize=fontsize_label)
+    ax[0].grid(axis='x')
+    ax[1].grid(axis='x')
+    ax[2].grid(axis='x')
     for pop, events in spikes_events.items():
         if pop == 'ex':
             color = 'darkred'
