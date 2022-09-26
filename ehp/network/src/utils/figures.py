@@ -359,8 +359,10 @@ def create_graph_measure_figs(measure: dict, output_path: str, **kargs):
         eq_sym = '>'
         kargs['histtype'] = 'step'
         kargs['n_bins'] = 50
+        cum = True
     else:
         eq_sym = '='
+        cum = False
     if kargs['density']:
         y_label = f'P({measuremnt}{eq_sym}{symbol})'
         kargs['rwidth'] = 1
@@ -411,12 +413,12 @@ def create_graph_measure_figs(measure: dict, output_path: str, **kargs):
             ax[1].set_xscale('log')
             ax[1].set_yscale('log')
         # save image
-        save_measurement_fig =f'{output_path}/{kargs["fig_name"]}'
+        save_measurement_fig =f'{output_path}/{kargs["fig_name"]}_cum_{cum}'
         plt.savefig(save_measurement_fig, dpi=500)
+        plt.close(fig)
 
 
-def create_matrices_figs(matrix: dict,
-                             output_path: str, **kargs):
+def create_matrices_figs(matrix: dict, output_path: str, **kargs):
     """
     plot matrices (weight, strengh and degree) for each connection
     between populations
