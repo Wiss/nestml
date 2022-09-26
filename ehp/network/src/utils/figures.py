@@ -85,6 +85,7 @@ def create_weights_figs(weights_events: dict, fig_name: str, output_path: str,
                 ax.legend(fontsize=fontsize_legend)
             save_weights_fig =f'{output_path}/{fig_name}_{key}'
             plt.savefig(save_weights_fig, dpi=500)
+            plt.close(fig)
 
 def create_spikes_figs(pop_dict: dict, spikes_events: dict,
                      multimeter_events: dict, fig_name: str,
@@ -206,6 +207,7 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
         # save image
         save_spikes_s_fig =f'{output_path}/{fig_name}_{pop}_separate'
         plt.savefig(save_spikes_s_fig, dpi=500)
+        plt.close(fig)
 
 
     # all together
@@ -297,6 +299,7 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
     # save image
     save_spikes_j_fig =f'{output_path}/{fig_name}_joint'
     plt.savefig(save_spikes_j_fig, dpi=500)
+    plt.close(fig)
 
 def create_pops_figs(pop: dict, fig_name: str, output_path: str, **kargs):
     # all together
@@ -320,6 +323,7 @@ def create_pops_figs(pop: dict, fig_name: str, output_path: str, **kargs):
     # save image
     save_spikes_j_fig =f'{output_path}/{fig_name}_joint'
     plt.savefig(save_spikes_j_fig, dpi=500)
+    plt.close(fig)
 
 def create_multimeter_figs(multimeter_events: dict, fig_name: str,
                          output_path: str, **kargs):
@@ -489,6 +493,7 @@ def weights_before_after_hist(weights_init: dict, weights_fin: dict,
         # save image
         save_weights_fig =f'{output_path}/{w_k}_before_after_hist'
         plt.savefig(save_weights_fig, dpi=500)
+        plt.close(fig)
 
 
 def delays_hist(weights_init, output_path: str, **kargs):
@@ -524,3 +529,4 @@ def delays_hist(weights_init, output_path: str, **kargs):
         # save image
         save_weights_fig =f'{output_path}/{w_k}_delays_hist'
         plt.savefig(save_weights_fig, dpi=500)
+        plt.close(fig)
