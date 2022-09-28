@@ -173,11 +173,21 @@ def phase_coherence(pop_dict: dict, spikes_events: dict, final_t: float,
                                     neuron_count[pop])
         # average order param is not define for t<first_spike
         # neither for t>last_spike
-        if not all(activity['times']):
+        if len(activity['times']) == 0:
             # The following two lines allow to have a
             # pop_average_order_param[pop] filled with nan values
             first_spike[pop] = max(pop_average_order_param[pop]['times'])
             last_spike[pop] = 0
+        #elif not all(activity['times']):
+        #    # The following two lines allow to have a
+        #    # pop_average_order_param[pop] filled with nan values
+        #    first_spike[pop] = max(pop_average_order_param[pop]['times'])
+        #    last_spike[pop] = 0
+        #if not all(activity['times']) or not activity['times']:
+        #    # The following two lines allow to have a
+        #    # pop_average_order_param[pop] filled with nan values
+        #    first_spike[pop] = max(pop_average_order_param[pop]['times'])
+        #    last_spike[pop] = 0
         else:
             first_spike[pop] = min(activity['times'])
             last_spike[pop] = max(activity['times'])
