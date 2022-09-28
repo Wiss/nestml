@@ -161,6 +161,7 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
                          color='darkgreen')
         ax[2].set_ylabel('R', fontsize=fontsize_label)
         ax[0].grid(axis='x')
+        ax[0].yaxis.set_major_locator(MaxNLocator(integer=True))
         ax[1].grid(axis='x')
         ax[2].grid(axis='x')
         # spikes
@@ -233,6 +234,7 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
                     fontsize=fontsize_title)
     ax[-1].set_xlabel('time (ms)', fontsize=fontsize_label)
     ax[0].grid(axis='x')
+    ax[0].yaxis.set_major_locator(MaxNLocator(integer=True))
     ax[1].grid(axis='x')
     ax[2].grid(axis='x')
     for pop, events in spikes_events.items():
