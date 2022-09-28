@@ -3,12 +3,13 @@ notes: "Energy dependent"
 general:
   record:
     spikes: True
-    weights: False
+    weights: True
     multimeter:
       # define which variable do you want to record (ATP, V_m, etc)
       - ATP
+      #- V_m
   record_rate: 10 # record every x ms. Only for recorded variables
-  simtime: 1500  # ms
+  simtime: 5000  # ms
   resolution: 0.1
   seed: 1
   module: "edlif_psc_alpha_0_module"  # nest module to be loaded
@@ -20,6 +21,10 @@ neurons:
     model: "edlif_psc_alpha_percent0_nestml__with_ed_stdp0_nestml"  # "edlif_psc_alpha_percent"
     params:
       energy_params:
+        # fix atp level?
+        fix_atp:
+          mean: 0  # 1 if you want fixed atp level, zero otherwise
+          std: 0  # This param should **always** be zero
         # Initial condition for ATP
         ATP:
           mean: 100
@@ -66,29 +71,33 @@ neurons:
         # synaptic time constants
         tau_syn_ex:
           mean: 6
-          std: 1
+          std: 0
         tau_syn_in:
           mean: 6
-          std: 1
+          std: 0
         # membrane time constant
         tau_m:
-          mean: 2
-          std: 0.1
+          mean: 10
+          std: 0
         # capacitance
         C_m:
           mean: 250
-          std: 12
+          std: 0
         # refractory period
         t_ref:
           mean: 2
-          std: 0.1
+          std: 0
         I_e:
-          mean: 0  #2000
-          std: 0  #500
+          mean: 350  #2000
+          std: 30  #500
   in:
     model: "edlif_psc_alpha_percent0_nestml__with_ed_stdp0_nestml"  # "edlif_psc_alpha_percent"
     params:
       energy_params:
+        # fix atp level?
+        fix_atp:
+          mean: 0  # 1 if you want fixed atp level, zero otherwise
+          std: 0  # This param should **always** be zero
         # Initial condition for ATP
         ATP:
           mean: 100
@@ -135,33 +144,33 @@ neurons:
         # synaptic time constants
         tau_syn_ex:
           mean: 6
-          std: 1
+          std: 0
         tau_syn_in:
           mean: 6
-          std: 1
+          std: 0
         # membrane time constant
         tau_m:
-          mean: 2
-          std: 0.1
+          mean: 10
+          std: 0
         # capacitance
         C_m:
           mean: 250
-          std: 12
+          std: 0
         # refractory period
         t_ref:
           mean: 2
-          std: 0.1
-        I_e:
-          mean: 0  #2000
           std: 0
+        I_e:
+          mean: 350  #2000
+          std: 30
 #  connecting populations
 connections:
   # excitatory -> excitatory
   ex_ex:
     # connection parameters
     conn_spec:
-      allow_autapses: True # bool
-      allow_multapses: True # bool
+      allow_autapses: False # bool
+      allow_multapses: False # bool
       rule: "pairwise_bernoulli"
       p: 0.8  # 1 == all-to-all
     # synaptic parameters
@@ -173,6 +182,8 @@ connections:
         mu_plus: 0 # weight dependence exponent, depression (real)
         lambda: 0.01  # step size
         Wmax:  # maximum allowed weight (real)
+        eta: 69.4 # 0.05 # if eta=5 => neurons with 80% atp while have max potentiation of lambda/3
+        alpha: 0.5
       # for using default values for synapses instead of distributins,
       # just leave the dictionary value empty
       w:
@@ -187,16 +198,16 @@ connections:
         max: 2.5  # ms # max_axon_length / propagation_velocity (100 mm/ms)
       alpha:  # asymmetry parameter
       # (scales depressing increments as alpha*lambda) (real)
-        dist: "uniform"
-        min: 0.3
-        max: 1.9
-      record: False
+        dist: # "uniform"
+        min:
+        max:
+      record: True
   # excitatory -> inhibitory
   ex_in:
     # connection parameters
     conn_spec:
-      allow_autapses: True # bool
-      allow_multapses: True # bool
+      allow_autapses: False # bool
+      allow_multapses: False # bool
       rule: "pairwise_bernoulli"
       p: 0.8  # 1 == all-to-all
     # synaptic parameters
@@ -225,8 +236,8 @@ connections:
   in_ex:
     # connection parameters
     conn_spec:
-      allow_autapses: True # bool
-      allow_multapses: True # bool
+      allow_autapses: False # bool
+      allow_multapses: False # bool
       rule: "pairwise_bernoulli"
       p: 0.8  # 1 == all-to-all
     # synaptic parameters
@@ -259,8 +270,8 @@ connections:
   in_in:
     # connection parameters
     conn_spec:
-      allow_autapses: True # bool
-      allow_multapses: True # bool
+      allow_autapses: False # bool
+      allow_multapses: False # bool
       rule: "pairwise_bernoulli"
       p: 0.8  # 1 == all-to-all
     # synaptic parameters
@@ -287,11 +298,11 @@ connections:
       record: False
 network_layout:
   energy_dependent: True
-  n_neurons: 200
+  n_neurons: 50
   ex_in_ratio: 0.8  # n_exc = exc_inh_ratio*n_neurons
   positions:
     dist: "uniform"
-    dim: 2 # number of spatial dimensions (2 or 3)
+    dim: 2 # number of spatial dimensions (only 2 its supported now)
     pos_bounds:
       # in mm
       - -0.5
@@ -310,7 +321,7 @@ external_sources:
     # here you can include different generators types with their own params
     generator_general_poisson:
       type: 'poisson_generator'
-      active: True  # activate in the simulation
+      active: False  # activate in the simulation
       params:
         rate: 9000  # mean rate Hz
         start: 1100
@@ -322,7 +333,7 @@ external_sources:
     generator_general_poisson_ac:
       type: 'sinusoidal_poisson_generator'
       # f(t) = max(0, rate + amplitude * sin(2*pi*frequency*t + phase*pi/180))
-      active: True  # activate in the simulation
+      active: False  # activate in the simulation
       params:
         rate: 47000  # mean rate spikes/second
         amplitude: 53810  # Firing rate modulation in spikes/second

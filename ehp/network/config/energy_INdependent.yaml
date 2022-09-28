@@ -8,7 +8,7 @@ general:
       # define which variable do you want to record (ATP, V_m, etc)
       - ATP
   record_rate: 10 # record every x ms. Only for recorded variables
-  simtime: 1500  # ms
+  simtime: 15  # ms
   resolution: 0.1
   seed: 1
   module: "edlif_psc_alpha_0_module"  # nest module to be loaded
