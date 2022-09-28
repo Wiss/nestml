@@ -18,6 +18,7 @@ from src.utils.figures import (create_weights_figs,
                                create_matrices_figs,
                                create_full_matrix_figs,
                                create_graph_measure_figs,
+                               create_cc_vs_incoming_figs,
                                delays_hist,
                                weights_before_after_hist)
 from src.utils.manage_files import (create_folder,
@@ -288,6 +289,28 @@ if __name__ == '__main__':
                                     mean_clustering_coeff_fin)
     print('final mean clustering coefficient',
                                     mean_clustering_coeff_fin)
+
+    # in-degree(strength) vs out-degree(strength) vs clustering coeff
+    create_cc_vs_incoming_figs(clustering_coeff=clustering_coeff_init,
+                               matrix=full_w_matrix_init,
+                               incoming_var='strength',
+                               fig_name='init',
+                               output_path=PATH_TO_FIGS)
+    create_cc_vs_incoming_figs(clustering_coeff=clustering_coeff_init,
+                               matrix=full_adj_matrix_init,
+                               incoming_var='degree',
+                               fig_name='init',
+                               output_path=PATH_TO_FIGS)
+    create_cc_vs_incoming_figs(clustering_coeff=clustering_coeff_fin,
+                               matrix=full_w_matrix_fin,
+                               incoming_var='strength',
+                               fig_name='fin',
+                               output_path=PATH_TO_FIGS)
+    create_cc_vs_incoming_figs(clustering_coeff=clustering_coeff_fin,
+                               matrix=full_adj_matrix_fin,
+                               incoming_var='degree',
+                               fig_name='fin',
+                               output_path=PATH_TO_FIGS)
 
     ## igraph measurements
     ## I can use this package to compute some stuff

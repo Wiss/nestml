@@ -589,12 +589,12 @@ def weights_before_after_hist(weights_init: dict, weights_fin: dict,
 
 def delays_hist(weights_init, output_path: str, **kargs):
     """
-    for each key in weights_init and weight_fin plot weight values histogram
+    for each key in weights_init or and weight_fin plot weight values histogram
 
     Parameters
     ----------
     weights_init:
-        initial weights before simulation
+        initial or final weights
     """
     kargs.setdefault('facecolor', 'steelblue')
     kargs.setdefault('n_bins', 20)
@@ -621,3 +621,146 @@ def delays_hist(weights_init, output_path: str, **kargs):
         save_weights_fig =f'{output_path}/{w_k}_delays_hist'
         plt.savefig(save_weights_fig, dpi=500)
         plt.close(fig)
+
+
+def create_cc_vs_incoming_figs(clustering_coeff: np.array,
+                             matrix: np.array,
+                             incoming_var: str,
+                             output_path: str, **kargs):
+    """
+    Plot clustering coefficient vs incoming strength ot degree
+
+    Parameters
+    ----------
+    matrix:
+        matrix
+    """
+    kargs.setdefault('markersize', 2)
+    kargs.setdefault('markerfacecolor', 'steelblue')
+    kargs.setdefault('edgecolors', 'k')
+    kargs.setdefault('lw', None)
+    kargs.setdefault('cmap', 'gray_r')
+    kargs.setdefault('size', 60)
+    kargs.setdefault('fig_size', (12, 12))
+    #cmap_pos = [0.95, 0.5, 0.05, 0.3]
+    incoming = []
+    outgoing = []
+    both = []
+    for idx, _ in enumerate(clustering_coeff):
+        incoming.append(np.sum(matrix[idx, :]))
+        outgoing.append(np.sum(matrix[:, idx]))
+        both.append(incoming[-1] + outgoing[-1])
+
+    # in vs out histogram
+    fig, ax = plt.subplots(figsize=kargs['fig_size'])
+    ax.set_xlabel('In-'+incoming_var.capitalize(), fontsize=fontsize_label)
+    ax.set_ylabel('Out-'+incoming_var.capitalize(), fontsize=fontsize_label)
+    artist = ax.hexbin(incoming, outgoing, gridsize=20,
+                       cmap='gray_r', edgecolor='white')
+    divider = make_axes_locatable(ax)
+    cmap_pos = divider.append_axes('right', size="5%", pad="5%")
+    cax = fig.add_axes(cmap_pos)
+    cbar = fig.colorbar(artist, cax=cax)
+    ax.spines['right'].set(visible=False)
+    ax.spines['top'].set(visible=False)
+    ax.tick_params(top=False, right=False)
+    #cbar.set_ticks([5, 10, 15])
+    cbar.ax.set_title('Bin Counts', ha='left', x=0)
+    cbar.ax.tick_params(axis='y', color='white', left=True, right=True,
+                        length=5, width=1.5)
+    #cbar.outline.remove()
+    #cbar.outline.set_visible(False)
+    save_in_out_hist_fig =f'{output_path}/in_out_hist_{incoming_var}_{kargs["fig_name"]}'
+    plt.savefig(save_in_out_hist_fig, dpi=500)
+    plt.close(fig)
+
+    # in vs clustering coeff histogram
+    fig, ax = plt.subplots(figsize=kargs['fig_size'])
+    ax.set_xlabel('In-'+incoming_var.capitalize(), fontsize=fontsize_label)
+    ax.set_ylabel('Clustering coeff.', fontsize=fontsize_label)
+    artist = ax.hexbin(incoming, clustering_coeff, gridsize=20,
+                       cmap='gray_r', edgecolor='white')
+    divider = make_axes_locatable(ax)
+    cmap_pos = divider.append_axes('right', size="5%", pad="5%")
+    cax = fig.add_axes(cmap_pos)
+    cbar = fig.colorbar(artist, cax=cax)
+    ax.spines['right'].set(visible=False)
+    ax.spines['top'].set(visible=False)
+    ax.tick_params(top=False, right=False)
+    #cbar.set_ticks([5, 10, 15])
+    cbar.ax.set_title('Bin Counts', ha='left', x=0)
+    cbar.ax.tick_params(axis='y', color='white', left=True, right=True,
+                        length=5, width=1.5)
+    #cbar.outline.remove()
+    #cbar.outline.set_visible(False)
+    save_in_cc_hist_fig =f'{output_path}/in_cc_hist_{incoming_var}_{kargs["fig_name"]}'
+    plt.savefig(save_in_cc_hist_fig, dpi=500)
+    plt.close(fig)
+
+    # out vs cc histogram
+    fig, ax = plt.subplots(figsize=kargs['fig_size'])
+    ax.set_xlabel('Out-'+incoming_var.capitalize(), fontsize=fontsize_label)
+    ax.set_ylabel('Clustering coeff.', fontsize=fontsize_label)
+    artist = ax.hexbin(outgoing, clustering_coeff, gridsize=20,
+                       cmap='gray_r', edgecolor='white')
+    divider = make_axes_locatable(ax)
+    cmap_pos = divider.append_axes('right', size="5%", pad="5%")
+    cax = fig.add_axes(cmap_pos)
+    cbar = fig.colorbar(artist, cax=cax)
+    ax.spines['right'].set(visible=False)
+    ax.spines['top'].set(visible=False)
+    ax.tick_params(top=False, right=False)
+    #cbar.set_ticks([5, 10, 15])
+    cbar.ax.set_title('Bin Counts', ha='left', x=0)
+    cbar.ax.tick_params(axis='y', color='white', left=True, right=True,
+                        length=5, width=1.5)
+    #cbar.outline.remove()
+    #cbar.outline.set_visible(False)
+    save_out_cc_hist_fig =f'{output_path}/out_cc_hist_{incoming_var}_{kargs["fig_name"]}'
+    plt.savefig(save_out_cc_hist_fig, dpi=500)
+    plt.close(fig)
+
+    # both vs cc histogram
+    fig, ax = plt.subplots(figsize=kargs['fig_size'])
+    ax.set_xlabel(incoming_var.capitalize(), fontsize=fontsize_label)
+    ax.set_ylabel('Clustering coeff.', fontsize=fontsize_label)
+    artist = ax.hexbin(both, clustering_coeff, gridsize=20,
+                       cmap='gray_r', edgecolor='white')
+    divider = make_axes_locatable(ax)
+    cmap_pos = divider.append_axes('right', size="5%", pad="5%")
+    cax = fig.add_axes(cmap_pos)
+    cbar = fig.colorbar(artist, cax=cax)
+    ax.spines['right'].set(visible=False)
+    ax.spines['top'].set(visible=False)
+    ax.tick_params(top=False, right=False)
+    #cbar.set_ticks([5, 10, 15])
+    cbar.ax.set_title('Bin Counts', ha='left', x=0)
+    cbar.ax.tick_params(axis='y', color='white', left=True, right=True,
+                        length=5, width=1.5)
+    #cbar.outline.remove()
+    #cbar.outline.set_visible(False)
+    save_both_cc_hist_fig =f'{output_path}/both_cc_hist_{incoming_var}_{kargs["fig_name"]}'
+    plt.savefig(save_both_cc_hist_fig, dpi=500)
+    plt.close(fig)
+
+    # in vs out vs clusterign coeff
+    fig, ax = plt.subplots(figsize=kargs['fig_size'])
+    #fig.suptitle(f'Clustering vs in-{incoming_var}',
+    #             fontsize=fontsize_title)
+    ax.set_ylabel('In-'+incoming_var.capitalize(), fontsize=fontsize_label)
+    ax.set_xlabel('Out-'+incoming_var.capitalize(), fontsize=fontsize_label)
+    points = ax.scatter(incoming, outgoing, c=clustering_coeff,
+                        cmap=kargs['cmap'],
+                        edgecolors=kargs['edgecolors'],
+                        lw=kargs['lw'],
+                        s=kargs['size'])
+    divider = make_axes_locatable(ax)
+    cmap_pos = divider.append_axes('right', size="5%", pad="5%")
+    cax = fig.add_axes(cmap_pos)
+    cbar = fig.colorbar(points, cax=cax)
+    cbar.ax.set_title('Clustering Coeff.', ha='left', x=0)
+    # save image
+    save_cc_vs_in_fig =f'{output_path}/cc_vs_{incoming_var}_{kargs["fig_name"]}'
+    plt.savefig(save_cc_vs_in_fig, dpi=500)
+    plt.close(fig)
+
