@@ -2,11 +2,16 @@
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 import matplotlib.gridspec as gridspec
+from matplotlib.ticker import MaxNLocator
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1 import ImageGrid
 import numpy as np
 
+from src.logging.logging import logger
 import src.utils.measurement_tools as tools
+
+
+logger = logger.getChild(__name__)
 
 # parameters
 alpha = 0.6
@@ -182,6 +187,8 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
                            label=pop + ' sd',
                            alpha=kargs['alpha'])
         ax[1].legend(fontsize=fontsize_legend)
+        logger.info('%s population ATP average through simulation %s',
+                    pop, np.mean(atp_mean[pop]))
         # second axes for firing rate
         ax_1_2 = ax[1].twinx()
         ax_1_2.plot(firing_rate['times'],
@@ -193,6 +200,8 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
         ax_1_2.set_ylabel('Firing rate (Hz)',
                           fontsize=fontsize_label,
                           color='darkorange')
+        logger.info('%s population Firing rate average through simulation %s Hz',
+                    pop, np.mean(firing_rate[pop]['rates']))
         #ax_1_2.legend(fontsize=fontsize_legend)
         # phase coherence
         ax[2].set_ylabel('R',
@@ -207,6 +216,8 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
                             i_phase[pop][sender],
                             c=color, label=pop + 'inst_phase',
                             lw=kargs['mean_lw'], alpha=alpha)
+        logger.info('%s population phase coherence average through simulation %s',
+                    pop, np.nanmean(phase_coherence[pop]['o_param']))
         # save image
         save_spikes_s_fig =f'{output_path}/{fig_name}_{pop}_separate'
         plt.savefig(save_spikes_s_fig, dpi=500)
@@ -278,6 +289,8 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
                         color='darkgreen',
                         label='sd',
                         alpha=kargs['alpha'])
+    logger.info('all populations ATP average through simulation %s',
+                np.mean(atp_mean['all']))
     # second axes for firing rate
     ax_1_2 = ax[1].twinx()
     ax_1_2.plot(firing_rate['times'],
@@ -289,11 +302,15 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
     ax_1_2.set_ylabel('Firing rate (Hz)',
                       fontsize=fontsize_label,
                       color='darkorange')
+    logger.info('all population Firing rate average through simulation %s Hz',
+                np.mean(firing_rate['all']['rates']))
     #ax_1_2.legend(fontsize=fontsize_legend)
     # phase coherence
     ax[2].plot(phase_coherence['all']['times'],
                phase_coherence['all']['o_param'].reshape(-1),
                c='darkgrey', lw=kargs['mean_lw'])  # , alpha=alpha)
+    logger.info('all population phase coherence average through simulation %s',
+                np.nanmean(phase_coherence['all']['o_param']))
 
     ax[0].set_ylabel('Neuron ID', fontsize=fontsize_label)
     ax[0].legend(fontsize=fontsize_legend)
