@@ -48,7 +48,7 @@ neuron edlif_psc_alpha_percent:
     
     # ODEs
     V_abs' = -V_abs / tau_m + (I_syn + I_e + I_stim) / C_m 
-    ATP' = (ATP_s - ATP_c) * o_t 
+    ATP' = (ATP_s - ATP_c) * o_t * (1 - fix_atp)
   end
 
   parameters:
@@ -80,6 +80,7 @@ neuron edlif_psc_alpha_percent:
     gamma real = 16                # sensitivity to energy imbalance
     w_max real = 1000
     w_min real = 1000
+    fix_atp real = 0                     # if 1 => atp is fixed, if 0 => dynamic atp
   end
 
   internals:

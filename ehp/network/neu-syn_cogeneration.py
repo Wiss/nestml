@@ -103,6 +103,9 @@ def ed_stdp_model_as_str():
         mu_minus real = 0
         Wmax real = 100.
         Wmin real = 0.
+        # energy parameters
+        eta real = 5  # syanpse sensitivity to energy imbalance
+        # if eta=5 => neurons with 80% atp while have max potentiation of lambda/3
     end
 
     equations:
@@ -125,8 +128,9 @@ def ed_stdp_model_as_str():
     onReceive(post_spikes):
         # potentiate synapse
         ATP real = post_ATP/100
-        energy_factor_ real = (post_ATP/100)**2
-        # exp((1 - post_ATP/100)**2/sigma_e)
+        #energy_factor_ real = (post_ATP/100)**2
+        exponent real = eta * (1 - ATP)
+        energy_factor_ real = exp(-exponent)
         w_ real = Wmax * (w / Wmax + (energy_factor_ * lambda * (1.0 - (w / Wmax)) ** mu_plus * pre_trace))
         w = min(Wmax, w_)
     end
