@@ -310,6 +310,13 @@ if __name__ == '__main__':
    # print(g_adj_init.outdegree())
    # g_adj_fin = ig.Graph.Adjacency(full_adj_matrix_fin)
 
+    for measurement in general['record']['multimeter']:
+        create_multimeter_figs(multimeter_events=multimeter_events,
+                            measurement=measurement,
+                            fig_name=measurement,
+                            output_path=PATH_TO_FIGS,
+                            simtime=general['simtime'],
+                            multimeter_record_rate=general['record_rate'])
     # save logger into experiment folder
     subprocess.run(['cp', 'src/last_experiment.log', f'{PATH_TO_OUTPUT}'])
 
