@@ -191,8 +191,8 @@ def init_population(position_dist: str, neuron_model: str, n_neurons: int,
             logger.debug("seting energy param %s", param)
             logger.debug("with mean: %s and std: %s", param_v['mean'],
                          param_v['std'])
-            pop.set({param: [param_v['mean'] +
-                             param_v['std']*np.random.rand() for x in range(len(pop))]})
+            pop.set({param: [np.random.normal(param_v['mean'],
+                             param_v['std']) for x in range(len(pop))]})
             logger.debug(pop.get(param))
 
     # General params for all neuron types
@@ -200,8 +200,8 @@ def init_population(position_dist: str, neuron_model: str, n_neurons: int,
         logger.debug("setting general param %s", param)
         logger.debug("with mean: %s and std: %s", param_v['mean'],
                      param_v['std'])
-        pop.set({param: [param_v['mean'] +
-                         param_v['std']*np.random.rand() for x in range(len(pop))]})
+        pop.set({param: [np.random.normal(param_v['mean'],
+                         param_v['std']) for x in range(len(pop))]})
         logger.debug(pop.get(param))
     return pop
 
