@@ -302,26 +302,40 @@ if __name__ == '__main__':
                                     mean_clustering_coeff_fin)
 
     # in-degree(strength) vs out-degree(strength) vs clustering coeff
-    create_cc_vs_incoming_figs(clustering_coeff=clustering_coeff_init,
-                               matrix=full_w_matrix_init,
-                               incoming_var='strength',
-                               fig_name='init',
-                               output_path=PATH_TO_FIGS)
-    create_cc_vs_incoming_figs(clustering_coeff=clustering_coeff_init,
-                               matrix=full_adj_matrix_init,
-                               incoming_var='degree',
-                               fig_name='init',
-                               output_path=PATH_TO_FIGS)
-    create_cc_vs_incoming_figs(clustering_coeff=clustering_coeff_fin,
-                               matrix=full_w_matrix_fin,
-                               incoming_var='strength',
-                               fig_name='fin',
-                               output_path=PATH_TO_FIGS)
-    create_cc_vs_incoming_figs(clustering_coeff=clustering_coeff_fin,
-                               matrix=full_adj_matrix_fin,
-                               incoming_var='degree',
-                               fig_name='fin',
-                               output_path=PATH_TO_FIGS)
+    incoming_clustering_dict = {'1':
+        {'name': 'strenght_init',
+         'cc': clustering_coeff_init,
+         'matrix': full_w_matrix_init},
+                                '2':
+        {'name': 'degree_init',
+         'cc': clustering_coeff_init,
+         'matrix': full_adj_matrix_init},
+                                '3':
+        {'name': 'strenght_fin',
+         'cc': clustering_coeff_fin,
+         'matrix': full_w_matrix_fin},
+                                '4':
+        {'name': 'degree_fin',
+         'cc': clustering_coeff_fin,
+         'matrix': full_adj_matrix_fin}
+                                }
+    for key, value in incoming_clustering_dict.items():
+        for n in range(2):
+            if n == 0:
+                pop = 'all'
+                pop_length = len(pop_dict['ex']) + len(pop_dict['in'])
+            else:
+                pop = 'ex'
+                pop_length = len(pop_dict['ex'])
+            incoming_var = value['name'].split('_')[0]
+            when = value['name'].split('_')[-1]
+            create_cc_vs_incoming_figs(clustering_coeff=value['cc'],
+                                       matrix=value['matrix'],
+                                       incoming_var=incoming_var,
+                                       population=pop,
+                                       pop_length=pop_length,
+                                       fig_name= when + '_' + pop,
+                                       output_path=PATH_TO_FIGS)
 
     ## igraph measurements
     ## I can use this package to compute some stuff

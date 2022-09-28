@@ -626,6 +626,8 @@ def delays_hist(weights_init, output_path: str, **kargs):
 def create_cc_vs_incoming_figs(clustering_coeff: np.array,
                              matrix: np.array,
                              incoming_var: str,
+                             population: str,
+                             pop_length: int,
                              output_path: str, **kargs):
     """
     Plot clustering coefficient vs incoming strength ot degree
@@ -646,6 +648,10 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
     incoming = []
     outgoing = []
     both = []
+    clustering_coeff = clustering_coeff[0: pop_length]
+    matrix = matrix[0: pop_length, 0:pop_length]
+    if population not in ['all', 'ex']:
+        raise ValueError("only supported for 'all' or 'ex' populations")
     for idx, _ in enumerate(clustering_coeff):
         incoming.append(np.sum(matrix[idx, :]))
         outgoing.append(np.sum(matrix[:, idx]))
@@ -653,6 +659,7 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
 
     # in vs out histogram
     fig, ax = plt.subplots(figsize=kargs['fig_size'])
+    #fig.suptitle(population, fontsize=fontsize_title)
     ax.set_xlabel('In-'+incoming_var.capitalize(), fontsize=fontsize_label)
     ax.set_ylabel('Out-'+incoming_var.capitalize(), fontsize=fontsize_label)
     artist = ax.hexbin(incoming, outgoing, gridsize=20,
