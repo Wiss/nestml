@@ -49,15 +49,26 @@ if __name__ == '__main__':
         external_sources = load_config(config_path)
 
     ## folder for results
+    config_file_name = config_path.split('/')[-1].split('.')[0]
     g_m_ex = neurons['ex']['params']['energy_params']['gamma']['mean']
+    g_m_ex = str(g_m_ex).replace('.', '_')
     g_s_ex = neurons['ex']['params']['energy_params']['gamma']['std']
+    g_s_ex = str(g_s_ex).replace('.', '_')
     g_m_in = neurons['in']['params']['energy_params']['gamma']['mean']
+    g_m_in = str(g_m_in).replace('.', '_')
     g_s_in = neurons['in']['params']['energy_params']['gamma']['std']
+    g_s_ex = str(g_m_in).replace('.', '_')
+    etaexex = connections['ex_ex']['syn_spec']['params']['eta']
+    etaexex = str(etaexex).replace('.', '_')
+    aexex = connections['ex_ex']['syn_spec']['params']['alpha']
+    aexex = str(aexex).replace('.', '_')
     PATH_TO_OUTPUT = os.path.join(
                     'results',
-                    f"ed_{network_layout['energy_dependent']}_" \
-                    f"gex_m_{g_m_ex}_s_{g_s_ex}_" \
-                    f"gin_m_{g_m_in}_s_{g_s_in}",
+                    config_file_name,
+                    'gex_' + g_m_ex + \
+                    '_gin_m_' + g_m_in + \
+                    '_etaexex_' + etaexex + \
+                    '_aexex_' + aexex,
                     time.strftime("%Y_%m_%d_%H%M%S")+f"_seed_{general['seed']}")
     if general['record']['spikes'] or general['record']['weights']:
         create_folder(PATH_TO_OUTPUT)
