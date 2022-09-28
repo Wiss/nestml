@@ -331,9 +331,48 @@ def create_pops_figs(pop: dict, fig_name: str, output_path: str, **kargs):
     plt.savefig(save_spikes_j_fig, dpi=500)
     plt.close(fig)
 
-def create_multimeter_figs(multimeter_events: dict, fig_name: str,
-                         output_path: str, **kargs):
-    pass
+def create_multimeter_figs(multimeter_events: dict, measurement: str,
+                         fig_name: str, output_path: str, **kargs):
+    final_t = kargs['simtime']
+    #resolution = kargs['resolution']
+    mult_time = np.arange(start=kargs['multimeter_record_rate'], stop=final_t,
+                          step=kargs['multimeter_record_rate'])
+    for pop in multimeter_events:
+        if pop == 'ex':
+            p = 'excitatory'
+        elif pop == 'in':
+            p = 'inhibitory'
+        measure_per_sender = {}
+        fig, ax = plt.subplots(1, figsize=fig_size)
+        ax.set_title(measurement + ' in ' + p + ' population',
+                     fontsize=fontsize_title)
+        ax.set_xlabel('time (ms)', fontsize=fontsize_label)
+        ax.set_ylabel(measurement, fontsize=fontsize_label)
+        ax.grid(axis='x')
+        for sender, measure in zip(multimeter_events[pop]['senders'],
+                            multimeter_events[pop][measurement]):
+            measure_per_sender.setdefault(sender, []).append(measure)
+        for sender in set(multimeter_events[pop]['senders']):
+            ax.plot(mult_time,
+                    measure_per_sender[sender],
+                    #c=f'C{n}',
+                    alpha=0.5,
+                    label=sender)
+        #measure_stck[pop] = [np.array(measure_s) for measure_s
+        #                    in measure_per_sender.values()]
+        #measure_stack[pop] = np.stack(measure_stck[pop])
+        #measure_mean[pop] = np.mean(measure_stack[pop], axis=0)
+        #measure_std[pop] = np.std(measure_stack[pop], axis=0)
+        #ax[1].plot(mult_time,
+        #           measure_per_sender[pop],
+        #           c='darkgreen',
+        #           lw=kargs['mean_lw'],
+        #           label=pop + ' mean')
+        ax.legend(fontsize=fontsize_legend)
+        # save image
+        save_measurement_fig =f'{output_path}/{fig_name}_{pop}'
+        plt.savefig(save_measurement_fig, dpi=500)
+        plt.close(fig)
 
 def create_graph_measure_figs(measure: dict, output_path: str, **kargs):
     """
