@@ -66,7 +66,7 @@ if __name__ == '__main__':
                     'results',
                     config_file_name,
                     'gex_' + g_m_ex + \
-                    '_gin_m_' + g_m_in + \
+                    '_gin_' + g_m_in + \
                     '_etaexex_' + etaexex + \
                     '_aexex_' + aexex,
                     time.strftime("%Y_%m_%d_%H%M%S")+f"_seed_{general['seed']}")
