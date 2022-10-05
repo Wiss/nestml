@@ -21,6 +21,8 @@ fontsize_legend = 9
 linewidth = 2
 pointsize = 20
 fig_size = (12, 12)
+dpi = 144
+dpi_w_matrices = 3*144
 
 
 def create_weights_figs(weights_events: dict, fig_name: str, output_path: str,
@@ -89,7 +91,7 @@ def create_weights_figs(weights_events: dict, fig_name: str, output_path: str,
             if kargs['legend']:
                 ax.legend(fontsize=fontsize_legend)
             save_weights_fig =f'{output_path}/{fig_name}_{key}'
-            plt.savefig(save_weights_fig, dpi=500)
+            plt.savefig(save_weights_fig, dpi=dpi)
             plt.close(fig)
 
 def create_spikes_figs(pop_dict: dict, spikes_events: dict,
@@ -221,7 +223,7 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
                     pop, np.nanmean(phase_coherence[pop]['o_param']))
         # save image
         save_spikes_s_fig =f'{output_path}/{fig_name}_{pop}_separate'
-        plt.savefig(save_spikes_s_fig, dpi=500)
+        plt.savefig(save_spikes_s_fig, dpi=dpi)
         plt.close(fig)
 
 
@@ -323,7 +325,7 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
     #ax[2].legend(fontsize=fontsize_legend)
     # save image
     save_spikes_j_fig =f'{output_path}/{fig_name}_joint'
-    plt.savefig(save_spikes_j_fig, dpi=500)
+    plt.savefig(save_spikes_j_fig, dpi=dpi)
     plt.close(fig)
 
 def create_pops_figs(pop: dict, fig_name: str, output_path: str, **kargs):
@@ -347,7 +349,7 @@ def create_pops_figs(pop: dict, fig_name: str, output_path: str, **kargs):
     ax.legend(fontsize=fontsize_legend)
     # save image
     save_spikes_j_fig =f'{output_path}/{fig_name}_joint'
-    plt.savefig(save_spikes_j_fig, dpi=500)
+    plt.savefig(save_spikes_j_fig, dpi=dpi)
     plt.close(fig)
 
 def create_multimeter_figs(multimeter_events: dict, measurement: str,
@@ -390,7 +392,7 @@ def create_multimeter_figs(multimeter_events: dict, measurement: str,
         ax.legend(fontsize=fontsize_legend)
         # save image
         save_measurement_fig =f'{output_path}/{fig_name}_{pop}'
-        plt.savefig(save_measurement_fig, dpi=500)
+        plt.savefig(save_measurement_fig, dpi=dpi)
         plt.close(fig)
 
 def create_graph_measure_figs(measure: dict, output_path: str, **kargs):
@@ -478,13 +480,13 @@ def create_graph_measure_figs(measure: dict, output_path: str, **kargs):
             ax[1].set_yscale('log')
         # save image
         save_measurement_fig =f'{output_path}/{kargs["fig_name"]}_cum_{cum}'
-        plt.savefig(save_measurement_fig, dpi=500)
+        plt.savefig(save_measurement_fig, dpi=dpi)
         plt.close(fig)
 
 
 def create_matrices_figs(matrix: dict, output_path: str, **kargs):
     """
-    plot matrices (weight, strengh and degree) for each connection
+    plot matrices for each connection
     between populations
     """
     kargs.setdefault('pad', '5%')
@@ -514,7 +516,7 @@ def create_matrices_figs(matrix: dict, output_path: str, **kargs):
 
     # save image
     save_weights_m_fig =f'{output_path}/{kargs["fig_name"]}'
-    plt.savefig(save_weights_m_fig, pad_inches=0, dpi=500)
+    plt.savefig(save_weights_m_fig, pad_inches=0, dpi=dpi_w_matrices)
     plt.close(fig)
 
 
@@ -539,7 +541,7 @@ def create_full_matrix_figs(matrix: np.array, output_path: str, **kargs):
 
     # save image
     save_weights_f_m_fig =f'{output_path}/{kargs["fig_name"]}'
-    plt.savefig(save_weights_f_m_fig, dpi=500)
+    plt.savefig(save_weights_f_m_fig, dpi=dpi_w_matrices)
     plt.close(fig)
 
 def weights_before_after_hist(weights_init: dict, weights_fin: dict,
@@ -583,7 +585,7 @@ def weights_before_after_hist(weights_init: dict, weights_fin: dict,
                    rwidth=kargs['rwidth'])
         # save image
         save_weights_fig =f'{output_path}/{w_k}_before_after_hist'
-        plt.savefig(save_weights_fig, dpi=500)
+        plt.savefig(save_weights_fig, dpi=dpi)
         plt.close(fig)
 
 
@@ -619,7 +621,7 @@ def delays_hist(weights_init, output_path: str, **kargs):
                    rwidth=kargs['rwidth'])
         # save image
         save_weights_fig =f'{output_path}/{w_k}_delays_hist'
-        plt.savefig(save_weights_fig, dpi=500)
+        plt.savefig(save_weights_fig, dpi=dpi)
         plt.close(fig)
 
 
@@ -679,7 +681,7 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
     #cbar.outline.remove()
     #cbar.outline.set_visible(False)
     save_in_out_hist_fig =f'{output_path}/in_out_hist_{incoming_var}_{kargs["fig_name"]}'
-    plt.savefig(save_in_out_hist_fig, dpi=500)
+    plt.savefig(save_in_out_hist_fig, dpi=dpi)
     plt.close(fig)
 
     # in vs clustering coeff histogram
@@ -702,7 +704,7 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
     #cbar.outline.remove()
     #cbar.outline.set_visible(False)
     save_in_cc_hist_fig =f'{output_path}/in_cc_hist_{incoming_var}_{kargs["fig_name"]}'
-    plt.savefig(save_in_cc_hist_fig, dpi=500)
+    plt.savefig(save_in_cc_hist_fig, dpi=dpi)
     plt.close(fig)
 
     # out vs cc histogram
@@ -725,7 +727,7 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
     #cbar.outline.remove()
     #cbar.outline.set_visible(False)
     save_out_cc_hist_fig =f'{output_path}/out_cc_hist_{incoming_var}_{kargs["fig_name"]}'
-    plt.savefig(save_out_cc_hist_fig, dpi=500)
+    plt.savefig(save_out_cc_hist_fig, dpi=dpi)
     plt.close(fig)
 
     # both vs cc histogram
@@ -748,7 +750,7 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
     #cbar.outline.remove()
     #cbar.outline.set_visible(False)
     save_both_cc_hist_fig =f'{output_path}/both_cc_hist_{incoming_var}_{kargs["fig_name"]}'
-    plt.savefig(save_both_cc_hist_fig, dpi=500)
+    plt.savefig(save_both_cc_hist_fig, dpi=dpi)
     plt.close(fig)
 
     # in vs out vs clusterign coeff
@@ -769,6 +771,6 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
     cbar.ax.set_title('Clustering Coeff.', ha='left', x=0)
     # save image
     save_cc_vs_in_fig =f'{output_path}/cc_vs_{incoming_var}_{kargs["fig_name"]}'
-    plt.savefig(save_cc_vs_in_fig, dpi=500)
+    plt.savefig(save_cc_vs_in_fig, dpi=dpi)
     plt.close(fig)
 
