@@ -640,6 +640,7 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
     kargs.setdefault('markersize', 2)
     kargs.setdefault('markerfacecolor', 'steelblue')
     kargs.setdefault('edgecolors', 'k')
+    kargs.setdefault('edgecolors_hex', 'whitesmoke')
     kargs.setdefault('lw', None)
     kargs.setdefault('cmap', 'gray_r')
     kargs.setdefault('size', 60)
@@ -663,7 +664,7 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
     ax.set_xlabel('In-'+incoming_var.capitalize(), fontsize=fontsize_label)
     ax.set_ylabel('Out-'+incoming_var.capitalize(), fontsize=fontsize_label)
     artist = ax.hexbin(incoming, outgoing, gridsize=20,
-                       cmap='gray_r', edgecolor='white')
+                       cmap='gray_r', edgecolor=kargs['edgecolors_hex'])
     divider = make_axes_locatable(ax)
     cmap_pos = divider.append_axes('right', size="5%", pad="5%")
     cax = fig.add_axes(cmap_pos)
@@ -686,7 +687,7 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
     ax.set_xlabel('In-'+incoming_var.capitalize(), fontsize=fontsize_label)
     ax.set_ylabel('Clustering coeff.', fontsize=fontsize_label)
     artist = ax.hexbin(incoming, clustering_coeff, gridsize=20,
-                       cmap='gray_r', edgecolor='white')
+                       cmap='gray_r', edgecolor=kargs['edgecolors_hex'])
     divider = make_axes_locatable(ax)
     cmap_pos = divider.append_axes('right', size="5%", pad="5%")
     cax = fig.add_axes(cmap_pos)
@@ -709,7 +710,7 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
     ax.set_xlabel('Out-'+incoming_var.capitalize(), fontsize=fontsize_label)
     ax.set_ylabel('Clustering coeff.', fontsize=fontsize_label)
     artist = ax.hexbin(outgoing, clustering_coeff, gridsize=20,
-                       cmap='gray_r', edgecolor='white')
+                       cmap='gray_r', edgecolor=kargs['edgecolors_hex'])
     divider = make_axes_locatable(ax)
     cmap_pos = divider.append_axes('right', size="5%", pad="5%")
     cax = fig.add_axes(cmap_pos)
@@ -732,7 +733,7 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
     ax.set_xlabel(incoming_var.capitalize(), fontsize=fontsize_label)
     ax.set_ylabel('Clustering coeff.', fontsize=fontsize_label)
     artist = ax.hexbin(both, clustering_coeff, gridsize=20,
-                       cmap='gray_r', edgecolor='white')
+                       cmap='gray_r', edgecolor=kargs['edgecolors_hex'])
     divider = make_axes_locatable(ax)
     cmap_pos = divider.append_axes('right', size="5%", pad="5%")
     cax = fig.add_axes(cmap_pos)
