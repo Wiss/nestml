@@ -14,7 +14,8 @@ from src.utils.measurement_tools import (get_weight_matrix,
                                          get_adjacency_matrix,
                                          get_graph_measurement,
                                          get_clustering_coeff,
-                                         get_mean_energy_per_neuron)
+                                         get_mean_energy_per_neuron,
+                                         energy_fix_point)
 
 from src.utils.figures import (create_weights_figs,
                                create_spikes_figs,
@@ -37,6 +38,8 @@ if __name__ == '__main__':
             relative to results\ folder")
     args = parser.parse_args()
     config_path = args.path
+    # count time
+    start_sim = time.time()
 
     PATH_TO_CONFIG = os.path.join(
                     'results',
@@ -89,14 +92,18 @@ if __name__ == '__main__':
     assert all(degree_ex['init']['in'] == get_graph_measurement(matrices=adj_matrix_init,
                                                                pop='ex')['in'])
 
+    # choose simulation subsection
+    init_time = 400
+    fin_time = 3000
+
     pops_figs = 0
-    spikes_figs = 0
+    spikes_figs = 1
     matrices_figs = 0
     full_matrix_figs = 0
     graph_measure_figs = 0
     delays_hist_figs = 0
-    multimeter_figs = 0
-    cc_vs_incoming_figs = 1
+    multimeter_figs = 1
+    cc_vs_incoming_figs = 0
 
     # generate plots
     # position plots
@@ -118,7 +125,11 @@ if __name__ == '__main__':
                         resolution=general['resolution'],
                         n_neurons=network_layout['n_neurons'],
                         ex_in_ratio=network_layout['ex_in_ratio'],
-                        time_window=general['firing_rate_window'])
+                        time_window=general['firing_rate_window'],
+                        init_time=init_time,
+                        fin_time=fin_time,
+                        record_rate=general['record_rate']
+                        )
 
     ## Matrices
     # plot w_matrices
@@ -289,4 +300,13 @@ if __name__ == '__main__':
                                 fig_name=measurement,
                                 output_path=PATH_TO_FIGS,
                                 simtime=general['simtime'],
+                                init_time=init_time,
+                                fin_time=fin_time,
                                 multimeter_record_rate=general['record_rate'])
+
+    end_all = time.time()
+    plots_tot_time = -(start_sim - end_all)
+    print('##########################################')
+    print('## COMPUTE TIMES #########################')
+    print('##########################################')
+    print(f'plots takes: {plots_tot_time} sec. -> {plots_tot_time/60} min.')

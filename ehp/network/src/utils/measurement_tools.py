@@ -584,3 +584,25 @@ def get_mean_energy_per_neuron(ATP: dict):
         for sender in set(ATP[pop]['senders']):
             mean_atp_per_neuron.append(np.mean(atp_per_sender[sender]))
     return mean_atp_per_neuron
+
+def energy_fix_point(eta: float, alpha: float = 0.5, a_h: float = 100) -> float:
+    """
+    This is the energy level at which max potentiation and min depression
+    are equall
+
+    Parameters:
+    eta:
+        synaptic sensitivity parameter
+    alpha:
+        depression term for scalation
+    a_h:
+        homeostatic energy level
+
+    Returns:
+    --------
+    expected_a_level
+    """
+    if eta == 0:
+        return 0
+    else:
+        return np.log(alpha)/eta*a_h + a_h

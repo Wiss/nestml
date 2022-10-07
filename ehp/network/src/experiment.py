@@ -32,7 +32,8 @@ from src.utils.measurement_tools import (get_weight_matrix,
                                          get_adjacency_matrix,
                                          get_graph_measurement,
                                          get_clustering_coeff,
-                                         get_mean_energy_per_neuron)
+                                         get_mean_energy_per_neuron,
+                                         energy_fix_point)
 
 from src.logging.logging import logger
 
@@ -47,6 +48,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     config_path = args.file
 
+    # count time
+    start = time.time()
+
     ## CONFIG
     general, neurons, connections, network_layout, \
         external_sources = load_config(config_path)
@@ -54,24 +58,24 @@ if __name__ == '__main__':
     ## folder for results
     config_file_name = config_path.split('/')[-1].split('.')[0]
     g_m_ex = neurons['ex']['params']['energy_params']['gamma']['mean']
-    g_m_ex = str(g_m_ex).replace('.', '_')
+    g_m_ex_s = str(g_m_ex).replace('.', '_')
     g_s_ex = neurons['ex']['params']['energy_params']['gamma']['std']
-    g_s_ex = str(g_s_ex).replace('.', '_')
+    g_s_ex_s = str(g_s_ex).replace('.', '_')
     g_m_in = neurons['in']['params']['energy_params']['gamma']['mean']
-    g_m_in = str(g_m_in).replace('.', '_')
+    g_m_in_s = str(g_m_in).replace('.', '_')
     g_s_in = neurons['in']['params']['energy_params']['gamma']['std']
-    g_s_ex = str(g_m_in).replace('.', '_')
+    g_s_ex_s = str(g_m_in).replace('.', '_')
     etaexex = connections['ex_ex']['syn_spec']['params']['eta']
-    etaexex = str(etaexex).replace('.', '_')
+    etaexex_s = str(etaexex).replace('.', '_')
     aexex = connections['ex_ex']['syn_spec']['params']['alpha']
-    aexex = str(aexex).replace('.', '_')
+    aexex_s = str(aexex).replace('.', '_')
     PATH_TO_OUTPUT = os.path.join(
                     'results',
                     config_file_name,
-                    'gex_' + g_m_ex + \
-                    '_gin_' + g_m_in + \
-                    '_etaexex_' + etaexex + \
-                    '_aexex_' + aexex,
+                    'gex_' + g_m_ex_s + \
+                    '_gin_' + g_m_in_s + \
+                    '_etaexex_' + etaexex_s + \
+                    '_aexex_' + aexex_s,
                     time.strftime("%Y_%m_%d_%H%M%S")+f"_seed_{general['seed']}")
     if general['record']['spikes'] or general['record']['weights']:
         create_folder(PATH_TO_OUTPUT)
@@ -108,6 +112,7 @@ if __name__ == '__main__':
                                             weight_rec_dict=weight_rec_dict)
 
     logger.info("simulation finished successfully")
+    end_sim = time.time()
 
     # save data and generate plots
     pop_dict = {}
@@ -164,7 +169,8 @@ if __name__ == '__main__':
                        resolution=general['resolution'],
                        n_neurons=network_layout['n_neurons'],
                        ex_in_ratio=network_layout['ex_in_ratio'],
-                       time_window=general['firing_rate_window'])
+                       time_window=general['firing_rate_window'],
+                       record_rate=general['record_rate'])
 
     # record inital weights
     save_data(PATH_TO_DATA, 'weights_init', weights_init)
@@ -309,6 +315,9 @@ if __name__ == '__main__':
     # save
     save_data(PATH_TO_DATA, 'clustering_coeff_init', clustering_coeff_init)
     save_data(PATH_TO_DATA, 'clustering_coeff_fin', clustering_coeff_fin)
+    print('##########################################')
+    print('## CLUSTERING COEFFICIENTS ###############')
+    print('##########################################')
     logger.info('initial mean clustering coefficient %f',
                                     mean_clustering_coeff_init)
     print('initial mean clustering coefficient',
@@ -376,13 +385,11 @@ if __name__ == '__main__':
                 pop_length = pop_dict['ex']['n']
             incoming_var = value['name'].split('_')[0]
             when = value['name'].split('_')[-1]
-            create_cc_vs_incoming_figs(clustering_coeff=value['a'],
-                                    matrix=value['matrix'],
-                                    incoming_var=incoming_var,
+            create_cc_vs_atp_figs(clustering_coeff=clustering_coeff_fin,
+                                    mean_atp=mean_energy_per_neuron,
                                     population=pop,
                                     pop_length=pop_length,
-                                    fig_name= 'ATP_' + when + '_' + pop,
-                                    cc_var='<ATP>',
+                                    fig_name= '_fin_' + pop,
                                     output_path=PATH_TO_FIGS)
     ## igraph measurements
     ## I can use this package to compute some stuff
@@ -420,3 +427,28 @@ if __name__ == '__main__':
     #    if general['record'][rec_k]:
     #        for key, value in rec_dict_v.items():
     #        PATH_TO_FIGS
+
+    mean_energy_fix_point = energy_fix_point(eta=etaexex,
+                                             alpha=aexex,
+                                             a_h=100)
+
+    print('##########################################')
+    print('## ENERGY EXPECTED FIXED POINT ###########')
+    print('##########################################')
+    print(f'Expected energy fixed point for ex pop: {mean_energy_fix_point}')
+    logger.info('Expected energy fixed point: %f', mean_energy_fix_point)
+
+    end_all = time.time()
+    sim_tot_time = -(start - end_sim)
+    plots_tot_time = -(end_sim - end_all)
+    sim_plots_tot_time = -(start - end_all)
+    print('##########################################')
+    print('## COMPUTE TIMES #########################')
+    print('##########################################')
+    print(f'simulation takes: {sim_tot_time} sec. -> {sim_tot_time/60} min.')
+    print(f'plots takes: {plots_tot_time} sec. -> {plots_tot_time/60} min.')
+    print(f'simulation + plots takes: {sim_plots_tot_time} sec. -> '\
+          f'{sim_plots_tot_time/60} min.')
+    logger.info('simulation takes %f secs', sim_tot_time)
+    logger.info('plots takes %f secs', plots_tot_time)
+    logger.info('simulation + plots takes %f secs', sim_plots_tot_time)
