@@ -337,7 +337,7 @@ def create_pops_figs(pop: dict, fig_name: str, output_path: str, **kargs):
             color = 'darkred'
         elif key == 'in':
             color = 'steelblue'
-        pos = pop[key].spatial['positions']
+        pos = pop[key]['positions']
         for n, p in enumerate(pos):
             if n == 0:
                 ax.plot(p[0], p[1], '.', c=color, label=key,
@@ -636,11 +636,26 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
 
     Parameters
     ----------
+    clustering_coeff:
+        in principle this should be clustering coeff, but it cual be any
+        variable related to a neruon
     matrix:
         matrix
+    incoming_var:
+        incoming variable (in-degree, in-strength)
+    pop_length:
+        population length
+    output_path:
+        output path for save figs
     """
     kargs.setdefault('markersize', 2)
     kargs.setdefault('markerfacecolor', 'steelblue')
+    kargs.setdefault('cc_var', 'Clustering Coeff.')  # cc_var is the "other var"
+    # that I'm using instead of cc (mean energy for example)
+    if kargs['cc_var'] == 'Clustering Coeff.':
+        kargs['cc_var_figname'] = 'cc'
+    if kargs['cc_var'] == '<ATP>':
+        kargs['cc_var_figname'] = 'atp'
     kargs.setdefault('edgecolors', 'k')
     kargs.setdefault('edgecolors_hex', 'whitesmoke')
     kargs.setdefault('lw', None)
@@ -687,7 +702,7 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
     # in vs clustering coeff histogram
     fig, ax = plt.subplots(figsize=kargs['fig_size'])
     ax.set_xlabel('In-'+incoming_var.capitalize(), fontsize=fontsize_label)
-    ax.set_ylabel('Clustering coeff.', fontsize=fontsize_label)
+    ax.set_ylabel(kargs['cc_var'], fontsize=fontsize_label)
     artist = ax.hexbin(incoming, clustering_coeff, gridsize=20,
                        cmap='gray_r', edgecolor=kargs['edgecolors_hex'])
     divider = make_axes_locatable(ax)
@@ -703,14 +718,14 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
                         length=5, width=1.5)
     #cbar.outline.remove()
     #cbar.outline.set_visible(False)
-    save_in_cc_hist_fig =f'{output_path}/in_cc_hist_{incoming_var}_{kargs["fig_name"]}'
+    save_in_cc_hist_fig =f'{output_path}/in_{kargs["cc_var_figname"]}_hist_{incoming_var}_{kargs["fig_name"]}'
     plt.savefig(save_in_cc_hist_fig, dpi=dpi)
     plt.close(fig)
 
     # out vs cc histogram
     fig, ax = plt.subplots(figsize=kargs['fig_size'])
     ax.set_xlabel('Out-'+incoming_var.capitalize(), fontsize=fontsize_label)
-    ax.set_ylabel('Clustering coeff.', fontsize=fontsize_label)
+    ax.set_ylabel(kargs['cc_var'], fontsize=fontsize_label)
     artist = ax.hexbin(outgoing, clustering_coeff, gridsize=20,
                        cmap='gray_r', edgecolor=kargs['edgecolors_hex'])
     divider = make_axes_locatable(ax)
@@ -726,14 +741,14 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
                         length=5, width=1.5)
     #cbar.outline.remove()
     #cbar.outline.set_visible(False)
-    save_out_cc_hist_fig =f'{output_path}/out_cc_hist_{incoming_var}_{kargs["fig_name"]}'
+    save_out_cc_hist_fig =f'{output_path}/out_{kargs["cc_var_figname"]}_hist_{incoming_var}_{kargs["fig_name"]}'
     plt.savefig(save_out_cc_hist_fig, dpi=dpi)
     plt.close(fig)
 
     # both vs cc histogram
     fig, ax = plt.subplots(figsize=kargs['fig_size'])
     ax.set_xlabel(incoming_var.capitalize(), fontsize=fontsize_label)
-    ax.set_ylabel('Clustering coeff.', fontsize=fontsize_label)
+    ax.set_ylabel(kargs['cc_var'], fontsize=fontsize_label)
     artist = ax.hexbin(both, clustering_coeff, gridsize=20,
                        cmap='gray_r', edgecolor=kargs['edgecolors_hex'])
     divider = make_axes_locatable(ax)
@@ -749,7 +764,7 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
                         length=5, width=1.5)
     #cbar.outline.remove()
     #cbar.outline.set_visible(False)
-    save_both_cc_hist_fig =f'{output_path}/both_cc_hist_{incoming_var}_{kargs["fig_name"]}'
+    save_both_cc_hist_fig =f'{output_path}/both_{kargs["cc_var_figname"]}_hist_{incoming_var}_{kargs["fig_name"]}'
     plt.savefig(save_both_cc_hist_fig, dpi=dpi)
     plt.close(fig)
 
@@ -768,9 +783,67 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
     cmap_pos = divider.append_axes('right', size="5%", pad="5%")
     cax = fig.add_axes(cmap_pos)
     cbar = fig.colorbar(points, cax=cax)
-    cbar.ax.set_title('Clustering Coeff.', ha='left', x=0)
+    cbar.ax.set_title(kargs['cc_var'], ha='left', x=0)
     # save image
-    save_cc_vs_in_fig =f'{output_path}/cc_vs_{incoming_var}_{kargs["fig_name"]}'
+    save_cc_vs_in_fig =f'{output_path}/{kargs["cc_var_figname"]}_vs_{incoming_var}_{kargs["fig_name"]}'
     plt.savefig(save_cc_vs_in_fig, dpi=dpi)
     plt.close(fig)
 
+
+def create_cc_vs_atp_figs(clustering_coeff: np.array,
+                             mean_atp: np.array,
+                             population: str,
+                             pop_length: int,
+                             output_path: str, **kargs):
+    """
+    Plot clustering coefficient vs incoming strength ot degree
+
+    Parameters
+    ----------
+    clustering_coeff:
+        in principle this should be clustering coeff, but it cual be any
+        variable related to a neruon
+    incoming_var:
+        incoming variable (in-degree, in-strength)
+    pop_length:
+        population length
+    output_path:
+        output path for save figs
+    """
+    kargs.setdefault('markersize', 2)
+    kargs.setdefault('markerfacecolor', 'steelblue')
+    # that I'm using instead of cc (mean energy for example)
+    kargs.setdefault('edgecolors', 'k')
+    kargs.setdefault('edgecolors_hex', 'whitesmoke')
+    kargs.setdefault('lw', None)
+    kargs.setdefault('cmap', 'gray_r')
+    kargs.setdefault('size', 60)
+    kargs.setdefault('fig_size', (12, 12))
+    #cmap_pos = [0.95, 0.5, 0.05, 0.3]
+    clustering_coeff = clustering_coeff[0: pop_length]
+    mean_atp = mean_atp[0: pop_length]
+    if population not in ['all', 'ex']:
+        raise ValueError("only supported for 'all' or 'ex' populations")
+    # in vs out histogram
+    fig, ax = plt.subplots(figsize=kargs['fig_size'])
+    #fig.suptitle(population, fontsize=fontsize_title)
+    ax.set_xlabel('Clustering coeff.', fontsize=fontsize_label)
+    ax.set_ylabel('<ATP>', fontsize=fontsize_label)
+    artist = ax.hexbin(clustering_coeff, mean_atp, gridsize=20,
+                       cmap='gray_r', edgecolor=kargs['edgecolors_hex'])
+    divider = make_axes_locatable(ax)
+    cmap_pos = divider.append_axes('right', size="5%", pad="5%")
+    cax = fig.add_axes(cmap_pos)
+    cbar = fig.colorbar(artist, cax=cax)
+    ax.spines['right'].set(visible=False)
+    ax.spines['top'].set(visible=False)
+    ax.tick_params(top=False, right=False)
+    #cbar.set_ticks([5, 10, 15])
+    cbar.ax.set_title('Bin Counts', ha='left', x=0)
+    cbar.ax.tick_params(axis='y', color='white', left=True, right=True,
+                        length=5, width=1.5)
+    #cbar.outline.remove()
+    #cbar.outline.set_visible(False)
+    save_atp_cc_hist_fig =f'{output_path}/atp_cc_hist_{kargs["fig_name"]}'
+    plt.savefig(save_atp_cc_hist_fig, dpi=dpi)
+    plt.close(fig)

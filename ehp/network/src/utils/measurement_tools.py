@@ -31,7 +31,7 @@ def instantaneous_phase(pop, activity: dict, final_t: float,
     instantaneous_phase['times'] = np.arange(start=0,
                                              stop=final_t + step/2, # to include final_t
                                              step=step)
-    for neuron in pop.tolist():
+    for neuron in list(pop['global_id']):
         instantaneous_phase.setdefault(neuron,
                                         np.empty(
                                         len(instantaneous_phase['times'])
@@ -243,7 +243,7 @@ def pop_firing_rate(pop_dict: dict, spikes_events: dict, time_window: int,
         firing_rate[pop].setdefault('tot_spikes',
                                     np.zeros(len(firing_rate['times'])))
         firing_rate[pop].setdefault('n_neurons',
-                                    len(pop_dict[pop]))
+                                    pop_dict[pop]['n'])
         for spike_time in spikes_events[pop]['times']:
             idx_from_spk_time = int(spike_time / step)
             firing_rate[pop]['tot_spikes'][idx_from_spk_time] += 1
@@ -319,15 +319,15 @@ def get_weight_matrix(pop: dict, weights: dict, **kargs) -> (dict, np.array):
     kargs.setdefault('verbose', 0)
     kargs.setdefault('w_abs', True)
     w_matrix = {}
-    tot_pop = len(pop['ex']) + len(pop['in'])
+    tot_pop = pop['ex']['n'] + pop['in']['n']
     full_w_matrix = np.zeros([tot_pop, tot_pop])
     # init weight matrix with zeros
     for n, con_key in enumerate(weights):
         pre = con_key.split('_')[0]
         post = con_key.split('_')[1]
-        w_matrix[con_key] = np.zeros([len(pop[pre]), len(pop[post])])
-        min_pre_pop_idx = min(pop[pre].tolist())
-        min_post_pop_idx = min(pop[post].tolist())
+        w_matrix[con_key] = np.zeros([pop[pre]['n'], pop[post]['n']])
+        min_pre_pop_idx = min(list(pop[pre]['global_id']))
+        min_post_pop_idx = min(list(pop[post]['global_id']))
         weights_source = weights[con_key]['source']
         weights_target = weights[con_key]['target']
         if any(item in weights[con_key].get('synapse_model')[0].split('_') \
@@ -564,3 +564,23 @@ def get_clustering_coeff(w_matrix: np.array,
                 2/(degree[-1] * (degree[-1] - 1)) * (sum_w_3_root))
     clustering_coeff_mean = np.mean(clustering_coeff)
     return clustering_coeff, clustering_coeff_mean
+
+def get_mean_energy_per_neuron(ATP: dict):
+    """
+    gets mean energy per neuron
+
+    Parameters
+    ----------
+    ATP:
+        ATP events dict. remeber keys: ATP[pop][senders] and ATP[pop][ATP]
+    """
+    atp_per_sender = {}
+    for pop in ATP:
+        for sender, atp in zip(ATP[pop]['senders'], ATP[pop]['ATP']):
+            atp_per_sender.setdefault(sender, []).append(atp)
+
+    mean_atp_per_neuron = []
+    for pop in ATP:
+        for sender in set(ATP[pop]['senders']):
+            mean_atp_per_neuron.append(np.mean(atp_per_sender[sender]))
+    return mean_atp_per_neuron

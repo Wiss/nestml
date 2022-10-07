@@ -19,17 +19,20 @@ from src.utils.figures import (create_weights_figs,
                                create_full_matrix_figs,
                                create_graph_measure_figs,
                                create_cc_vs_incoming_figs,
+                               create_cc_vs_atp_figs,
                                delays_hist,
                                weights_before_after_hist)
+
 from src.utils.manage_files import (create_folder,
                                     load_config,
                                     save_config,
-                                    save_data,
-                                    load_data)
+                                    save_data)
+
 from src.utils.measurement_tools import (get_weight_matrix,
                                          get_adjacency_matrix,
                                          get_graph_measurement,
-                                         get_clustering_coeff)
+                                         get_clustering_coeff,
+                                         get_mean_energy_per_neuron)
 
 from src.logging.logging import logger
 
@@ -83,7 +86,7 @@ if __name__ == '__main__':
 
     # setup network
     logger.info("setting up network")
-    pop_dict, conn_dict, weight_rec_dict, external_srcs, \
+    pop_dict0, conn_dict, weight_rec_dict, external_srcs, \
                             subregion_mults = network.init_network(
                                             resolution=general['resolution'],
                                             module=general['module'],
@@ -100,13 +103,21 @@ if __name__ == '__main__':
                                             simtime=general['simtime'],
                                             record=general['record'],
                                             record_rate=general['record_rate'],
-                                            pop_dict=pop_dict,
+                                            pop_dict=pop_dict0,
                                             conn_dict=conn_dict,
                                             weight_rec_dict=weight_rec_dict)
 
     logger.info("simulation finished successfully")
 
     # save data and generate plots
+    pop_dict = {}
+    for pop_k in pop_dict0:
+        pop_dict[pop_k] = pop_dict0[pop_k].get()
+        pop_dict[pop_k]['positions'] = pop_dict0[pop_k].spatial['positions']
+        pop_dict[pop_k]['n'] = len(pop_dict0[pop_k])
+        assert list(pop_dict[pop_k]['global_id']) == pop_dict0[pop_k].tolist()
+    save_data(PATH_TO_DATA, 'pop_dict', pop_dict)
+    logger.info("pop dict saved")
     # position plots
     create_pops_figs(pop=pop_dict,
                      fig_name="pop_positions",
@@ -211,6 +222,9 @@ if __name__ == '__main__':
                      'adjacency_matrix_full_fin': full_adj_matrix_fin
                      }
     for f_matrix_k, f_matrix_v in full_matrices.items():
+        # save
+        save_data(PATH_TO_DATA, f_matrix_k, f_matrix_v)
+        logger.info("recordable '%s' saved", f_matrix_k)
         create_full_matrix_figs(matrix=f_matrix_v,
                                 output_path=PATH_TO_FIGS,
                                 fig_name=f_matrix_k,
@@ -271,11 +285,11 @@ if __name__ == '__main__':
                                   cumulative=False)
         # create plots with cumulative distribution
         create_graph_measure_figs(measure=measure_v,
-                                    output_path=PATH_TO_FIGS,
-                                    fig_name=measure_k,
-                                    title=title,
-                                    logscale=True,
-                                    cumulative=-1)
+                                  output_path=PATH_TO_FIGS,
+                                  fig_name=measure_k,
+                                  title=title,
+                                  logscale=True,
+                                  cumulative=-1)
 
     # plot init and fin weights histograms
     weights_before_after_hist(weights_init=weights_init,
@@ -292,6 +306,9 @@ if __name__ == '__main__':
     clustering_coeff_fin, mean_clustering_coeff_fin = \
             get_clustering_coeff(w_matrix=full_w_matrix_fin,
                                  adj_matrix=full_adj_matrix_fin)
+    # save
+    save_data(PATH_TO_DATA, 'clustering_coeff_init', clustering_coeff_init)
+    save_data(PATH_TO_DATA, 'clustering_coeff_fin', clustering_coeff_fin)
     logger.info('initial mean clustering coefficient %f',
                                     mean_clustering_coeff_init)
     print('initial mean clustering coefficient',
@@ -323,10 +340,10 @@ if __name__ == '__main__':
         for n in range(2):
             if n == 0:
                 pop = 'all'
-                pop_length = len(pop_dict['ex']) + len(pop_dict['in'])
+                pop_length = pop_dict['ex']['n'] + pop_dict['in']['n']
             else:
                 pop = 'ex'
-                pop_length = len(pop_dict['ex'])
+                pop_length = pop_dict['ex']['n']
             incoming_var = value['name'].split('_')[0]
             when = value['name'].split('_')[-1]
             create_cc_vs_incoming_figs(clustering_coeff=value['cc'],
@@ -334,9 +351,39 @@ if __name__ == '__main__':
                                        incoming_var=incoming_var,
                                        population=pop,
                                        pop_length=pop_length,
-                                       fig_name= when + '_' + pop,
+                                       fig_name=when + '_' + pop,
                                        output_path=PATH_TO_FIGS)
 
+    # in-degree(strength) vs out-degree(strength) vs mean energy per neuron
+    mean_energy_per_neuron = get_mean_energy_per_neuron(
+                                        ATP=multimeter_events)
+    incoming_energy_dict = {'1':
+        {'name': 'strenght_fin',
+        'a': mean_energy_per_neuron,
+        'matrix': full_w_matrix_fin},
+                                '2':
+        {'name': 'degree_fin',
+        'a': mean_energy_per_neuron,
+        'matrix': full_adj_matrix_fin}
+                                }
+    for key, value in incoming_energy_dict.items():
+        for n in range(2):
+            if n == 0:
+                pop = 'all'
+                pop_length = pop_dict['ex']['n'] + pop_dict['in']['n']
+            else:
+                pop = 'ex'
+                pop_length = pop_dict['ex']['n']
+            incoming_var = value['name'].split('_')[0]
+            when = value['name'].split('_')[-1]
+            create_cc_vs_incoming_figs(clustering_coeff=value['a'],
+                                    matrix=value['matrix'],
+                                    incoming_var=incoming_var,
+                                    population=pop,
+                                    pop_length=pop_length,
+                                    fig_name= 'ATP_' + when + '_' + pop,
+                                    cc_var='<ATP>',
+                                    output_path=PATH_TO_FIGS)
     ## igraph measurements
     ## I can use this package to compute some stuff
    # g_weight_init = ig.Graph.Weighted_Adjacency(full_w_matrix_init)

@@ -73,7 +73,7 @@ def save_data(file_path, file_name, dict_data):
         dictionary with information
     """
     with open(f"{file_path}/{file_name}.pkl", "wb") as f:
-        pickle.dump(dict_data, f)
+        pickle.dump(dict_data, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def load_data(file_path, file_name):

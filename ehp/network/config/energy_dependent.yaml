@@ -1,15 +1,15 @@
 # Initial configuration file for doing experiments with Biophysical network
-notes: "Energy dependent"
+notes: "Energy dependent. 'Real' (at least improved) energy values"
 general:
   record:
     spikes: True
-    weights: True
+    weights: False # each connection has its own 'record' param also
     multimeter:
       # define which variable do you want to record (ATP, V_m, etc)
       - ATP
-      #- V_m
-  record_rate: 10 # record every x ms. Only for recorded variables
-  simtime: 5000  # ms
+      - V_m
+  record_rate: 1 #10 # record every x ms. Only for recorded variables
+  simtime: 300  # ms
   resolution: 0.1
   seed: 1
   module: "edlif_psc_alpha_0_module"  # nest module to be loaded
@@ -35,14 +35,14 @@ neurons:
           std: 0
         # action-potential energy consumption time-constant
         tau_ap:
-          mean: 30
+          mean: 60
           std: 0
         # Time constant of synaptic consumption
         tau_syn_atp_in:
-          mean: 20
+          mean: 60
           std: 0
         tau_syn_atp_ex:
-          mean: 20
+          mean: 60
           std: 0
         # resting-potential consumption percent/ms
         E_rp:
@@ -54,18 +54,18 @@ neurons:
           std: 0
         # action potential consumption percent/spike
         E_ap:
-          mean: 15  # %
+          mean: 8  # %
           std: 0
         #synaptic consumption percent/spike
         E_syn_ex:
-          mean: 8  # %
+          mean: 4  # %
           std: 0
         E_syn_in:
-          mean: 5  # %
+          mean: 4  # %
           std: 0
         # sensitivity to energy imbalance
         gamma:
-          mean: 10
+          mean: 50
           std: 0
       general_params:
         # synaptic time constants
@@ -77,7 +77,7 @@ neurons:
           std: 0
         # membrane time constant
         tau_m:
-          mean: 10
+          mean: 20
           std: 0
         # capacitance
         C_m:
@@ -85,11 +85,11 @@ neurons:
           std: 0
         # refractory period
         t_ref:
-          mean: 2
+          mean: 8
           std: 0
         I_e:
-          mean: 350  #2000
-          std: 30  #500
+          mean: 166  #2000
+          std: 15  #500
   in:
     model: "edlif_psc_alpha_percent0_nestml__with_ed_stdp0_nestml"  # "edlif_psc_alpha_percent"
     params:
@@ -108,14 +108,14 @@ neurons:
           std: 0
         # action-potential energy consumption time-constant
         tau_ap:
-          mean: 30
+          mean: 60
           std: 0
         # Time constant of synaptic consumption
         tau_syn_atp_in:
-          mean: 20
+          mean: 60
           std: 0
         tau_syn_atp_ex:
-          mean: 20
+          mean: 60
           std: 0
         # resting-potential consumption percent/ms
         E_rp:
@@ -127,18 +127,18 @@ neurons:
           std: 0
         # action potential consumption percent/spike
         E_ap:
-          mean: 15  # %
+          mean: 8  # %
           std: 0
         #synaptic consumption percent/spike
         E_syn_ex:
-          mean: 8  # %
+          mean: 4  # %
           std: 0
         E_syn_in:
-          mean: 5  # %
+          mean: 4  # %
           std: 0
         # sensitivity to energy imbalance
         gamma:
-          mean: 10
+          mean: 50
           std: 0
       general_params:
         # synaptic time constants
@@ -150,7 +150,7 @@ neurons:
           std: 0
         # membrane time constant
         tau_m:
-          mean: 10
+          mean: 20
           std: 0
         # capacitance
         C_m:
@@ -158,11 +158,11 @@ neurons:
           std: 0
         # refractory period
         t_ref:
-          mean: 2
+          mean: 8
           std: 0
         I_e:
-          mean: 350  #2000
-          std: 30
+          mean: 166  #2000
+          std: 15
 #  connecting populations
 connections:
   # excitatory -> excitatory
@@ -182,7 +182,7 @@ connections:
         mu_plus: 0 # weight dependence exponent, depression (real)
         lambda: 0.01  # step size
         Wmax:  # maximum allowed weight (real)
-        eta: 69.4 # 0.05 # if eta=5 => neurons with 80% atp while have max potentiation of lambda/3
+        eta: 120  # if eta=5 => neurons with 80% atp while have max potentiation of lambda/3
         alpha: 0.5
       # for using default values for synapses instead of distributins,
       # just leave the dictionary value empty
@@ -201,7 +201,7 @@ connections:
         dist: # "uniform"
         min:
         max:
-      record: True
+      record: False
   # excitatory -> inhibitory
   ex_in:
     # connection parameters
@@ -298,7 +298,7 @@ connections:
       record: False
 network_layout:
   energy_dependent: True
-  n_neurons: 50
+  n_neurons: 30
   ex_in_ratio: 0.8  # n_exc = exc_inh_ratio*n_neurons
   positions:
     dist: "uniform"
@@ -335,11 +335,11 @@ external_sources:
       # f(t) = max(0, rate + amplitude * sin(2*pi*frequency*t + phase*pi/180))
       active: False  # activate in the simulation
       params:
-        rate: 47000  # mean rate spikes/second
-        amplitude: 53810  # Firing rate modulation in spikes/second
-        frequency: 5  # mod frequency Hz
+        rate: 5000  # mean rate spikes/second
+        amplitude: 5000  # Firing rate modulation in spikes/second
+        frequency: 2  # mod frequency Hz
         phase: 0 # modulation phase in degree [0-360]
-        stop: 1000  # stop simulation
+        stop: 13000  # stop simulation
         #individual_spike_trains: True  # if True, then all target neurons will
         # receive different spike trains. If false, all neurons receive the
         # same spike train
