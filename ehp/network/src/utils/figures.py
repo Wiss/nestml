@@ -15,12 +15,14 @@ logger = logger.getChild(__name__)
 
 # parameters
 alpha = 0.6
-fontsize_title = 14
-fontsize_label = 12
-fontsize_legend = 9
+fontsize_title = 17
+fontsize_label = 14
+fontsize_legend = 11
 linewidth = 2
 pointsize = 20
 fig_size = (12, 12)
+fig_size_mult = (12, 8)
+tick_size = 13
 dpi = 144
 dpi_w_matrices = 3*144
 
@@ -88,6 +90,7 @@ def create_weights_figs(weights_events: dict, fig_name: str, output_path: str,
                             '--', color=c)
             ax.set_ylabel('Weights', fontsize=fontsize_label)
             ax.set_xlabel('Time (ms)', fontsize=fontsize_label)
+            ax.tick_params(axis='both', labelsize=tick_size)
             if kargs['legend']:
                 ax.legend(fontsize=fontsize_legend)
             save_weights_fig =f'{output_path}/{fig_name}_{key}'
@@ -122,8 +125,18 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
     kargs.setdefault('mean_lw', 3)
     kargs.setdefault('plot_pop_p_coherence_with_all', False)
     kargs.setdefault('plot_each_n_atp', False)
-    final_t = kargs['simtime']
     resolution = kargs['resolution']
+    final_t = kargs['simtime']
+    kargs.setdefault('init_time', 0)
+    kargs.setdefault('fin_time', -1)
+    idx_init = int(kargs['init_time']/resolution)
+    idx_init_atp = int(kargs['init_time']/kargs['record_rate'])
+    if kargs['fin_time'] == -1:
+        idx_fin = kargs['fin_time']
+        idx_fin_atp = kargs['fin_time']
+    else:
+        idx_fin = int(kargs['fin_time']/resolution)
+        idx_fin_atp = int(kargs['fin_time']/kargs['record_rate'])
     atp_stck = {}
     atp_stack = {}
     atp_mean = {}
@@ -151,6 +164,10 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
             p = 'inhibitory'
         senders = spikes_events[pop]['senders']
         times = spikes_events[pop]['times']
+        idx_init_spks = np.where(times >= kargs['init_time'])[0][0]
+        idx_fin_spks = np.where(times <= kargs['fin_time'])[0][0]
+        print(idx_init_spks)
+        print(idx_fin_spks)
         ax[0].set_title('Spikes from ' + p + ' population',
                         fontsize=fontsize_title)
         ax[1].set_title('Available energy and firing rate from ' + p + \
@@ -166,8 +183,13 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
         ax[0].yaxis.set_major_locator(MaxNLocator(integer=True))
         ax[1].grid(axis='x')
         ax[2].grid(axis='x')
+        ax[0].tick_params(axis='both', labelsize=tick_size)
+        ax[1].tick_params(axis='both', labelsize=tick_size)
+        ax[2].tick_params(axis='both', labelsize=tick_size)
         # spikes
-        ax[0].plot(times, senders, '.', c=color)
+        ax[0].plot(times[times >= kargs['init_time']],
+                   senders[times >= kargs['init_time']],
+                   '.', c=color)
         # ATP and firing rate
         atp_per_sender = {}
         for sender, atp in zip(multimeter_events[pop]['senders'],
@@ -177,14 +199,16 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
         atp_stack[pop] = np.stack(atp_stck[pop])
         atp_mean[pop] = np.mean(atp_stack[pop], axis=0)
         atp_std[pop] = np.std(atp_stack[pop], axis=0)
-        ax[1].plot(mult_time,
-                   atp_mean[pop],
+        ax[1].plot(mult_time[idx_init_atp: idx_fin_atp],
+                   atp_mean[pop][idx_init_atp: idx_fin_atp],
                    c='darkgreen',
                    lw=kargs['mean_lw'],
                    label=pop + ' mean')
-        ax[1].fill_between(mult_time,
-                           atp_mean[pop] - atp_std[pop],
-                           atp_mean[pop] + atp_std[pop],
+        ax[1].fill_between(mult_time[idx_init_atp: idx_fin_atp],
+                           atp_mean[pop][idx_init_atp: idx_fin_atp] - \
+                           atp_std[pop][idx_init_atp: idx_fin_atp],
+                           atp_mean[pop][idx_init_atp: idx_fin_atp] + \
+                           atp_std[pop][idx_init_atp: idx_fin_atp],
                            edgecolor='darkgreen',
                            color='darkgreen',
                            label=pop + ' sd',
@@ -194,8 +218,9 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
                     pop, np.mean(atp_mean[pop]))
         # second axes for firing rate
         ax_1_2 = ax[1].twinx()
-        ax_1_2.plot(firing_rate['times'],
-                    firing_rate[pop]['rates'],
+        ax_1_2.tick_params(axis='both', labelsize=tick_size)
+        ax_1_2.plot(firing_rate['times'][idx_init: idx_fin],
+                    firing_rate[pop]['rates'][idx_init: idx_fin],
                     c='darkorange',
                     lw=kargs['mean_lw'],
                     label=pop + ' fr',
@@ -209,14 +234,14 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
         # phase coherence
         ax[2].set_ylabel('R',
                          fontsize=fontsize_label)
-        ax[2].plot(phase_coherence[pop]['times'],
-                   phase_coherence[pop]['o_param'].reshape(-1),
+        ax[2].plot(phase_coherence[pop]['times'][idx_init: idx_fin],
+                   phase_coherence[pop]['o_param'].reshape(-1)[idx_init: idx_fin],
                    c='darkgrey', label=pop, lw=kargs['mean_lw'])
         if kargs['plot_i_phase']:
             for sender in i_phase[pop]:
                 if sender != 'times':
-                    ax[2].plot(i_phase[pop]['times'],
-                            i_phase[pop][sender],
+                    ax[2].plot(i_phase[pop]['times'][idx_init: idx_fin],
+                            i_phase[pop][sender][idx_init: idx_fin],
                             c=color, label=pop + 'inst_phase',
                             lw=kargs['mean_lw'], alpha=alpha)
         logger.info('%s population phase coherence average through simulation %s',
@@ -239,6 +264,9 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
     ax[0].yaxis.set_major_locator(MaxNLocator(integer=True))
     ax[1].grid(axis='x')
     ax[2].grid(axis='x')
+    ax[0].tick_params(axis='both', labelsize=tick_size)
+    ax[1].tick_params(axis='both', labelsize=tick_size)
+    ax[2].tick_params(axis='both', labelsize=tick_size)
     for pop, events in spikes_events.items():
         if pop == 'ex':
             color = 'darkred'
@@ -249,31 +277,39 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
         senders = spikes_events[pop]['senders']
         times = spikes_events[pop]['times']
         # spikes
-        ax[0].plot(times, senders, '.', c=color, label=pop)
+        ax[0].plot(times[idx_init_spks: idx_fin_spks],
+                   senders[idx_init_spks: idx_fin_spks],
+                   '.', c=color, label=pop)
         # ATP
         if kargs['plot_each_n_atp']:
             for n, sender in enumerate(atp_per_sender):
                 if n == 0:
-                    ax[1].plot(mult_time, atp_per_sender[sender],
+                    ax[1].plot(mult_time[idx_init_atp: idx_fin_atp],
+                               atp_per_sender[sender][idx_init_atp: idx_fin_atp],
                                '.', c=color, label=pop, alpha=kargs['alpha'])
-                    ax[1].plot(mult_time, atp_per_sender[sender], c=color,
+                    ax[1].plot(mult_time[idx_init_atp: idx_fin_atp],
+                               atp_per_sender[sender][idx_init_atp: idx_fin_atp],
+                               c=color,
                             alpha=kargs['alpha'])
                 else:
-                    ax[1].plot(mult_time, atp_per_sender[sender],
+                    ax[1].plot(mult_time[idx_init_atp: idx_fin_atp],
+                               atp_per_sender[sender][idx_init_atp: idx_fin_atp],
                                '.', c=color, alpha=kargs['alpha'])
-                    ax[1].plot(mult_time, atp_per_sender[sender], c=color,
+                    ax[1].plot(mult_time[idx_init_atp: idx_fin_atp],
+                               atp_per_sender[sender][idx_init_atp: idx_fin_atp],
+                               c=color,
                             alpha=kargs['alpha'])
         # phase coherence
         if kargs['plot_pop_p_coherence_with_all']:
-            ax[2].plot(phase_coherence[pop]['times'],
-                    phase_coherence[pop]['o_param'].reshape(-1),
+            ax[2].plot(phase_coherence[pop]['times'][idx_init: idx_fin],
+                    phase_coherence[pop]['o_param'].reshape(-1)[idx_init: idx_fin],
                     c='darkgrey', label=pop, lw=kargs['mean_lw'],
                     alpha=alpha)
         if kargs['plot_i_phase']:
             for sender in i_phase[pop]:
                 if sender != 'times':
-                    ax[2].plot(i_phase[pop]['times'],
-                               i_phase[pop][sender],
+                    ax[2].plot(i_phase[pop]['times'][idx_init: idx_fin],
+                               i_phase[pop][sender][idx_init: idx_fin],
                                c=color, label=pop + 'inst_phase',
                                lw=kargs['mean_lw'], alpha=alpha)
 
@@ -281,14 +317,16 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
     atp_stack['all'] = np.stack(atp_stck['ex'] + atp_stck['in'])
     atp_mean['all'] = np.mean(atp_stack['all'], axis=0)
     atp_std['all'] = np.std(atp_stack['all'], axis=0)
-    ax[1].plot(mult_time,
-                atp_mean['all'],
+    ax[1].plot(mult_time[idx_init_atp: idx_fin_atp],
+                atp_mean['all'][idx_init_atp: idx_fin_atp],
                 c='darkgreen',
                 lw=kargs['mean_lw'],
                 label='mean')
-    ax[1].fill_between(mult_time,
-                        atp_mean['all'] - atp_std['all'],
-                        atp_mean['all'] + atp_std['all'],
+    ax[1].fill_between(mult_time[idx_init_atp: idx_fin_atp],
+                        atp_mean['all'][idx_init_atp: idx_fin_atp] - \
+                        atp_std['all'][idx_init_atp: idx_fin_atp],
+                        atp_mean['all'][idx_init_atp: idx_fin_atp] + \
+                       atp_std['all'][idx_init_atp: idx_fin_atp],
                         edgecolor='darkgreen',
                         color='darkgreen',
                         label='sd',
@@ -297,8 +335,8 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
                 np.mean(atp_mean['all']))
     # second axes for firing rate
     ax_1_2 = ax[1].twinx()
-    ax_1_2.plot(firing_rate['times'],
-                firing_rate['all']['rates'],
+    ax_1_2.plot(firing_rate['times'][idx_init: idx_fin],
+                firing_rate['all']['rates'][idx_init: idx_fin],
                 c='darkorange',
                 lw=kargs['mean_lw'],
                 label='fr',
@@ -306,12 +344,13 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
     ax_1_2.set_ylabel('Firing rate (Hz)',
                       fontsize=fontsize_label,
                       color='darkorange')
+    ax_1_2.tick_params(axis='both', labelsize=tick_size)
     logger.info('all population Firing rate average through simulation %s Hz',
                 np.mean(firing_rate['all']['rates']))
     #ax_1_2.legend(fontsize=fontsize_legend)
     # phase coherence
-    ax[2].plot(phase_coherence['all']['times'],
-               phase_coherence['all']['o_param'].reshape(-1),
+    ax[2].plot(phase_coherence['all']['times'][idx_init: idx_fin],
+               phase_coherence['all']['o_param'].reshape(-1)[idx_init: idx_fin],
                c='darkgrey', lw=kargs['mean_lw'])  # , alpha=alpha)
     logger.info('all population phase coherence average through simulation %s',
                 np.nanmean(phase_coherence['all']['o_param']))
@@ -346,6 +385,7 @@ def create_pops_figs(pop: dict, fig_name: str, output_path: str, **kargs):
                 ax.plot(p[0], p[1], '.', c=color, markersize=pointsize)
     ax.set_ylabel('y (mm)', fontsize=fontsize_label)
     ax.set_xlabel('x (mm)', fontsize=fontsize_label)
+    ax.tick_params(axis='both', labelsize=tick_size)
     ax.legend(fontsize=fontsize_legend)
     # save image
     save_spikes_j_fig =f'{output_path}/{fig_name}_joint'
@@ -355,6 +395,14 @@ def create_pops_figs(pop: dict, fig_name: str, output_path: str, **kargs):
 def create_multimeter_figs(multimeter_events: dict, measurement: str,
                          fig_name: str, output_path: str, **kargs):
     final_t = kargs['simtime']
+    kargs.setdefault('init_time', 0)
+    kargs.setdefault('fin_time', -1)
+    idx_init = int(kargs['init_time']/kargs['multimeter_record_rate'])
+    if kargs['fin_time'] == -1:
+        idx_fin = kargs['fin_time']
+    else:
+        idx_fin = int(kargs['fin_time']/kargs['multimeter_record_rate'])
+    kargs.setdefault('fig_size', fig_size_mult)
     #resolution = kargs['resolution']
     mult_time = np.arange(start=kargs['multimeter_record_rate'], stop=final_t,
                           step=kargs['multimeter_record_rate'])
@@ -364,18 +412,19 @@ def create_multimeter_figs(multimeter_events: dict, measurement: str,
         elif pop == 'in':
             p = 'inhibitory'
         measure_per_sender = {}
-        fig, ax = plt.subplots(1, figsize=fig_size)
+        fig, ax = plt.subplots(1, figsize=kargs['fig_size'])
         ax.set_title(measurement + ' in ' + p + ' population',
                      fontsize=fontsize_title)
         ax.set_xlabel('time (ms)', fontsize=fontsize_label)
         ax.set_ylabel(measurement, fontsize=fontsize_label)
+        ax.tick_params(axis='both', labelsize=tick_size)
         ax.grid(axis='x')
         for sender, measure in zip(multimeter_events[pop]['senders'],
                             multimeter_events[pop][measurement]):
             measure_per_sender.setdefault(sender, []).append(measure)
         for sender in set(multimeter_events[pop]['senders']):
-            ax.plot(mult_time,
-                    measure_per_sender[sender],
+            ax.plot(mult_time[idx_init:idx_fin],
+                    measure_per_sender[sender][idx_init:idx_fin],
                     #c=f'C{n}',
                     alpha=0.5,
                     label=sender)
@@ -442,6 +491,7 @@ def create_graph_measure_figs(measure: dict, output_path: str, **kargs):
         for axes in ax:
             axes.set_ylabel(y_label, fontsize=fontsize_label)
             axes.set_xlabel(f'{symbol}', fontsize=fontsize_label)
+            axes.tick_params(axis='both', labelsize=tick_size)
         ax[0].set_title(f'In-{measuremnt}',
                         fontsize=fontsize_title)
         ax[1].set_title(f'Out-{measuremnt}',
@@ -568,6 +618,7 @@ def weights_before_after_hist(weights_init: dict, weights_fin: dict,
         for axes in ax:
             axes.set_ylabel('Frequency', fontsize=fontsize_label)
             axes.set_xlabel('Weight', fontsize=fontsize_label)
+            axes.tick_params(axis='both', labelsize=tick_size)
         if any(item in w_v.get('synapse_model')[0].split('_') \
                for item in ['edlif', 'rec', 'copy']):
             w_key = 'w'
@@ -609,6 +660,7 @@ def delays_hist(weights_init, output_path: str, **kargs):
                      fontsize=fontsize_title)
         ax.set_ylabel('Frequency', fontsize=fontsize_label)
         ax.set_xlabel('Delays', fontsize=fontsize_label)
+        ax.tick_params(axis='both', labelsize=tick_size)
         if any(item in w_v.get('synapse_model')[0].split('_') \
                for item in ['edlif', 'rec', 'copy']):
             w_key = 'delay'
@@ -661,7 +713,7 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
     kargs.setdefault('lw', None)
     kargs.setdefault('cmap', 'gray_r')
     kargs.setdefault('size', 60)
-    kargs.setdefault('fig_size', (12, 12))
+    kargs.setdefault('fig_size', fig_size)
     #cmap_pos = [0.95, 0.5, 0.05, 0.3]
     incoming = []
     outgoing = []
@@ -680,6 +732,7 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
     #fig.suptitle(population, fontsize=fontsize_title)
     ax.set_xlabel('In-'+incoming_var.capitalize(), fontsize=fontsize_label)
     ax.set_ylabel('Out-'+incoming_var.capitalize(), fontsize=fontsize_label)
+    ax.tick_params(axis='both', labelsize=tick_size)
     artist = ax.hexbin(incoming, outgoing, gridsize=20,
                        cmap='gray_r', edgecolor=kargs['edgecolors_hex'])
     divider = make_axes_locatable(ax)
@@ -703,6 +756,7 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
     fig, ax = plt.subplots(figsize=kargs['fig_size'])
     ax.set_xlabel('In-'+incoming_var.capitalize(), fontsize=fontsize_label)
     ax.set_ylabel(kargs['cc_var'], fontsize=fontsize_label)
+    ax.tick_params(axis='both', labelsize=tick_size)
     artist = ax.hexbin(incoming, clustering_coeff, gridsize=20,
                        cmap='gray_r', edgecolor=kargs['edgecolors_hex'])
     divider = make_axes_locatable(ax)
@@ -726,6 +780,7 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
     fig, ax = plt.subplots(figsize=kargs['fig_size'])
     ax.set_xlabel('Out-'+incoming_var.capitalize(), fontsize=fontsize_label)
     ax.set_ylabel(kargs['cc_var'], fontsize=fontsize_label)
+    ax.tick_params(axis='both', labelsize=tick_size)
     artist = ax.hexbin(outgoing, clustering_coeff, gridsize=20,
                        cmap='gray_r', edgecolor=kargs['edgecolors_hex'])
     divider = make_axes_locatable(ax)
@@ -749,6 +804,7 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
     fig, ax = plt.subplots(figsize=kargs['fig_size'])
     ax.set_xlabel(incoming_var.capitalize(), fontsize=fontsize_label)
     ax.set_ylabel(kargs['cc_var'], fontsize=fontsize_label)
+    ax.tick_params(axis='both', labelsize=tick_size)
     artist = ax.hexbin(both, clustering_coeff, gridsize=20,
                        cmap='gray_r', edgecolor=kargs['edgecolors_hex'])
     divider = make_axes_locatable(ax)
@@ -774,6 +830,7 @@ def create_cc_vs_incoming_figs(clustering_coeff: np.array,
     #             fontsize=fontsize_title)
     ax.set_ylabel('In-'+incoming_var.capitalize(), fontsize=fontsize_label)
     ax.set_xlabel('Out-'+incoming_var.capitalize(), fontsize=fontsize_label)
+    ax.tick_params(axis='both', labelsize=tick_size)
     points = ax.scatter(incoming, outgoing, c=clustering_coeff,
                         cmap=kargs['cmap'],
                         edgecolors=kargs['edgecolors'],
@@ -818,7 +875,7 @@ def create_cc_vs_atp_figs(clustering_coeff: np.array,
     kargs.setdefault('lw', None)
     kargs.setdefault('cmap', 'gray_r')
     kargs.setdefault('size', 60)
-    kargs.setdefault('fig_size', (12, 12))
+    kargs.setdefault('fig_size', fig_size)
     #cmap_pos = [0.95, 0.5, 0.05, 0.3]
     clustering_coeff = clustering_coeff[0: pop_length]
     mean_atp = mean_atp[0: pop_length]
@@ -829,6 +886,7 @@ def create_cc_vs_atp_figs(clustering_coeff: np.array,
     #fig.suptitle(population, fontsize=fontsize_title)
     ax.set_xlabel('Clustering coeff.', fontsize=fontsize_label)
     ax.set_ylabel('<ATP>', fontsize=fontsize_label)
+    ax.tick_params(axis='both', labelsize=tick_size)
     artist = ax.hexbin(clustering_coeff, mean_atp, gridsize=20,
                        cmap='gray_r', edgecolor=kargs['edgecolors_hex'])
     divider = make_axes_locatable(ax)
