@@ -164,10 +164,15 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
             p = 'inhibitory'
         senders = spikes_events[pop]['senders']
         times = spikes_events[pop]['times']
-        idx_init_spks = np.where(times >= kargs['init_time'])[0][0]
-        idx_fin_spks = np.where(times <= kargs['fin_time'])[0][0]
-        print(idx_init_spks)
-        print(idx_fin_spks)
+        # include min and max times
+        times_w_min = times[times > kargs['init_time']]
+        senders_w_min = senders[times > kargs['init_time']]
+        if kargs['fin_time'] > 0:
+            times_w_min_max = times_w_min[times_w_min < kargs['fin_time']]
+            senders_w_min_max = senders_w_min[times_w_min < kargs['fin_time']]
+        else:
+            times_w_min_max = times_w_min
+            senders_w_min_max = senders_w_min
         ax[0].set_title('Spikes from ' + p + ' population',
                         fontsize=fontsize_title)
         ax[1].set_title('Available energy and firing rate from ' + p + \
@@ -187,9 +192,10 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
         ax[1].tick_params(axis='both', labelsize=tick_size)
         ax[2].tick_params(axis='both', labelsize=tick_size)
         # spikes
-        ax[0].plot(times[times >= kargs['init_time']],
-                   senders[times >= kargs['init_time']],
-                   '.', c=color)
+        ax[0].plot(times_w_min_max,
+                   senders_w_min_max,
+                   '.',
+                   c=color)
         # ATP and firing rate
         atp_per_sender = {}
         for sender, atp in zip(multimeter_events[pop]['senders'],
@@ -225,7 +231,7 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
                     lw=kargs['mean_lw'],
                     label=pop + ' fr',
                     alpha=0.5)
-        ax_1_2.set_ylabel('Firing rate (Hz)',
+        ax_1_2.set_ylabel('Mean firing rate (Hz)',
                           fontsize=fontsize_label,
                           color='darkorange')
         logger.info('%s population Firing rate average through simulation %s Hz',
@@ -276,9 +282,18 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
             p = 'inhibitory'
         senders = spikes_events[pop]['senders']
         times = spikes_events[pop]['times']
+        # include min and max times
+        times_w_min = times[times > kargs['init_time']]
+        senders_w_min = senders[times > kargs['init_time']]
+        if kargs['fin_time'] > 0:
+            times_w_min_max = times_w_min[times_w_min < kargs['fin_time']]
+            senders_w_min_max = senders_w_min[times_w_min < kargs['fin_time']]
+        else:
+            times_w_min_max = times_w_min
+            senders_w_min_max = senders_w_min
         # spikes
-        ax[0].plot(times[idx_init_spks: idx_fin_spks],
-                   senders[idx_init_spks: idx_fin_spks],
+        ax[0].plot(times_w_min_max,
+                   senders_w_min_max,
                    '.', c=color, label=pop)
         # ATP
         if kargs['plot_each_n_atp']:
@@ -341,7 +356,7 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
                 lw=kargs['mean_lw'],
                 label='fr',
                 alpha=0.5)
-    ax_1_2.set_ylabel('Firing rate (Hz)',
+    ax_1_2.set_ylabel('Mean firing rate (Hz)',
                       fontsize=fontsize_label,
                       color='darkorange')
     ax_1_2.tick_params(axis='both', labelsize=tick_size)

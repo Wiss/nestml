@@ -93,8 +93,11 @@ if __name__ == '__main__':
                                                                pop='ex')['in'])
 
     # choose simulation subsection
-    init_time = 400
-    fin_time = 3000
+    init_time = 0
+    fin_time = 120
+
+    if init_time >= fin_time:
+        raise Exception("init time should be smaller than fin time")
 
     pops_figs = 0
     spikes_figs = 1
