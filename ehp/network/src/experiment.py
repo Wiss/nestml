@@ -35,8 +35,6 @@ from src.utils.measurement_tools import (get_weight_matrix,
                                          get_mean_energy_per_neuron,
                                          energy_fix_point)
 
-from src.logging.logging import logger
-
 
 if __name__ == '__main__':
     import argparse
