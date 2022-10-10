@@ -383,12 +383,29 @@ if __name__ == '__main__':
                 pop_length = pop_dict['ex']['n']
             incoming_var = value['name'].split('_')[0]
             when = value['name'].split('_')[-1]
-            create_cc_vs_atp_figs(clustering_coeff=clustering_coeff_fin,
-                                    mean_atp=mean_energy_per_neuron,
+            create_cc_vs_incoming_figs(clustering_coeff=value['a'],
+                                    matrix=value['matrix'],
+                                    incoming_var=incoming_var,
                                     population=pop,
                                     pop_length=pop_length,
-                                    fig_name= '_fin_' + pop,
+                                    fig_name= 'ATP_' + when + '_' + pop,
+                                    cc_var='<ATP>',
                                     output_path=PATH_TO_FIGS)
+
+    for n in range(2):
+        if n == 0:
+            pop = 'all'
+            pop_length = pop_dict['ex']['n'] + pop_dict['in']['n']
+        else:
+            pop = 'ex'
+            pop_length = pop_dict['ex']['n']
+        create_cc_vs_atp_figs(clustering_coeff=clustering_coeff_fin,
+                                mean_atp=mean_energy_per_neuron,
+                                population=pop,
+                                pop_length=pop_length,
+                                fig_name= '_fin_' + pop,
+                                output_path=PATH_TO_FIGS)
+
     ## igraph measurements
     ## I can use this package to compute some stuff
    # g_weight_init = ig.Graph.Weighted_Adjacency(full_w_matrix_init)
