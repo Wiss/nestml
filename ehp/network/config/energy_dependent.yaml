@@ -9,11 +9,11 @@ general:
       - ATP
       - V_m
   record_rate: 1 #10 # record every x ms. Only for recorded variables
-  simtime: 300  # ms
+  simtime: 15000  # ms
   resolution: 0.1
   seed: 1
   module: "edlif_psc_alpha_0_module"  # nest module to be loaded
-  firing_rate_window: 50 # window for firing rate calculation
+  firing_rate_window: 100 # window for firing rate calculation
   adj_threshold: 5  # threshold for calculating adjacency matrix from weights
   w_matrix_abs: True # calculate weight matrix using abs(w_ij)
 neurons:
@@ -65,7 +65,7 @@ neurons:
           std: 0
         # sensitivity to energy imbalance
         gamma:
-          mean: 50
+          mean: 90
           std: 0
       general_params:
         # synaptic time constants
@@ -138,7 +138,7 @@ neurons:
           std: 0
         # sensitivity to energy imbalance
         gamma:
-          mean: 50
+          mean: 90
           std: 0
       general_params:
         # synaptic time constants
@@ -172,7 +172,7 @@ connections:
       allow_autapses: False # bool
       allow_multapses: False # bool
       rule: "pairwise_bernoulli"
-      p: 0.8  # 1 == all-to-all
+      p: 1.  # 1 == all-to-all
     # synaptic parameters
     syn_spec:
       synapse_model: "ed_stdp0_nestml__with_edlif_psc_alpha_percent0_nestml"
@@ -182,7 +182,7 @@ connections:
         mu_plus: 0 # weight dependence exponent, depression (real)
         lambda: 0.01  # step size
         Wmax:  # maximum allowed weight (real)
-        eta: 120  # if eta=5 => neurons with 80% atp while have max potentiation of lambda/3
+        eta: 100  # if eta=5 => neurons with 80% atp while have max potentiation of lambda/3
         alpha: 0.5
       # for using default values for synapses instead of distributins,
       # just leave the dictionary value empty
@@ -209,7 +209,7 @@ connections:
       allow_autapses: False # bool
       allow_multapses: False # bool
       rule: "pairwise_bernoulli"
-      p: 0.8  # 1 == all-to-all
+      p: 1.  # 1 == all-to-all
     # synaptic parameters
     syn_spec:
       synapse_model: "static_synapse"
@@ -239,7 +239,7 @@ connections:
       allow_autapses: False # bool
       allow_multapses: False # bool
       rule: "pairwise_bernoulli"
-      p: 0.8  # 1 == all-to-all
+      p: 1.  # 1 == all-to-all
     # synaptic parameters
     syn_spec:
       synapse_model: "static_synapse"
@@ -273,7 +273,7 @@ connections:
       allow_autapses: False # bool
       allow_multapses: False # bool
       rule: "pairwise_bernoulli"
-      p: 0.8  # 1 == all-to-all
+      p: 1.  # 1 == all-to-all
     # synaptic parameters
     syn_spec:
       synapse_model: "static_synapse"
@@ -298,7 +298,7 @@ connections:
       record: False
 network_layout:
   energy_dependent: True
-  n_neurons: 30
+  n_neurons: 500
   ex_in_ratio: 0.8  # n_exc = exc_inh_ratio*n_neurons
   positions:
     dist: "uniform"
