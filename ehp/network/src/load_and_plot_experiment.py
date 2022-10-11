@@ -252,6 +252,7 @@ if __name__ == '__main__':
                                         fig_name= when + '_' + pop,
                                         output_path=PATH_TO_FIGS)
 
+    if atp_vs_incoming_figs:
         # in-degree(strength) vs out-degree(strength) vs mean energy per neuron
         mean_energy_per_neuron = get_mean_energy_per_neuron(
                                             ATP=multimeter_events)
