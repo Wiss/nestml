@@ -99,7 +99,6 @@ if __name__ == '__main__':
     tot_sims = 0
     for energy_case, energy_case_list in all_config_files.items():
         start_case = time.time()
-        tot_sims += 1
         print('##############################################################')
         print('-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o')
         print('##############################################################')
