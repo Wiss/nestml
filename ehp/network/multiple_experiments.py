@@ -117,7 +117,7 @@ if __name__ == '__main__':
                             'src.experiment',
                             '-f',
                             f'config/{file}.yaml'])
-            total_sims += 1
+            tot_sims += 1
         end_case = time.time()
         case_time = end_case - start_case
         print('##########################################')
