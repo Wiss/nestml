@@ -605,4 +605,52 @@ def energy_fix_point(eta: float, alpha: float = 0.5, a_h: float = 100) -> float:
     if eta == 0:
         return 0
     else:
-        return np.log(alpha)/eta*a_h + a_h
+        return a_h*(np.log(alpha)/eta*a_h + 1)
+
+def get_mean_fr_per_neuron(spikes_events: dict,
+                         simtime: float):
+    """
+    Calculates average over time firing rate per neuron.
+
+    Parameters:
+    -----------
+    spikes_events:
+        spikes events from simulation
+    simtime:
+        simulation total time in ms
+    """
+    mean_rate_per_neuron = []
+    for pop in spikes_events:
+        lst = list(spikes_events[pop]['senders'])
+        sorted_sender = set(sorted(lst))
+        for sender in sorted_sender:
+            mean_rate_per_neuron.append(sum(
+                        spikes_events[pop]['senders'] == sender)/simtime*1000)  # Hz
+    return mean_rate_per_neuron
+
+
+def get_incoming_strength_per_neuron(w_matrix: np.array,
+                                   ex_pop_length: int,
+                                   only_pos: bool = False,
+                                   only_neg: bool = False):
+    """
+    Calculates incoming strength per neuron in population pop
+    """
+    w_matrix_copy = w_matrix.copy()
+    if only_pos or only_neg:
+        assert only_pos != only_neg
+    incoming_strength = []
+    cols = w_matrix[0, :]
+    if only_pos:
+        # negative weights = 0
+        w_matrix_copy[ex_pop_length: -1, :] *= 0
+    elif only_neg:
+        # positive weights = 0
+        w_matrix_copy[0: ex_pop_length, :] *= 0
+        w_matrix_copy[ex_pop_length: -1, :] = -w_matrix[ex_pop_length: -1, :].copy()
+    else:
+        w_matrix_copy[ex_pop_length: -1, :] = -w_matrix[ex_pop_length: -1, :].copy()
+    for neuron in range(len(cols)):
+        in_strength = np.sum(w_matrix_copy[:, neuron])
+        incoming_strength.append(in_strength)
+    return incoming_strength
