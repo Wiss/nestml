@@ -4,6 +4,7 @@ load_and_plot_experiments.py
 """
 import time
 import os
+import numpy as np
 
 from src.utils.manage_files import (create_folder,
                                     load_config,
@@ -15,6 +16,8 @@ from src.utils.measurement_tools import (get_weight_matrix,
                                          get_graph_measurement,
                                          get_clustering_coeff,
                                          get_mean_energy_per_neuron,
+                                         get_mean_fr_per_neuron,
+                                         get_incoming_strength_per_neuron,
                                          energy_fix_point)
 
 from src.utils.figures import (create_weights_figs,
@@ -26,6 +29,7 @@ from src.utils.figures import (create_weights_figs,
                                create_graph_measure_figs,
                                create_cc_vs_incoming_figs,
                                create_cc_vs_atp_figs,
+                               create_atp_vs_rate_figs,
                                delays_hist,
                                weights_before_after_hist)
 
@@ -47,7 +51,7 @@ if __name__ == '__main__':
     if os.path.exists(PATH_TO_CONFIG):
         print("Oh! Now I remember. I know exactly what you mean.")
     else:
-        print("No sir, we are vey sorry to inform that there is no backup for such expeirment")
+        print("No sir, we are vey sorry to inform that there is no backup for such experiment")
 
     PATH_TO_FIGS = os.path.join(
                     PATH_TO_CONFIG,
@@ -94,19 +98,22 @@ if __name__ == '__main__':
 
     # choose simulation subsection
     init_time = 0
-    fin_time = 120
+    fin_time = 2000
 
     if init_time >= fin_time:
         raise Exception("init time should be smaller than fin time")
 
     pops_figs = 0
-    spikes_figs = 1
+    spikes_figs = 0
     matrices_figs = 0
     full_matrix_figs = 0
     graph_measure_figs = 0
     delays_hist_figs = 0
-    multimeter_figs = 1
+    weights_hist_figs = 0
+    multimeter_figs = 0
     cc_vs_incoming_figs = 0
+    atp_vs_incoming_figs = 0
+    atp_vs_rate_figs = 1
 
     # generate plots
     # position plots
@@ -206,9 +213,10 @@ if __name__ == '__main__':
                                         cumulative=-1)
 
     # plot init and fin weights histograms
-    weights_before_after_hist(weights_init=weights_init,
-                              weights_fin=weights_fin,
-                              output_path=PATH_TO_FIGS)
+    if weights_hist_figs:
+        weights_before_after_hist(weights_init=weights_init,
+                                  weights_fin=weights_fin,
+                                  output_path=PATH_TO_FIGS)
 
     if delays_hist_figs:
         # plot delays histograms
@@ -308,6 +316,82 @@ if __name__ == '__main__':
                                 fin_time=fin_time,
                                 multimeter_record_rate=general['record_rate'])
 
+    if atp_vs_rate_figs:
+        ex_pop_length = pop_dict['ex']['n']
+        mean_energy_per_neuron = get_mean_energy_per_neuron(
+                                            ATP=multimeter_events)
+        mean_firing_rate_per_neuron = get_mean_fr_per_neuron(
+                                                spikes_events=spikes_events,
+                                                simtime=general['simtime'])
+        in_strength = get_incoming_strength_per_neuron(
+                                            w_matrix=full_w_matrix_fin,
+                                            ex_pop_length=ex_pop_length,
+                                            )
+        in_strength_pos = get_incoming_strength_per_neuron(
+                                            w_matrix=full_w_matrix_fin,
+                                            ex_pop_length=ex_pop_length,
+                                            only_pos=True)
+        mean_in_str = np.mean(in_strength_pos)
+        mean_ex_fr = np.mean(mean_firing_rate_per_neuron[0: ex_pop_length])
+        print(f'mean in_strength_pos: {mean_in_str}')
+        print(f'mean ex_fr: {mean_ex_fr}')
+        print(f'expected A consumption: {mean_in_str * mean_ex_fr / ex_pop_length}')
+        in_strength_neg = get_incoming_strength_per_neuron(
+                                            w_matrix=full_w_matrix_fin,
+                                            ex_pop_length=ex_pop_length,
+                                            only_neg=True)
+        for pop in ['ex', 'in']:
+            create_atp_vs_rate_figs(mean_atp=mean_energy_per_neuron,
+                                    mean_rate=mean_firing_rate_per_neuron,
+                                    incoming_strength=in_strength,
+                                    output_path=PATH_TO_FIGS,
+                                    pop=pop,
+                                    ex_pop_length=ex_pop_length,
+                                    cc_var=r'$\sum_j w_{ji}$',
+                                    extra_info='_atp')
+            create_atp_vs_rate_figs(mean_atp=mean_energy_per_neuron,
+                                    mean_rate=in_strength,
+                                    incoming_strength=mean_firing_rate_per_neuron,
+                                    output_path=PATH_TO_FIGS,
+                                    pop=pop,
+                                    ex_pop_length=ex_pop_length,
+                                    cc_var=r'$<\nu>$',
+                                    extra_info='_incoming')
+            create_atp_vs_rate_figs(mean_atp=mean_energy_per_neuron,
+                                    mean_rate=in_strength_pos,
+                                    incoming_strength=mean_firing_rate_per_neuron,
+                                    output_path=PATH_TO_FIGS,
+                                    pop=pop,
+                                    ex_pop_length=ex_pop_length,
+                                    cc_var=r'$<\nu>$',
+                                    extra_info='_incoming_pos')
+            create_atp_vs_rate_figs(mean_atp=mean_energy_per_neuron,
+                                    mean_rate=in_strength_neg,
+                                    incoming_strength=mean_firing_rate_per_neuron,
+                                    output_path=PATH_TO_FIGS,
+                                    pop=pop,
+                                    ex_pop_length=ex_pop_length,
+                                    cc_var=r'$<\nu>$',
+                                    extra_info='_incoming_neg')
+            create_atp_vs_rate_figs(mean_atp=in_strength_pos,
+                                    mean_rate=mean_firing_rate_per_neuron,
+                                    incoming_strength=mean_energy_per_neuron,
+                                    output_path=PATH_TO_FIGS,
+                                    pop=pop,
+                                    ex_pop_length=ex_pop_length,
+                                    cc_var=r'<ATP>',
+                                    extra_info='_incoming_pos_cc_atp')
+            create_atp_vs_rate_figs(mean_atp=in_strength,
+                                    mean_rate=mean_firing_rate_per_neuron,
+                                    incoming_strength=mean_energy_per_neuron,
+                                    output_path=PATH_TO_FIGS,
+                                    pop=pop,
+                                    ex_pop_length=ex_pop_length,
+                                    cc_var=r'<ATP>',
+                                    extra_info='_incoming_cc_atp')
+
+
+        
     end_all = time.time()
     plots_tot_time = -(start_sim - end_all)
     print('##########################################')

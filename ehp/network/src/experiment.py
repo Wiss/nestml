@@ -8,6 +8,7 @@ import os
 import subprocess
 import time
 import igraph as ig
+import numpy as np
 
 from src.logging.logging import logger
 import src.network as network
@@ -20,6 +21,7 @@ from src.utils.figures import (create_weights_figs,
                                create_graph_measure_figs,
                                create_cc_vs_incoming_figs,
                                create_cc_vs_atp_figs,
+                               create_atp_vs_rate_figs,
                                delays_hist,
                                weights_before_after_hist)
 
@@ -33,6 +35,7 @@ from src.utils.measurement_tools import (get_weight_matrix,
                                          get_graph_measurement,
                                          get_clustering_coeff,
                                          get_mean_energy_per_neuron,
+                                         get_incoming_strength_per_neuron,
                                          energy_fix_point)
 
 
@@ -434,8 +437,76 @@ if __name__ == '__main__':
                             output_path=PATH_TO_FIGS,
                             simtime=general['simtime'],
                             multimeter_record_rate=general['record_rate'])
-    # save logger into experiment folder
-    subprocess.run(['cp', 'src/last_experiment.log', f'{PATH_TO_OUTPUT}'])
+
+
+    ex_pop_length = pop_dict['ex']['n']
+    mean_energy_per_neuron = get_mean_energy_per_neuron(
+                                        ATP=multimeter_events)
+    mean_firing_rate_per_neuron = get_mean_fr_per_neuron(
+                                            spikes_events=spikes_events,
+                                            simtime=general['simtime'])
+    in_strength = get_incoming_strength_per_neuron(
+                                        w_matrix=full_w_matrix_fin,
+                                        ex_pop_length=ex_pop_length,
+                                        )
+    in_strength_pos = get_incoming_strength_per_neuron(
+                                        w_matrix=full_w_matrix_fin,
+                                        ex_pop_length=ex_pop_length,
+                                        only_pos=True)
+    in_strength_neg = get_incoming_strength_per_neuron(
+                                        w_matrix=full_w_matrix_fin,
+                                        ex_pop_length=ex_pop_length,
+                                        only_neg=True)
+
+    for pop in ['ex', 'in']:
+        create_atp_vs_rate_figs(mean_atp=mean_energy_per_neuron,
+                                mean_rate=mean_firing_rate_per_neuron,
+                                incoming_strength=in_strength,
+                                output_path=PATH_TO_FIGS,
+                                pop=pop,
+                                ex_pop_length=ex_pop_length,
+                                cc_var=r'$\sum_j w_{ji}$',
+                                extra_info='_atp')
+        create_atp_vs_rate_figs(mean_atp=mean_energy_per_neuron,
+                                mean_rate=in_strength,
+                                incoming_strength=mean_firing_rate_per_neuron,
+                                output_path=PATH_TO_FIGS,
+                                pop=pop,
+                                ex_pop_length=ex_pop_length,
+                                cc_var=r'$<\nu>$',
+                                extra_info='_incoming')
+        create_atp_vs_rate_figs(mean_atp=mean_energy_per_neuron,
+                                mean_rate=in_strength_pos,
+                                incoming_strength=mean_firing_rate_per_neuron,
+                                output_path=PATH_TO_FIGS,
+                                pop=pop,
+                                ex_pop_length=ex_pop_length,
+                                cc_var=r'$<\nu>$',
+                                extra_info='_incoming_pos')
+        create_atp_vs_rate_figs(mean_atp=mean_energy_per_neuron,
+                                mean_rate=in_strength_neg,
+                                incoming_strength=mean_firing_rate_per_neuron,
+                                output_path=PATH_TO_FIGS,
+                                pop=pop,
+                                ex_pop_length=ex_pop_length,
+                                cc_var=r'$<\nu>$',
+                                extra_info='_incoming_neg')
+        create_atp_vs_rate_figs(mean_atp=in_strength_pos,
+                                mean_rate=mean_firing_rate_per_neuron,
+                                incoming_strength=mean_energy_per_neuron,
+                                output_path=PATH_TO_FIGS,
+                                pop=pop,
+                                ex_pop_length=ex_pop_length,
+                                cc_var=r'<ATP>',
+                                extra_info='_incoming_pos_cc_atp')
+        create_atp_vs_rate_figs(mean_atp=in_strength,
+                                mean_rate=mean_firing_rate_per_neuron,
+                                incoming_strength=mean_energy_per_neuron,
+                                output_path=PATH_TO_FIGS,
+                                pop=pop,
+                                ex_pop_length=ex_pop_length,
+                                cc_var=r'<ATP>',
+                                extra_info='_incoming_cc_atp')
 
     # generate figs (only if data is recorded)
     #for rec_k, rec_dict_v in rec_dict.items():
@@ -452,6 +523,8 @@ if __name__ == '__main__':
     print('##########################################')
     print(f'Expected energy fixed point for ex pop: {mean_energy_fix_point}')
     logger.info('Expected energy fixed point: %f', mean_energy_fix_point)
+    logger.info(f'mean in_strength_pos: %f', np.mean(in_strength_pos))
+    logger.info(f'mean ex_fr: %f', np.mean(mean_firing_rate_per_neuron[0: ex_pop_length]))
 
     end_all = time.time()
     sim_tot_time = -(start - end_sim)
@@ -467,3 +540,6 @@ if __name__ == '__main__':
     logger.info('simulation takes %f secs', sim_tot_time)
     logger.info('plots takes %f secs', plots_tot_time)
     logger.info('simulation + plots takes %f secs', sim_plots_tot_time)
+
+    # save logger into experiment folder
+    subprocess.run(['cp', 'src/last_experiment.log', f'{PATH_TO_OUTPUT}'])

@@ -920,3 +920,69 @@ def create_cc_vs_atp_figs(clustering_coeff: np.array,
     save_atp_cc_hist_fig =f'{output_path}/atp_cc_hist_{kargs["fig_name"]}'
     plt.savefig(save_atp_cc_hist_fig, dpi=dpi)
     plt.close(fig)
+
+def create_atp_vs_rate_figs(mean_atp: np.array,
+                        mean_rate: np.array,
+                        incoming_strength: np.array,
+                        output_path: str, **kargs):
+    """
+    Plot average ATP vs average rate and draw color given
+    incoming strength.
+
+    Parameters
+    ----------
+    mean_atp:
+        mean atp per neuron in population
+    mean_rate:
+        mean rate per neuron in population
+    incoming_strengh:
+        incoming strenght per neuron
+    output_path:
+        output path for save figs
+    """
+    kargs.setdefault('markersize', 2)
+    kargs.setdefault('markerfacecolor', 'steelblue')
+    kargs['cc_var_figname'] = r'$\sum{ji} w_ji$'
+    kargs.setdefault('edgecolors', 'k')
+    kargs.setdefault('lw', None)
+    kargs.setdefault('cmap', 'gray_r')
+    kargs.setdefault('size', 60)
+    kargs.setdefault('fig_size', fig_size)
+    if kargs['cc_var'] == r'$\sum_j w_{ji}$':
+        ylabel = '<ATP>'
+        xlabel = r'$<\nu>$'
+    elif kargs['cc_var'] == r'$<\nu>$':
+        ylabel = '<ATP>'
+        xlabel = r'$\sum_j w_{ji}$'
+    elif kargs['cc_var'] == '<ATP>':
+        ylabel = r'$\sum_j w_{ji}$'
+        xlabel = r'$<\nu>$'
+    pop_length = kargs['ex_pop_length']
+    if kargs['pop'] == 'ex':
+        mean_atp = mean_atp[0: pop_length]
+        mean_fr = mean_rate[0: pop_length]
+        incoming_strength = incoming_strength[0: pop_length]
+    else:
+        mean_atp = mean_atp[pop_length:-1]
+        mean_fr = mean_rate[pop_length:-1]
+        incoming_strength = incoming_strength[pop_length:-1]
+    fig, ax = plt.subplots(figsize=kargs['fig_size'])
+    #fig.suptitle(f'Clustering vs in-{incoming_var}',
+    #             fontsize=fontsize_title)
+    ax.set_ylabel(ylabel, fontsize=fontsize_label)
+    ax.set_xlabel(xlabel, fontsize=fontsize_label)
+    ax.tick_params(axis='both', labelsize=tick_size)
+    points = ax.scatter(mean_fr, mean_atp, c=incoming_strength,
+                        cmap=kargs['cmap'],
+                        edgecolors=kargs['edgecolors'],
+                        lw=kargs['lw'],
+                        s=kargs['size'])
+    divider = make_axes_locatable(ax)
+    cmap_pos = divider.append_axes('right', size="5%", pad="5%")
+    cax = fig.add_axes(cmap_pos)
+    cbar = fig.colorbar(points, cax=cax)
+    cbar.ax.set_title(kargs['cc_var'], ha='left', x=0)
+    # save image
+    save_atp_vs_rate_fig =f'{output_path}/atp_vs_fr_vs_in-strength_{kargs["pop"]}{kargs["extra_info"]}'
+    plt.savefig(save_atp_vs_rate_fig, dpi=dpi)
+    plt.close(fig)
