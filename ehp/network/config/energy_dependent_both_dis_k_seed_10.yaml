@@ -182,7 +182,7 @@ connections:
         mu_plus: 0 # weight dependence exponent, depression (real)
         lambda: 0.01  # step size
         Wmax:  # maximum allowed weight (real)
-        eta: 100  # if eta=5 => neurons with 80% atp while have max potentiation of lambda/3
+        eta: 70
         alpha: 0.5
       # for using default values for synapses instead of distributins,
       # just leave the dictionary value empty

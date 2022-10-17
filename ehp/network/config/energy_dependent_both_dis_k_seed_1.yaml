@@ -35,14 +35,14 @@ neurons:
           std: 0
         # action-potential energy consumption time-constant
         tau_ap:
-          mean: 60
+          mean: 1000
           std: 0
         # Time constant of synaptic consumption
         tau_syn_atp_in:
-          mean: 60
+          mean: 1000
           std: 0
         tau_syn_atp_ex:
-          mean: 60
+          mean: 1000
           std: 0
         # resting-potential consumption percent/ms
         E_rp:
@@ -65,7 +65,7 @@ neurons:
           std: 0
         # sensitivity to energy imbalance
         gamma:
-          mean: 90
+          mean: 50
           std: 0
       general_params:
         # synaptic time constants
@@ -108,14 +108,14 @@ neurons:
           std: 0
         # action-potential energy consumption time-constant
         tau_ap:
-          mean: 60
+          mean: 1000
           std: 0
         # Time constant of synaptic consumption
         tau_syn_atp_in:
-          mean: 60
+          mean: 1000
           std: 0
         tau_syn_atp_ex:
-          mean: 60
+          mean: 1000
           std: 0
         # resting-potential consumption percent/ms
         E_rp:
@@ -138,7 +138,7 @@ neurons:
           std: 0
         # sensitivity to energy imbalance
         gamma:
-          mean: 90
+          mean: 50
           std: 0
       general_params:
         # synaptic time constants
@@ -182,7 +182,7 @@ connections:
         mu_plus: 0 # weight dependence exponent, depression (real)
         lambda: 0.01  # step size
         Wmax:  # maximum allowed weight (real)
-        eta: 100  # if eta=5 => neurons with 80% atp while have max potentiation of lambda/3
+        eta: 90
         alpha: 0.5
       # for using default values for synapses instead of distributins,
       # just leave the dictionary value empty

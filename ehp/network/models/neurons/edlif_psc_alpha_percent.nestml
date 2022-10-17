@@ -73,13 +73,13 @@ neuron edlif_psc_alpha_percent:
     ATP_h real = 100                # homeostatic ATP level in percent
     E_rp real = 5                   # resting-potential consumption percent/ms
     E_hk real = 5                   # housekeeping consuption percent/ms
-    E_ap real = 15                  # action potential consumption percent/spike
-    E_syn_ex real = 8              # exc consumption percent/spike
-    E_syn_in real = 5              # inh synapsis consumption percent/spike
+    E_ap real = 8                   # action potential consumption percent/spike
+    E_syn_ex real = 4              # exc consumption percent/spike
+    E_syn_in real = 4              # inh synapsis consumption percent/spike
     ATP_basal real = E_rp + E_hk    # basal ATP production percent/ms
     gamma real = 16                # sensitivity to energy imbalance
-    w_max real = 1000
-    w_min real = 1000
+    w_max real = 100
+    w_min real = 100
     fix_atp real = 0                     # if 1 => atp is fixed, if 0 => dynamic atp
   end
 

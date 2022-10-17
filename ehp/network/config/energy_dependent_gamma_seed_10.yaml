@@ -65,7 +65,7 @@ neurons:
           std: 0
         # sensitivity to energy imbalance
         gamma:
-          mean: 90
+          mean: 50
           std: 0
       general_params:
         # synaptic time constants
@@ -138,7 +138,7 @@ neurons:
           std: 0
         # sensitivity to energy imbalance
         gamma:
-          mean: 90
+          mean: 50
           std: 0
       general_params:
         # synaptic time constants

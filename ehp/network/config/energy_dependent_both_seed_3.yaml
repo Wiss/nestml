@@ -1,5 +1,6 @@
 # Initial configuration file for doing experiments with Biophysical network
-notes: "Energy dependent. 'Real' (at least improved) energy values"
+notes: "Energy dependent. 'Real' (at least improved) energy values. Eq delay 
+ and Eq I_e."
 general:
   record:
     spikes: True
@@ -88,8 +89,8 @@ neurons:
           mean: 8
           std: 0
         I_e:
-          mean: 166  #2000
-          std: 15  #500
+          mean: 200
+          std: 0  #15
   in:
     model: "edlif_psc_alpha_percent0_nestml__with_ed_stdp0_nestml"  # "edlif_psc_alpha_percent"
     params:
@@ -161,8 +162,8 @@ neurons:
           mean: 8
           std: 0
         I_e:
-          mean: 166  #2000
-          std: 15
+          mean: 200
+          std: 0  #15
 #  connecting populations
 connections:
   # excitatory -> excitatory
@@ -181,21 +182,20 @@ connections:
         mu_minus: 0 # weight dependence exponent, potentiation (real)
         mu_plus: 0 # weight dependence exponent, depression (real)
         lambda: 0.01  # step size
-        Wmax:  # maximum allowed weight (real)
-        eta: 10
+        eta: 70
         alpha: 0.5
       # for using default values for synapses instead of distributins,
       # just leave the dictionary value empty
       w:
       # for this model the weight variable is called "w"
         dist: "exponential" # exponential, normal or uniform
-        beta: 5  # beta param for exponential
+        beta: 5  # beta param for exponential 1/beta*exp(-x/beta) (beta=1/lambda)
         min:
         max:
       delay:
         dist: "uniform" # exponential, normal or uniform
-        min: 0.1  # ms
-        max: 2.5  # ms # max_axon_length / propagation_velocity (100 mm/ms)
+        min: 0.2  # ms
+        max: 0.6  #2.5  # ms # max_axon_length / propagation_velocity (100 mm/ms)
       alpha:  # asymmetry parameter
       # (scales depressing increments as alpha*lambda) (real)
         dist: # "uniform"
@@ -225,8 +225,8 @@ connections:
         max:
       delay:
         dist: "uniform" # exponential, normal or uniform
-        min: 0.1  # ms
-        max: 2.5  # ms # max_axon_length / propagation_velocity (100 mm/ms)
+        min: 0.2  # ms
+        max: 0.6 #2.5  # ms # max_axon_length / propagation_velocity (100 mm/ms)
       alpha:
         dist:
         min:
@@ -255,8 +255,8 @@ connections:
         max:
       delay:
         dist: "uniform" # exponential, normal or uniform
-        min: 0.1  # ms
-        max: 2.5  # ms # max_axon_length / propagation_velocity (100 mm/ms)
+        min: 0.2  # ms
+        max: 0.6 #2.5  # ms # max_axon_length / propagation_velocity (100 mm/ms)
       alpha:
         dist:
         min:
@@ -289,8 +289,8 @@ connections:
         max:
       delay:
         dist: "uniform" # exponential, normal or uniform
-        min: 0.1  # ms
-        max: 2.5  # ms # max_axon_length / propagation_velocity (100 mm/ms)
+        min: 0.2  # ms
+        max: 0.6 #2.5  # ms # max_axon_length / propagation_velocity (100 mm/ms)
       alpha:
         dist:
         min:
@@ -299,7 +299,7 @@ connections:
 network_layout:
   energy_dependent: True
   n_neurons: 500
-  ex_in_ratio: 0.8  # n_exc = exc_inh_ratio*n_neurons
+  ex_in_ratio: 0.99  # n_exc = exc_inh_ratio*n_neurons
   positions:
     dist: "uniform"
     dim: 2 # number of spatial dimensions (only 2 its supported now)
