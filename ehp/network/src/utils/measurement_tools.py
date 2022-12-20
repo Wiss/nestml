@@ -194,7 +194,7 @@ def phase_coherence(pop_dict: dict, spikes_events: dict, final_t: float,
         first_spike_idx[pop] = int(first_spike[pop] / resolution)
         last_spike_idx[pop] = int(last_spike[pop] / resolution)
         pop_average_order_param[pop]['o_param'][:, 0:first_spike_idx[pop]] = np.nan
-        pop_average_order_param[pop]['o_param'][:, last_spike_idx[pop]:-1] = np.nan
+        pop_average_order_param[pop]['o_param'][:, last_spike_idx[pop]: ] = np.nan
 
     # calculate average
     pop_average_order_param['all']['times'] = \
@@ -205,7 +205,7 @@ def phase_coherence(pop_dict: dict, spikes_events: dict, final_t: float,
     first_spike_idx['all'] = min(first_spike_idx.values())
     last_spike_idx['all'] = max(last_spike_idx.values())
     pop_average_order_param['all']['o_param'][:, 0: first_spike_idx['all']] = np.nan
-    pop_average_order_param['all']['o_param'][:, last_spike_idx['all']: -1] = np.nan
+    pop_average_order_param['all']['o_param'][:, last_spike_idx['all']: ] = np.nan
     if kargs['verbose'] > 0:
         print('total neurons considered for phase coherence calculation')
         print(neuron_count)
@@ -605,10 +605,11 @@ def energy_fix_point(eta: float, alpha: float = 0.5, a_h: float = 100) -> float:
     if eta == 0:
         return 0
     else:
-        return a_h*(np.log(alpha)/eta*a_h + 1)
+        return a_h*(np.log(alpha)/eta + 1)
 
 def get_mean_fr_per_neuron(spikes_events: dict,
-                         simtime: float):
+                         simtime: float,
+                         min_time: float = 0):
     """
     Calculates average over time firing rate per neuron.
 
@@ -621,11 +622,21 @@ def get_mean_fr_per_neuron(spikes_events: dict,
     """
     mean_rate_per_neuron = []
     for pop in spikes_events:
-        lst = list(spikes_events[pop]['senders'])
+        senders = spikes_events[pop]['senders']
+        times = spikes_events[pop]['times']
+        # include min and max times
+        times_w_min = times[times > min_time]
+        senders_w_min = senders[times > min_time]
+        lst = list(senders_w_min)
         sorted_sender = set(sorted(lst))
         for sender in sorted_sender:
             mean_rate_per_neuron.append(sum(
-                        spikes_events[pop]['senders'] == sender)/simtime*1000)  # Hz
+                        senders_w_min == sender)/(simtime - min_time)*1000)  # Hz
+        ##lst = list(spikes_events[pop]['senders'])
+        ##sorted_sender = set(sorted(lst))
+        ##for sender in sorted_sender:
+        ##    mean_rate_per_neuron.append(sum(
+        ##               spikes_events[pop]['senders'] == sender)/simtime*1000)  # Hz
     return mean_rate_per_neuron
 
 
@@ -643,13 +654,13 @@ def get_incoming_strength_per_neuron(w_matrix: np.array,
     cols = w_matrix[0, :]
     if only_pos:
         # negative weights = 0
-        w_matrix_copy[ex_pop_length: -1, :] *= 0
+        w_matrix_copy[ex_pop_length: , :] *= 0
     elif only_neg:
         # positive weights = 0
         w_matrix_copy[0: ex_pop_length, :] *= 0
-        w_matrix_copy[ex_pop_length: -1, :] = -w_matrix[ex_pop_length: -1, :].copy()
+        w_matrix_copy[ex_pop_length: , :] = -w_matrix[ex_pop_length: , :].copy()
     else:
-        w_matrix_copy[ex_pop_length: -1, :] = -w_matrix[ex_pop_length: -1, :].copy()
+        w_matrix_copy[ex_pop_length: , :] = -w_matrix[ex_pop_length: , :].copy()
     for neuron in range(len(cols)):
         in_strength = np.sum(w_matrix_copy[:, neuron])
         incoming_strength.append(in_strength)
