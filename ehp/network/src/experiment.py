@@ -22,6 +22,7 @@ from src.utils.figures import (create_weights_figs,
                                create_cc_vs_incoming_figs,
                                create_cc_vs_atp_figs,
                                create_atp_vs_rate_figs,
+                               create_w_vs_rate_figs,
                                delays_hist,
                                weights_before_after_hist)
 
@@ -34,6 +35,7 @@ from src.utils.measurement_tools import (get_weight_matrix,
                                          get_adjacency_matrix,
                                          get_graph_measurement,
                                          get_clustering_coeff,
+                                         get_mean_fr_per_neuron,
                                          get_mean_energy_per_neuron,
                                          get_incoming_strength_per_neuron,
                                          energy_fix_point)
@@ -112,6 +114,10 @@ if __name__ == '__main__':
                                             conn_dict=conn_dict,
                                             weight_rec_dict=weight_rec_dict)
 
+    mean_energy_fix_point = energy_fix_point(eta=etaexex,
+                                             alpha=aexex,
+                                             a_h=100)
+
     logger.info("simulation finished successfully")
     end_sim = time.time()
 
@@ -171,7 +177,8 @@ if __name__ == '__main__':
                        n_neurons=network_layout['n_neurons'],
                        ex_in_ratio=network_layout['ex_in_ratio'],
                        time_window=general['firing_rate_window'],
-                       record_rate=general['record_rate'])
+                       record_rate=general['record_rate'],
+                       eq_energy_level=mean_energy_fix_point)
 
     # record inital weights
     save_data(PATH_TO_DATA, 'weights_init', weights_init)
@@ -445,6 +452,10 @@ if __name__ == '__main__':
     mean_firing_rate_per_neuron = get_mean_fr_per_neuron(
                                             spikes_events=spikes_events,
                                             simtime=general['simtime'])
+    last_mean_firing_rate_per_neuron = get_mean_fr_per_neuron(
+                                            spikes_events=spikes_events,
+                                            simtime=general['simtime'],
+                                            min_time=general['simtime']*.9)
     in_strength = get_incoming_strength_per_neuron(
                                         w_matrix=full_w_matrix_fin,
                                         ex_pop_length=ex_pop_length,
@@ -458,6 +469,13 @@ if __name__ == '__main__':
                                         ex_pop_length=ex_pop_length,
                                         only_neg=True)
 
+    # create \sum w*rate vs ATP figs
+    create_w_vs_rate_figs(
+        last_mean_firing_rate_per_neuron=last_mean_firing_rate_per_neuron,
+        w_matrix_fin=w_matrix_fin,
+        mean_energy_per_neuron=mean_energy_per_neuron,
+        output_path=PATH_TO_FIGS,
+        ex_pop_length=ex_pop_length)
     for pop in ['ex', 'in']:
         create_atp_vs_rate_figs(mean_atp=mean_energy_per_neuron,
                                 mean_rate=mean_firing_rate_per_neuron,
@@ -508,20 +526,20 @@ if __name__ == '__main__':
                                 cc_var=r'<ATP>',
                                 extra_info='_incoming_cc_atp')
 
+
     # generate figs (only if data is recorded)
     #for rec_k, rec_dict_v in rec_dict.items():
     #    if general['record'][rec_k]:
     #        for key, value in rec_dict_v.items():
     #        PATH_TO_FIGS
 
-    mean_energy_fix_point = energy_fix_point(eta=etaexex,
-                                             alpha=aexex,
-                                             a_h=100)
 
     print('##########################################')
     print('## ENERGY EXPECTED FIXED POINT ###########')
     print('##########################################')
     print(f'Expected energy fixed point for ex pop: {mean_energy_fix_point}')
+    print(f'Mean ex fr: {np.mean(mean_firing_rate_per_neuron[0: ex_pop_length])}')
+    print(f'Last mean ex fr: {np.mean(last_mean_firing_rate_per_neuron[0: ex_pop_length])}')
     logger.info('Expected energy fixed point: %f', mean_energy_fix_point)
     logger.info(f'mean in_strength_pos: %f', np.mean(in_strength_pos))
     logger.info(f'mean ex_fr: %f', np.mean(mean_firing_rate_per_neuron[0: ex_pop_length]))

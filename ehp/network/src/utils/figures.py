@@ -99,7 +99,8 @@ def create_weights_figs(weights_events: dict, fig_name: str, output_path: str,
 
 def create_spikes_figs(pop_dict: dict, spikes_events: dict,
                      multimeter_events: dict, fig_name: str,
-                     output_path: str, **kargs):
+                     output_path: str,
+                     **kargs):
     """
     Raster plots
 
@@ -125,12 +126,14 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
     kargs.setdefault('mean_lw', 3)
     kargs.setdefault('plot_pop_p_coherence_with_all', False)
     kargs.setdefault('plot_each_n_atp', False)
+    kargs.setdefault('eq_energy_level', None)
     resolution = kargs['resolution']
     final_t = kargs['simtime']
     kargs.setdefault('init_time', 0)
     kargs.setdefault('fin_time', -1)
     idx_init = int(kargs['init_time']/resolution)
     idx_init_atp = int(kargs['init_time']/kargs['record_rate'])
+
     if kargs['fin_time'] == -1:
         idx_fin = kargs['fin_time']
         idx_fin_atp = kargs['fin_time']
@@ -219,6 +222,14 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
                            color='darkgreen',
                            label=pop + ' sd',
                            alpha=kargs['alpha'])
+        # expected energy equilibrium
+        if pop == 'ex':
+            ax[1].axhline(kargs['eq_energy_level'],
+                          c='grey',
+                          ls='--',
+                          lw=kargs['mean_lw'],
+                          label=r'$\breve{A} =$' +
+                          f' = {round(kargs["eq_energy_level"], 1)}')
         ax[1].legend(fontsize=fontsize_legend)
         logger.info('%s population ATP average through simulation %s',
                     pop, np.mean(atp_mean[pop]))
@@ -963,9 +974,9 @@ def create_atp_vs_rate_figs(mean_atp: np.array,
         mean_fr = mean_rate[0: pop_length]
         incoming_strength = incoming_strength[0: pop_length]
     else:
-        mean_atp = mean_atp[pop_length:-1]
-        mean_fr = mean_rate[pop_length:-1]
-        incoming_strength = incoming_strength[pop_length:-1]
+        mean_atp = mean_atp[pop_length: ]
+        mean_fr = mean_rate[pop_length: ]
+        incoming_strength = incoming_strength[pop_length: ]
     fig, ax = plt.subplots(figsize=kargs['fig_size'])
     #fig.suptitle(f'Clustering vs in-{incoming_var}',
     #             fontsize=fontsize_title)
@@ -986,3 +997,100 @@ def create_atp_vs_rate_figs(mean_atp: np.array,
     save_atp_vs_rate_fig =f'{output_path}/atp_vs_fr_vs_in-strength_{kargs["pop"]}{kargs["extra_info"]}'
     plt.savefig(save_atp_vs_rate_fig, dpi=dpi)
     plt.close(fig)
+
+
+def create_w_vs_rate_figs(last_mean_firing_rate_per_neuron: list,
+                        w_matrix_fin: dict,
+                        mean_energy_per_neuron: np.array,
+                        output_path: str,
+                        **kargs):
+    """
+    Plot \sum w_own rate_own vs \sum w_from_other_pop rate_other
+
+    Parameters
+    ----------
+    last_mean_firing_rate_per_neuron:
+        last mean fr per neuron in population dict
+    w_matrix_fin:
+        weight matrix at the end of sim (key = pop_pop)
+    mean_energy_per_neruon:
+        array with mean energy per neuron
+    output_path:
+        output path for save figs
+    """
+    kargs.setdefault('markersize', 2)
+    kargs.setdefault('markerfacecolor', 'steelblue')
+    kargs['cc_var'] = r'$<ATP>$'
+    kargs.setdefault('edgecolors', 'k')
+    kargs.setdefault('verbose', 0)
+    kargs.setdefault('lw', None)
+    kargs.setdefault('cmap', 'gray_r')
+    kargs.setdefault('size', 60)
+    kargs.setdefault('fig_size', fig_size)
+    pop_length = kargs['ex_pop_length']
+    for pop in ['ex', 'in']:
+        if pop == 'ex':
+            #own_fr = 'ex'
+            #other_fr = 'in'
+            mean_own_fr = np.array(last_mean_firing_rate_per_neuron[0: pop_length])
+            mean_other_fr = np.array(last_mean_firing_rate_per_neuron[pop_length: ])
+            own_w = 'ex_ex'
+            other_w = 'in_ex'
+            mean_own_w = w_matrix_fin[own_w]
+            mean_other_w = w_matrix_fin[other_w]
+            mean_atp = mean_energy_per_neuron[0: pop_length]
+            ylabel = r'$\sum_k w^{k}_{ex, ex} \nu^k_{ex}$'
+            xlabel = r'$\sum_k w^{k}_{in, ex} \nu^k_{in}$'
+        else:
+            mean_own_fr = np.array(last_mean_firing_rate_per_neuron[pop_length: ])
+            mean_other_fr = np.array(last_mean_firing_rate_per_neuron[0: pop_length])
+            own_w = 'in_in'
+            other_w = 'ex_in'
+            mean_own_w = w_matrix_fin[own_w]
+            mean_other_w = w_matrix_fin[other_w]
+            mean_atp = mean_energy_per_neuron[pop_length: ]
+            ylabel = r'$\sum_k w^{k}_{in, in} \nu^k_{in}$'
+            xlabel = r'$\sum_k w^{k}_{ex, in} \nu^k_{ex}$'
+
+        mean_own_fr_v = mean_own_fr.reshape(-1, 1)
+        mean_other_fr_v = mean_other_fr.reshape(-1, 1)
+
+        if kargs['verbose'] == 1:
+            print('mean_own_fr')
+            print(mean_own_fr_v.shape)
+            print(mean_own_fr_v)
+            print('mean_other_fr')
+            print(mean_other_fr_v.shape)
+            print(mean_other_fr_v)
+            print('mean_own_w')
+            print(mean_own_w.shape)
+            print(mean_own_w)
+            print('mean_other_w')
+            print(mean_other_w.shape)
+            print(mean_other_w)
+
+        mean_own_w_fr = np.matmul(
+            np.transpose(mean_own_fr_v), np.abs(mean_own_w)/100)
+        mean_other_w_fr = np.matmul(
+            np.transpose(mean_other_fr_v), np.abs(mean_other_w)/100)
+
+        fig, ax = plt.subplots(figsize=kargs['fig_size'])
+        ax.set_ylabel(ylabel, fontsize=fontsize_label)
+        ax.set_xlabel(xlabel, fontsize=fontsize_label)
+        ax.tick_params(axis='both', labelsize=tick_size)
+        points = ax.scatter(mean_other_w_fr,
+                            mean_own_w_fr,
+                            c=mean_atp,
+                            cmap=kargs['cmap'],
+                            edgecolors=kargs['edgecolors'],
+                            lw=kargs['lw'],
+                            s=kargs['size'])
+        divider = make_axes_locatable(ax)
+        cmap_pos = divider.append_axes('right', size="5%", pad="5%")
+        cax = fig.add_axes(cmap_pos)
+        cbar = fig.colorbar(points, cax=cax)
+        cbar.ax.set_title(kargs['cc_var'], ha='left', x=0)
+        # save image
+        save_atp_vs_w_rate_fig =f'{output_path}/atp_vs_w_fr_own_{pop}'
+        plt.savefig(save_atp_vs_w_rate_fig, dpi=dpi)
+        plt.close(fig)
