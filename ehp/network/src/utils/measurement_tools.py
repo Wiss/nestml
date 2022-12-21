@@ -590,7 +590,8 @@ def energy_fix_point(eta: float, alpha: float = 0.5, a_h: float = 100) -> float:
     This is the energy level at which max potentiation and min depression
     are equall
 
-    Parameters:
+    Parameters
+    ----------
     eta:
         synaptic sensitivity parameter
     alpha:
@@ -598,8 +599,8 @@ def energy_fix_point(eta: float, alpha: float = 0.5, a_h: float = 100) -> float:
     a_h:
         homeostatic energy level
 
-    Returns:
-    --------
+    Returns
+    -------
     expected_a_level
     """
     if eta == 0:
@@ -608,30 +609,52 @@ def energy_fix_point(eta: float, alpha: float = 0.5, a_h: float = 100) -> float:
         return a_h*(np.log(alpha)/eta + 1)
 
 def get_mean_fr_per_neuron(spikes_events: dict,
+                         pop_dict: dict,
                          simtime: float,
                          min_time: float = 0):
     """
     Calculates average over time firing rate per neuron.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     spikes_events:
         spikes events from simulation
+    pop_dict:
+        dictionary with populations
     simtime:
         simulation total time in ms
+    min_time:
+        min time to calculate fr (>0)
+
+    Returns
+    -------
+    mean_rate_per_neuron:
+        list with mean rate per neuron. This is the vectorial representation
+    of firing rate = [\nu^{ex}^{T}, \nu^{in}^{T}]^{T}
     """
+    ex_pop_list = pop_dict['ex'].tolist()
+    in_pop_list = pop_dict['in'].tolist()
+    # all neurons are potential senders
+    potential_senders = {'ex': ex_pop_list,
+                         'in': in_pop_list}
     mean_rate_per_neuron = []
+
     for pop in spikes_events:
         senders = spikes_events[pop]['senders']
         times = spikes_events[pop]['times']
         # include min and max times
-        times_w_min = times[times > min_time]
+        #times_w_min = times[times > min_time]
         senders_w_min = senders[times > min_time]
-        lst = list(senders_w_min)
-        sorted_sender = set(sorted(lst))
-        for sender in sorted_sender:
-            mean_rate_per_neuron.append(sum(
+        #lst = list(senders_w_min)
+        #sorted_sender = set(sorted(lst))
+        #for sender in sorted_sender:
+        for sender in potential_senders[pop]:
+            if sender in senders_w_min:
+                mean_rate_per_neuron.append(sum(
                         senders_w_min == sender)/(simtime - min_time)*1000)  # Hz
+            else:
+                mean_rate_per_neuron.append(0)
+
         ##lst = list(spikes_events[pop]['senders'])
         ##sorted_sender = set(sorted(lst))
         ##for sender in sorted_sender:
