@@ -78,8 +78,8 @@ neuron edlif_psc_alpha_percent0:
     E_syn_in real = 4              # inh synapsis consumption percent/spike
     ATP_basal real = E_rp + E_hk    # basal ATP production percent/ms
     gamma real = 16                # sensitivity to energy imbalance
-    w_max real = 100
-    w_min real = 100
+    w_max real = 1000
+    w_min real = 1000
     fix_atp real = 0                     # if 1 => atp is fixed, if 0 => dynamic atp
   end
 
