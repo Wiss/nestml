@@ -451,9 +451,11 @@ if __name__ == '__main__':
                                         ATP=multimeter_events)
     mean_firing_rate_per_neuron = get_mean_fr_per_neuron(
                                             spikes_events=spikes_events,
+                                            pop_dict=pop_dict0,
                                             simtime=general['simtime'])
     last_mean_firing_rate_per_neuron = get_mean_fr_per_neuron(
                                             spikes_events=spikes_events,
+                                            pop_dict=pop_dict0,
                                             simtime=general['simtime'],
                                             min_time=general['simtime']*.9)
     in_strength = get_incoming_strength_per_neuron(
@@ -470,12 +472,21 @@ if __name__ == '__main__':
                                         only_neg=True)
 
     # create \sum w*rate vs ATP figs
+    w_max = neurons['ex']['params']['energy_params']['w_max']['mean']
+    w_min = neurons['in']['params']['energy_params']['w_max']['mean']
+    if not (w_max == neurons['ex']['params']['energy_params']['w_min']['mean']
+           or w_max == neurons['ex']['params']['energy_params']['w_min']['mean']):
+        logger.warning('Watch out! w_max != w_man in either ex or in pop')
+
     create_w_vs_rate_figs(
         last_mean_firing_rate_per_neuron=last_mean_firing_rate_per_neuron,
         w_matrix_fin=w_matrix_fin,
         mean_energy_per_neuron=mean_energy_per_neuron,
         output_path=PATH_TO_FIGS,
-        ex_pop_length=ex_pop_length)
+        ex_pop_length=ex_pop_length,
+        w_max=w_max,
+        w_min=w_min,
+        verbose=0)
     for pop in ['ex', 'in']:
         create_atp_vs_rate_figs(mean_atp=mean_energy_per_neuron,
                                 mean_rate=mean_firing_rate_per_neuron,
