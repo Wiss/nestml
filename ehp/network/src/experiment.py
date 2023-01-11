@@ -14,6 +14,7 @@ from src.logging.logging import logger
 import src.network as network
 from src.utils.figures import (create_weights_figs,
                                create_spikes_figs,
+                               create_energy_figs,
                                create_pops_figs,
                                create_multimeter_figs,
                                create_matrices_figs,
@@ -183,6 +184,21 @@ if __name__ == '__main__':
                        spikes_events=spikes_events,
                        multimeter_events=multimeter_events,
                        fig_name='spikes',
+                       output_path=PATH_TO_FIGS,
+                       mult_var=general['record']['multimeter'],
+                       alpha=0.2,
+                       multimeter_record_rate=general['record_rate'],
+                       simtime=general['simtime'],
+                       resolution=general['resolution'],
+                       n_neurons=network_layout['n_neurons'],
+                       ex_in_ratio=network_layout['ex_in_ratio'],
+                       time_window=general['firing_rate_window'],
+                       record_rate=general['record_rate'],
+                       eq_energy_level=mean_energy_fix_point)
+    create_energy_figs(pop_dict=pop_dict,
+                       spikes_events=spikes_events,
+                       multimeter_events=multimeter_events,
+                       fig_name='energy-rates',
                        output_path=PATH_TO_FIGS,
                        mult_var=general['record']['multimeter'],
                        alpha=0.2,
@@ -388,7 +404,8 @@ if __name__ == '__main__':
 
     # in-degree(strength) vs out-degree(strength) vs mean energy per neuron
     mean_energy_per_neuron = get_mean_energy_per_neuron(
-                                        ATP=multimeter_events)
+                                        ATP=multimeter_events,
+                                        simtime=general['simtime'])
     incoming_energy_dict = {'1':
         {'name': 'strenght_fin',
         'a': mean_energy_per_neuron,
@@ -463,14 +480,19 @@ if __name__ == '__main__':
 
     ex_pop_length = pop_dict['ex']['n']
     mean_energy_per_neuron = get_mean_energy_per_neuron(
-                                        ATP=multimeter_events)
+                                        ATP=multimeter_events,
+                                        simtime=general['simtime'])
+    last_mean_energy_per_neuron = get_mean_energy_per_neuron(
+                                        ATP=multimeter_events,
+                                        simtime=general['simtime'],
+                                        min_time=general['simtime']*0.9)
     mean_firing_rate_per_neuron = get_mean_fr_per_neuron(
                                             spikes_events=spikes_events,
-                                            pop_dict=pop_dict0,
+                                            pop_dict=pop_dict,
                                             simtime=general['simtime'])
     last_mean_firing_rate_per_neuron = get_mean_fr_per_neuron(
                                             spikes_events=spikes_events,
-                                            pop_dict=pop_dict0,
+                                            pop_dict=pop_dict,
                                             simtime=general['simtime'],
                                             min_time=general['simtime']*.9)
     in_strength = get_incoming_strength_per_neuron(
@@ -487,8 +509,6 @@ if __name__ == '__main__':
                                         only_neg=True)
 
     # create \sum w*rate vs ATP figs
-    w_max = neurons['ex']['params']['energy_params']['w_max']['mean']
-    w_min = neurons['in']['params']['energy_params']['w_max']['mean']
     if not (w_max == neurons['ex']['params']['energy_params']['w_min']['mean']
            or w_max == neurons['ex']['params']['energy_params']['w_min']['mean']):
         logger.warning('Watch out! w_max != w_man in either ex or in pop')
@@ -503,49 +523,49 @@ if __name__ == '__main__':
         w_min=w_min,
         verbose=0)
     for pop in ['ex', 'in']:
-        create_atp_vs_rate_figs(mean_atp=mean_energy_per_neuron,
-                                mean_rate=mean_firing_rate_per_neuron,
+        create_atp_vs_rate_figs(mean_atp=last_mean_energy_per_neuron,
+                                mean_rate=last_mean_firing_rate_per_neuron,
                                 incoming_strength=in_strength,
                                 output_path=PATH_TO_FIGS,
                                 pop=pop,
                                 ex_pop_length=ex_pop_length,
                                 cc_var=r'$\sum_j w_{ji}$',
                                 extra_info='_atp')
-        create_atp_vs_rate_figs(mean_atp=mean_energy_per_neuron,
+        create_atp_vs_rate_figs(mean_atp=last_mean_energy_per_neuron,
                                 mean_rate=in_strength,
-                                incoming_strength=mean_firing_rate_per_neuron,
+                                incoming_strength=last_mean_firing_rate_per_neuron,
                                 output_path=PATH_TO_FIGS,
                                 pop=pop,
                                 ex_pop_length=ex_pop_length,
                                 cc_var=r'$<\nu>$',
                                 extra_info='_incoming')
-        create_atp_vs_rate_figs(mean_atp=mean_energy_per_neuron,
+        create_atp_vs_rate_figs(mean_atp=last_mean_energy_per_neuron,
                                 mean_rate=in_strength_pos,
-                                incoming_strength=mean_firing_rate_per_neuron,
+                                incoming_strength=last_mean_firing_rate_per_neuron,
                                 output_path=PATH_TO_FIGS,
                                 pop=pop,
                                 ex_pop_length=ex_pop_length,
                                 cc_var=r'$<\nu>$',
                                 extra_info='_incoming_pos')
-        create_atp_vs_rate_figs(mean_atp=mean_energy_per_neuron,
+        create_atp_vs_rate_figs(mean_atp=last_mean_energy_per_neuron,
                                 mean_rate=in_strength_neg,
-                                incoming_strength=mean_firing_rate_per_neuron,
+                                incoming_strength=last_mean_firing_rate_per_neuron,
                                 output_path=PATH_TO_FIGS,
                                 pop=pop,
                                 ex_pop_length=ex_pop_length,
                                 cc_var=r'$<\nu>$',
                                 extra_info='_incoming_neg')
-        create_atp_vs_rate_figs(mean_atp=in_strength_pos,
-                                mean_rate=mean_firing_rate_per_neuron,
-                                incoming_strength=mean_energy_per_neuron,
+        create_atp_vs_rate_figs(mean_atp=last_mean_firing_rate_per_neuron,
+                                mean_rate=in_strength_pos,
+                                incoming_strength=last_mean_energy_per_neuron,
                                 output_path=PATH_TO_FIGS,
                                 pop=pop,
                                 ex_pop_length=ex_pop_length,
                                 cc_var=r'<ATP>',
                                 extra_info='_incoming_pos_cc_atp')
-        create_atp_vs_rate_figs(mean_atp=in_strength,
-                                mean_rate=mean_firing_rate_per_neuron,
-                                incoming_strength=mean_energy_per_neuron,
+        create_atp_vs_rate_figs(mean_atp=last_mean_firing_rate_per_neuron,
+                                mean_rate=in_strength,
+                                incoming_strength=last_mean_energy_per_neuron,
                                 output_path=PATH_TO_FIGS,
                                 pop=pop,
                                 ex_pop_length=ex_pop_length,
