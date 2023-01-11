@@ -72,13 +72,27 @@ if __name__ == '__main__':
     etaexex_s = str(etaexex).replace('.', '_')
     aexex = connections['ex_ex']['syn_spec']['params']['alpha']
     aexex_s = str(aexex).replace('.', '_')
+    e_ap = neurons['ex']['params']['energy_params']['E_ap']['mean']
+    e_ap_s = str(e_ap).replace('.', '_')
+    e_syn_ex = neurons['ex']['params']['energy_params']['E_syn_ex']['mean']
+    e_syn_ex_s = str(e_syn_ex).replace('.', '_')
+    e_syn_in = neurons['ex']['params']['energy_params']['E_syn_in']['mean']
+    e_syn_in_s = str(e_syn_in).replace('.', '_')
+    w_max = neurons['ex']['params']['energy_params']['w_max']['mean']
+    w_max_s = str(w_max).replace('.', '_')
+    w_min = neurons['in']['params']['energy_params']['w_max']['mean']
+    w_min_s = str(w_min).replace('.', '_')
     PATH_TO_OUTPUT = os.path.join(
                     'results',
                     config_file_name,
                     'gex_' + g_m_ex_s + \
                     '_gin_' + g_m_in_s + \
                     '_etaexex_' + etaexex_s + \
-                    '_aexex_' + aexex_s,
+                    '_aexex_' + aexex_s + \
+                    '_w_max_' + w_max_s + \
+                    '_e_ap_' + e_ap_s + \
+                    '_e_syn_ex_' + e_syn_ex_s + \
+                    '_e_syn_in_' + e_syn_in_s,
                     time.strftime("%Y_%m_%d_%H%M%S")+f"_seed_{general['seed']}")
     if general['record']['spikes'] or general['record']['weights']:
         create_folder(PATH_TO_OUTPUT)
@@ -123,6 +137,7 @@ if __name__ == '__main__':
 
     # save data and generate plots
     pop_dict = {}
+    #save_data(PATH_TO_DATA, 'pop_dict0', pop_dict0)
     for pop_k in pop_dict0:
         pop_dict[pop_k] = pop_dict0[pop_k].get()
         pop_dict[pop_k]['positions'] = pop_dict0[pop_k].spatial['positions']
