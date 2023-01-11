@@ -15,13 +15,14 @@ logger = logger.getChild(__name__)
 
 # parameters
 alpha = 0.6
-fontsize_title = 17
-fontsize_label = 14
-fontsize_legend = 11
+fontsize_title = 18
+fontsize_label = 16
+fontsize_legend = 14
 linewidth = 2
 pointsize = 20
 fig_size = (12, 12)
 fig_size_mult = (12, 8)
+fig_size_energy = (12, 6)
 tick_size = 13
 dpi = 144
 dpi_w_matrices = 3*144
