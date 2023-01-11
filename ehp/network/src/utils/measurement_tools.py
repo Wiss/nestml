@@ -565,7 +565,9 @@ def get_clustering_coeff(w_matrix: np.array,
     clustering_coeff_mean = np.mean(clustering_coeff)
     return clustering_coeff, clustering_coeff_mean
 
-def get_mean_energy_per_neuron(ATP: dict):
+def get_mean_energy_per_neuron(ATP: dict,
+                             simtime: float,
+                             min_time: float = 0):
     """
     gets mean energy per neuron
 
@@ -582,7 +584,9 @@ def get_mean_energy_per_neuron(ATP: dict):
     mean_atp_per_neuron = []
     for pop in ATP:
         for sender in set(ATP[pop]['senders']):
-            mean_atp_per_neuron.append(np.mean(atp_per_sender[sender]))
+            init_idx = int(min_time/simtime)*len(atp_per_sender[sender])
+            mean_atp_n = np.mean(atp_per_sender[sender][init_idx:])
+            mean_atp_per_neuron.append(mean_atp_n)
     return mean_atp_per_neuron
 
 def energy_fix_point(eta: float, alpha: float = 0.5, a_h: float = 100) -> float:
@@ -632,8 +636,10 @@ def get_mean_fr_per_neuron(spikes_events: dict,
         list with mean rate per neuron. This is the vectorial representation
     of firing rate = [\nu^{ex}^{T}, \nu^{in}^{T}]^{T}
     """
-    ex_pop_list = pop_dict['ex'].tolist()
-    in_pop_list = pop_dict['in'].tolist()
+    #ex_pop_list = pop_dict['ex'].tolist()
+    ex_pop_list = list(pop_dict['ex']['global_id'])
+    #in_pop_list = pop_dict['in'].tolist()
+    in_pop_list = list(pop_dict['in']['global_id'])
     # all neurons are potential senders
     potential_senders = {'ex': ex_pop_list,
                          'in': in_pop_list}
