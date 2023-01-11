@@ -1,16 +1,16 @@
 #!/bin/bash
 
-GENERATE_CONFIG_FILES=0
+GENERATE_CONFIG_FILES=1
 MODIFY_CONFIG_FILE=1
 
 # generate copies from file <SOURCE_FILE> to <TARGET_FILE>
 if [ "$GENERATE_CONFIG_FILES" == 1 ]
 then
-    SOURCE_FILE="energy_dependent_both_seedo_1"
-    TARGET_FILE="energy_dependent_both_seed_" 
-    for j in {1..14}
+    SOURCE_FILE="energy_dependent_gamma_20_eta_50_k_07_seed_1_n_500"
+    TARGET_FILE="energy_dependent_gamma_20_eta_50_k_07_seed_" 
+    for j in {2..5}
         # copy from one source file 
-        do cp config/$SOURCE_FILE.yaml config/$TARGET_FILE"$j".yaml
+        do cp config/$SOURCE_FILE.yaml config/$TARGET_FILE"$j""_n_500".yaml
         # copy from several source files
         #do cp config/$SOURCE_FILE"$j".yaml config/$TARGET_FILE"$j".yaml
     done
@@ -28,7 +28,7 @@ then
     # new value for the paameters
     NEW_VALUE="250"
 
-    declare -a PARAM_TO_MODIFY=(15)  # for seed
+    declare -a PARAM_TO_MODIFY=(14)  # for seed
 
     #declare -a PARAM_TO_MODIFY=(92 165)  # for I_e
     NEW_TEXT="          mean: $NEW_VALUE"  # for I_e 
@@ -39,17 +39,17 @@ then
     #declare -a PARAM_TO_MODIFY=(68 141)  # for gamma
     #NEW_TEXT="          mean: $NEW_VALUE"  # for gamma
 
-    FILE="energy_dependent_both_seed_"
-    for n in {1..14}
+    FILE="energy_dependent_gamma_20_eta_50_k_07_seed_"
+    for n in {2..5}
         do for m in ${PARAM_TO_MODIFY[@]}
             do 
-            if [[ "$m" -eq "15" ]]
+            if [[ "$m" -eq "14" ]]
             then
                 NEW_TEXT="  seed: $n"  # for seed
             fi
             echo $m
             echo $NEW_TEXT
-            sed -i "$m"'s/.*/'"$NEW_TEXT"'/g' config/$FILE"$n".yaml
+            sed -i "$m"'s/.*/'"$NEW_TEXT"'/g' config/$FILE"$n""_n_500".yaml
         done
     done
 fi
