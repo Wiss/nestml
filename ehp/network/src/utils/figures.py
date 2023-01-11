@@ -158,6 +158,7 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
                                             final_t=final_t,
                                             resolution=resolution)
     for pop in spikes_events:
+
         fig, ax = plt.subplots(3, figsize=fig_size, sharex=True)
         ax[-1].set_xlabel('time (ms)', fontsize=fontsize_label)
         if pop == 'ex':
@@ -224,13 +225,13 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
                            label=pop + ' sd',
                            alpha=kargs['alpha'])
         # expected energy equilibrium
-        if pop == 'ex':
+        if pop == 'ex' and kargs['eq_energy_level'] != 0:
             ax[1].axhline(kargs['eq_energy_level'],
                           c='grey',
                           ls='--',
                           lw=kargs['mean_lw'],
                           label=r'$\breve{A} =$' +
-                          f' = {round(kargs["eq_energy_level"], 1)}')
+                          f'{round(kargs["eq_energy_level"], 1)}')
         ax[1].legend(fontsize=fontsize_legend)
         logger.info('%s population ATP average through simulation %s',
                     pop, np.mean(atp_mean[pop]))
@@ -394,10 +395,222 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
     plt.savefig(save_spikes_j_fig, dpi=dpi)
     plt.close(fig)
 
+def create_energy_figs(pop_dict: dict, spikes_events: dict,
+                     multimeter_events: dict, fig_name: str,
+                     output_path: str,
+                     **kargs):
+    """
+    Only energy and rates plots
+
+    Parameters
+    ----------
+    pop_dict:
+        dictionary with populations
+    spikes_events:
+        dictionary with all spike's information (events)
+    multimeter_events:
+        dictionary with all multimeters information
+    fig_name:
+        figure name
+    output_path:
+        path to figure
+    kargs:
+        extra parameters to the funcion given as dictionary
+    """
+    kargs.setdefault('mult_var', None)
+    kargs.setdefault('time_window', 30)
+    kargs.setdefault('alpha', 0.3)
+    kargs.setdefault('mean_lw', 3)
+    kargs.setdefault('plot_each_n_atp', False)
+    kargs.setdefault('eq_energy_level', None)
+    resolution = kargs['resolution']
+    final_t = kargs['simtime']
+    kargs.setdefault('init_time', 0)
+    kargs.setdefault('fin_time', -1)
+    idx_init = int(kargs['init_time']/resolution)
+    idx_init_atp = int(kargs['init_time']/kargs['record_rate'])
+
+    if kargs['fin_time'] == -1:
+        idx_fin = kargs['fin_time']
+        idx_fin_atp = kargs['fin_time']
+    else:
+        idx_fin = int(kargs['fin_time']/resolution)
+        idx_fin_atp = int(kargs['fin_time']/kargs['record_rate'])
+    atp_stck = {}
+    atp_stack = {}
+    atp_mean = {}
+    atp_std = {}
+    mult_time = np.arange(start=kargs['multimeter_record_rate'], stop=final_t,
+                          step=kargs['multimeter_record_rate'])
+    firing_rate = tools.pop_firing_rate(pop_dict=pop_dict,
+                                        spikes_events=spikes_events,
+                                        time_window=kargs['time_window'],
+                                        final_t=final_t,
+                                        resolution=resolution)
+    for pop in spikes_events:
+        fig, ax = plt.subplots(1, figsize=fig_size_energy, sharex=True)
+        ax.set_xlabel('time (ms)', fontsize=fontsize_label)
+        if pop == 'ex':
+            color = 'darkred'
+            p = 'excitatory'
+        elif pop == 'in':
+            color = 'steelblue'
+            p = 'inhibitory'
+        #ax.set_title('Available energy and firing rate from ' + p + \
+        #                ' population', fontsize=fontsize_title)
+        ax.set_ylabel('ATP (%)', fontsize=fontsize_label,
+                         color='darkgreen')
+        ax.grid(axis='x')
+        ax.tick_params(axis='both', labelsize=tick_size)
+
+        # ATP and firing rate
+        atp_per_sender = {}
+        for sender, atp in zip(multimeter_events[pop]['senders'],
+                            multimeter_events[pop]['ATP']):
+            atp_per_sender.setdefault(str(sender), []).append(atp)
+        atp_stck[pop] = [np.array(atp_s) for atp_s in atp_per_sender.values()]
+        atp_stack[pop] = np.stack(atp_stck[pop])
+        atp_mean[pop] = np.mean(atp_stack[pop], axis=0)
+        atp_std[pop] = np.std(atp_stack[pop], axis=0)
+        ax.plot(mult_time[idx_init_atp: idx_fin_atp],
+                   atp_mean[pop][idx_init_atp: idx_fin_atp],
+                   c='darkgreen',
+                   lw=kargs['mean_lw'],
+                   label=pop + ' mean')
+        ax.fill_between(mult_time[idx_init_atp: idx_fin_atp],
+                           atp_mean[pop][idx_init_atp: idx_fin_atp] - \
+                           atp_std[pop][idx_init_atp: idx_fin_atp],
+                           atp_mean[pop][idx_init_atp: idx_fin_atp] + \
+                           atp_std[pop][idx_init_atp: idx_fin_atp],
+                           edgecolor='darkgreen',
+                           color='darkgreen',
+                           label=pop + ' sd',
+                           alpha=kargs['alpha'])
+        # expected energy equilibrium
+        if pop == 'ex' and kargs['eq_energy_level'] != 0:
+            ax.axhline(kargs['eq_energy_level'],
+                          c='grey',
+                          ls='--',
+                          lw=kargs['mean_lw'],
+                          label=r'$\breve{A} =$' +
+                          f'{round(kargs["eq_energy_level"], 1)}')
+        ax.legend(fontsize=fontsize_legend)
+        #ax.legend(loc='upper center',
+        #            fontsize=fontsize_legend,
+        #            bbox_to_anchor=(0.5, 1.05),
+        #            fancybox=True, shadow=True, ncol=2)
+        logger.info('%s population ATP average through simulation %s',
+                    pop, np.mean(atp_mean[pop]))
+        # second axes for firing rate
+        ax_1_2 = ax.twinx()
+        ax_1_2.tick_params(axis='both', labelsize=tick_size)
+        ax_1_2.plot(firing_rate['times'][idx_init: idx_fin],
+                    firing_rate[pop]['rates'][idx_init: idx_fin],
+                    c='darkorange',
+                    lw=kargs['mean_lw'],
+                    label=pop + ' fr',
+                    alpha=0.5)
+        ax_1_2.set_ylabel('Mean firing rate (Hz)',
+                          fontsize=fontsize_label,
+                          color='darkorange')
+        logger.info('%s population Firing rate average through simulation %s Hz',
+                    pop, np.mean(firing_rate[pop]['rates']))
+        plt.tight_layout()
+        # save image
+        save_spikes_s_fig =f'{output_path}/{fig_name}_{pop}_separate'
+        plt.savefig(save_spikes_s_fig, dpi=dpi)
+        plt.close(fig)
+
+    # all together
+    fig, ax = plt.subplots(1, figsize=fig_size_energy, sharex=True)
+    ax.set_title('Available energy and firing rate',
+                    fontsize=fontsize_title)
+    ax.set_xlabel('time (ms)', fontsize=fontsize_label)
+    ax.grid(axis='x')
+    ax.tick_params(axis='both', labelsize=tick_size)
+    for pop, events in spikes_events.items():
+        if pop == 'ex':
+            color = 'darkred'
+            p = 'excitatory'
+        elif pop == 'in':
+            color = 'steelblue'
+            p = 'inhibitory'
+        senders = spikes_events[pop]['senders']
+        times = spikes_events[pop]['times']
+        # include min and max times
+        times_w_min = times[times > kargs['init_time']]
+        senders_w_min = senders[times > kargs['init_time']]
+        if kargs['fin_time'] > 0:
+            times_w_min_max = times_w_min[times_w_min < kargs['fin_time']]
+            senders_w_min_max = senders_w_min[times_w_min < kargs['fin_time']]
+        else:
+            times_w_min_max = times_w_min
+            senders_w_min_max = senders_w_min
+        # ATP
+        if kargs['plot_each_n_atp']:
+            for n, sender in enumerate(atp_per_sender):
+                if n == 0:
+                    ax.plot(mult_time[idx_init_atp: idx_fin_atp],
+                               atp_per_sender[sender][idx_init_atp: idx_fin_atp],
+                               '.', c=color, label=pop, alpha=kargs['alpha'])
+                    ax.plot(mult_time[idx_init_atp: idx_fin_atp],
+                               atp_per_sender[sender][idx_init_atp: idx_fin_atp],
+                               c=color,
+                            alpha=kargs['alpha'])
+                else:
+                    ax.plot(mult_time[idx_init_atp: idx_fin_atp],
+                               atp_per_sender[sender][idx_init_atp: idx_fin_atp],
+                               '.', c=color, alpha=kargs['alpha'])
+                    ax.plot(mult_time[idx_init_atp: idx_fin_atp],
+                               atp_per_sender[sender][idx_init_atp: idx_fin_atp],
+                               c=color,
+                            alpha=kargs['alpha'])
+    # ATP
+    atp_stack['all'] = np.stack(atp_stck['ex'] + atp_stck['in'])
+    atp_mean['all'] = np.mean(atp_stack['all'], axis=0)
+    atp_std['all'] = np.std(atp_stack['all'], axis=0)
+    ax.plot(mult_time[idx_init_atp: idx_fin_atp],
+                atp_mean['all'][idx_init_atp: idx_fin_atp],
+                c='darkgreen',
+                lw=kargs['mean_lw'],
+                label='mean')
+    ax.fill_between(mult_time[idx_init_atp: idx_fin_atp],
+                        atp_mean['all'][idx_init_atp: idx_fin_atp] - \
+                        atp_std['all'][idx_init_atp: idx_fin_atp],
+                        atp_mean['all'][idx_init_atp: idx_fin_atp] + \
+                       atp_std['all'][idx_init_atp: idx_fin_atp],
+                        edgecolor='darkgreen',
+                        color='darkgreen',
+                        label='sd',
+                        alpha=kargs['alpha'])
+    logger.info('all populations ATP average through simulation %s',
+                np.mean(atp_mean['all']))
+    # second axes for firing rate
+    ax_1_2 = ax.twinx()
+    ax_1_2.plot(firing_rate['times'][idx_init: idx_fin],
+                firing_rate['all']['rates'][idx_init: idx_fin],
+                c='darkorange',
+                lw=kargs['mean_lw'],
+                label='fr',
+                alpha=0.5)
+    ax_1_2.set_ylabel('Mean firing rate (Hz)',
+                      fontsize=fontsize_label,
+                      color='darkorange')
+    ax_1_2.tick_params(axis='both', labelsize=tick_size)
+    logger.info('all population Firing rate average through simulation %s Hz',
+                np.mean(firing_rate['all']['rates']))
+    ax.set_ylabel('ATP (%)', fontsize=fontsize_label,
+                     color='darkgreen')
+    ax.legend(fontsize=fontsize_legend)
+    # save image
+    save_spikes_j_fig =f'{output_path}/{fig_name}_joint'
+    plt.savefig(save_spikes_j_fig, dpi=dpi)
+    plt.close(fig)
+
 def create_pops_figs(pop: dict, fig_name: str, output_path: str, **kargs):
     # all together
     fig, ax = plt.subplots(1, figsize=fig_size, sharex=True)
-    ax.set_title('Neurons positions', fontsize=fontsize_title)
+    ax.set_title('Neurons positions', fontsize=2*fontsize_title)
     for key in pop.keys():
         if key == 'ex':
             color = 'darkred'
@@ -410,10 +623,16 @@ def create_pops_figs(pop: dict, fig_name: str, output_path: str, **kargs):
                         markersize=pointsize)
             else:
                 ax.plot(p[0], p[1], '.', c=color, markersize=pointsize)
-    ax.set_ylabel('y (mm)', fontsize=fontsize_label)
-    ax.set_xlabel('x (mm)', fontsize=fontsize_label)
-    ax.tick_params(axis='both', labelsize=tick_size)
-    ax.legend(fontsize=fontsize_legend)
+    ax.set_ylabel('y (mm)', fontsize=2*fontsize_label)
+    ax.set_xlabel('x (mm)', fontsize=2*fontsize_label)
+    ax.tick_params(axis='both', labelsize=2*tick_size)
+    #ax.legend(fontsize=2*fontsize_legend)
+    ax.legend(loc='upper center',
+              fontsize=2*fontsize_legend,
+              #bbox_to_anchor=(0.5, 1.05),
+              bbox_to_anchor=(1.03, 1.04),
+              fancybox=True, shadow=True, ncol=1)
+    plt.tight_layout()
     # save image
     save_spikes_j_fig =f'{output_path}/{fig_name}_joint'
     plt.savefig(save_spikes_j_fig, dpi=dpi)
@@ -425,6 +644,11 @@ def create_multimeter_figs(multimeter_events: dict, measurement: str,
     kargs.setdefault('init_time', 0)
     kargs.setdefault('fin_time', -1)
     idx_init = int(kargs['init_time']/kargs['multimeter_record_rate'])
+    if measurement == 'V_m':
+        measurement_label = r'V_m'
+    else:
+        measurement_label = measurement
+
     if kargs['fin_time'] == -1:
         idx_fin = kargs['fin_time']
     else:
@@ -440,10 +664,10 @@ def create_multimeter_figs(multimeter_events: dict, measurement: str,
             p = 'inhibitory'
         measure_per_sender = {}
         fig, ax = plt.subplots(1, figsize=kargs['fig_size'])
-        ax.set_title(measurement + ' in ' + p + ' population',
-                     fontsize=fontsize_title)
+        #ax.set_title(measurement + ' in ' + p + ' population',
+        #             fontsize=fontsize_title)
         ax.set_xlabel('time (ms)', fontsize=fontsize_label)
-        ax.set_ylabel(measurement, fontsize=fontsize_label)
+        ax.set_ylabel(measurement_label, fontsize=fontsize_label)
         ax.tick_params(axis='both', labelsize=tick_size)
         ax.grid(axis='x')
         for sender, measure in zip(multimeter_events[pop]['senders'],
@@ -465,7 +689,7 @@ def create_multimeter_figs(multimeter_events: dict, measurement: str,
         #           c='darkgreen',
         #           lw=kargs['mean_lw'],
         #           label=pop + ' mean')
-        ax.legend(fontsize=fontsize_legend)
+        #ax.legend(fontsize=fontsize_legend)
         # save image
         save_measurement_fig =f'{output_path}/{fig_name}_{pop}'
         plt.savefig(save_measurement_fig, dpi=dpi)
@@ -637,7 +861,7 @@ def weights_before_after_hist(weights_init: dict, weights_fin: dict,
     kargs.setdefault('n_bins', 20)
     kargs.setdefault('rwidth', 0.9)
     for w_k, w_v in weights_init.items():
-        fig, ax = plt.subplots(2, figsize=fig_size, sharex=True,
+        fig, ax = plt.subplots(2, figsize=fig_size, sharex=False,
                                sharey=True)
         fig.suptitle(f'Histogram: {w_k} connections with ' \
                      f'{w_v.get("synapse_model")[0]} synapse type',
@@ -961,14 +1185,16 @@ def create_atp_vs_rate_figs(mean_atp: np.array,
     kargs.setdefault('size', 60)
     kargs.setdefault('fig_size', fig_size)
     if kargs['cc_var'] == r'$\sum_j w_{ji}$':
-        ylabel = '<ATP>'
-        xlabel = r'$<\nu>$'
+        ylabel = r'$\bar{A}_t$'
+        xlabel = r'$\bar{\nu}_t$'
     elif kargs['cc_var'] == r'$<\nu>$':
-        ylabel = '<ATP>'
+        kargs['cc_var'] = r'$\bar{\nu}_t$'
+        ylabel = r'$\bar{A}_t$'
         xlabel = r'$\sum_j w_{ji}$'
     elif kargs['cc_var'] == '<ATP>':
-        ylabel = r'$\sum_j w_{ji}$'
-        xlabel = r'$<\nu>$'
+        kargs['cc_var'] = r'$\bar{A}_t$'
+        ylabel = r'$\bar{\nu}_t$'
+        xlabel = r'$\sum_j w_{ji}$'
     pop_length = kargs['ex_pop_length']
     if kargs['pop'] == 'ex':
         mean_atp = mean_atp[0: pop_length]
@@ -981,9 +1207,9 @@ def create_atp_vs_rate_figs(mean_atp: np.array,
     fig, ax = plt.subplots(figsize=kargs['fig_size'])
     #fig.suptitle(f'Clustering vs in-{incoming_var}',
     #             fontsize=fontsize_title)
-    ax.set_ylabel(ylabel, fontsize=fontsize_label)
-    ax.set_xlabel(xlabel, fontsize=fontsize_label)
-    ax.tick_params(axis='both', labelsize=tick_size)
+    ax.set_ylabel(ylabel, fontsize=2*fontsize_label)
+    ax.set_xlabel(xlabel, fontsize=2*fontsize_label)
+    ax.tick_params(axis='both', labelsize=2*tick_size)
     points = ax.scatter(mean_fr, mean_atp, c=incoming_strength,
                         cmap=kargs['cmap'],
                         edgecolors=kargs['edgecolors'],
@@ -993,7 +1219,9 @@ def create_atp_vs_rate_figs(mean_atp: np.array,
     cmap_pos = divider.append_axes('right', size="5%", pad="5%")
     cax = fig.add_axes(cmap_pos)
     cbar = fig.colorbar(points, cax=cax)
-    cbar.ax.set_title(kargs['cc_var'], ha='left', x=0)
+    cbar.ax.set_title(kargs['cc_var'], ha='left', x=0, fontsize=2*tick_size)
+    cbar.ax.tick_params(labelsize=2*tick_size)
+    plt.tight_layout()
     # save image
     save_atp_vs_rate_fig =f'{output_path}/atp_vs_fr_vs_in-strength_{kargs["pop"]}{kargs["extra_info"]}'
     plt.savefig(save_atp_vs_rate_fig, dpi=dpi)
@@ -1021,7 +1249,7 @@ def create_w_vs_rate_figs(last_mean_firing_rate_per_neuron: list,
     """
     kargs.setdefault('markersize', 2)
     kargs.setdefault('markerfacecolor', 'steelblue')
-    kargs['cc_var'] = r'$<ATP>$'
+    kargs['cc_var'] = r'$\bar{A}_t$'
     kargs.setdefault('edgecolors', 'k')
     kargs.setdefault('verbose', 0)
     kargs.setdefault('lw', None)
@@ -1040,8 +1268,8 @@ def create_w_vs_rate_figs(last_mean_firing_rate_per_neuron: list,
             mean_own_w = w_matrix_fin[own_w]
             mean_other_w = w_matrix_fin[other_w]
             mean_atp = mean_energy_per_neuron[0: pop_length]
-            ylabel = r'$\sum_k w^{k}_{ex, ex} \nu^k_{ex}$'
-            xlabel = r'$\sum_k w^{k}_{in, ex} \nu^k_{in}$'
+            ylabel = r'$\sum_k \bar{w}_{t}^{ex \rightarrow ex, k} \bar{\nu}_t^{ex, k}$'
+            xlabel = r'$\sum_k \bar{w}_{t}^{in \rightarrow ex, k} \bar{\nu}_t^{in, k}$'
         else:
             mean_own_fr = np.array(last_mean_firing_rate_per_neuron[pop_length: ])
             mean_other_fr = np.array(last_mean_firing_rate_per_neuron[0: pop_length])
@@ -1050,8 +1278,8 @@ def create_w_vs_rate_figs(last_mean_firing_rate_per_neuron: list,
             mean_own_w = w_matrix_fin[own_w]
             mean_other_w = w_matrix_fin[other_w]
             mean_atp = mean_energy_per_neuron[pop_length: ]
-            ylabel = r'$\sum_k w^{k}_{in, in} \nu^k_{in}$'
-            xlabel = r'$\sum_k w^{k}_{ex, in} \nu^k_{ex}$'
+            ylabel = r'$\sum_k \bar{w}_{t}^{in \rightarrow in, k} \bar{\nu}_t^{in, k}$'
+            xlabel = r'$\sum_k \bar{w}_{t}^{ex \rightarrow in, k} \bar{\nu}_t^{ex, k}$'
 
         mean_own_fr_v = mean_own_fr.reshape(-1, 1)
         mean_other_fr_v = mean_other_fr.reshape(-1, 1)
@@ -1071,14 +1299,14 @@ def create_w_vs_rate_figs(last_mean_firing_rate_per_neuron: list,
             print(mean_other_w)
 
         mean_own_w_fr = np.matmul(
-            np.transpose(mean_own_fr_v), np.abs(mean_own_w)/100)
+            np.transpose(mean_own_fr_v), np.abs(mean_own_w)/kargs["w_max"])
         mean_other_w_fr = np.matmul(
-            np.transpose(mean_other_fr_v), np.abs(mean_other_w)/100)
+            np.transpose(mean_other_fr_v), np.abs(mean_other_w)/kargs["w_min"])
 
         fig, ax = plt.subplots(figsize=kargs['fig_size'])
-        ax.set_ylabel(ylabel, fontsize=fontsize_label)
-        ax.set_xlabel(xlabel, fontsize=fontsize_label)
-        ax.tick_params(axis='both', labelsize=tick_size)
+        ax.set_ylabel(ylabel, fontsize=2*fontsize_label)
+        ax.set_xlabel(xlabel, fontsize=2*fontsize_label)
+        ax.tick_params(axis='both', labelsize=2*tick_size)
         points = ax.scatter(mean_other_w_fr,
                             mean_own_w_fr,
                             c=mean_atp,
@@ -1090,7 +1318,9 @@ def create_w_vs_rate_figs(last_mean_firing_rate_per_neuron: list,
         cmap_pos = divider.append_axes('right', size="5%", pad="5%")
         cax = fig.add_axes(cmap_pos)
         cbar = fig.colorbar(points, cax=cax)
-        cbar.ax.set_title(kargs['cc_var'], ha='left', x=0)
+        cbar.ax.set_title(kargs['cc_var'], ha='left', x=0, fontsize=2*tick_size)
+        cbar.ax.tick_params(labelsize=2*tick_size)
+        plt.tight_layout()
         # save image
         save_atp_vs_w_rate_fig =f'{output_path}/atp_vs_w_fr_own_{pop}'
         plt.savefig(save_atp_vs_w_rate_fig, dpi=dpi)
