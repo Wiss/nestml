@@ -1325,3 +1325,163 @@ def create_w_vs_rate_figs(last_mean_firing_rate_per_neuron: list,
         save_atp_vs_w_rate_fig =f'{output_path}/atp_vs_w_fr_own_{pop}'
         plt.savefig(save_atp_vs_w_rate_fig, dpi=dpi)
         plt.close(fig)
+
+
+def create_fr_vs_atp_attractor_figs(pop_dict: dict, spikes_events: dict,
+                     multimeter_events: dict, fig_name: str,
+                     output_path: str,
+                     **kargs):
+    """
+
+
+    Parameters
+    ----------
+    pop_dict:
+        dictionary with populations
+    spikes_events:
+        dictionary with all spike's information (events)
+    multimeter_events:
+        dictionary with all multimeters information
+    fig_name:
+        figure name
+    output_path:
+        path to figure
+    kargs:
+        extra parameters to the funcion given as dictionary
+    """
+    kargs.setdefault('mult_var', None)
+    kargs.setdefault('time_window', 30)
+    kargs.setdefault('alpha', 0.3)
+    kargs.setdefault('mean_lw', 3)
+    kargs.setdefault('plot_each_n_atp', True)
+    kargs.setdefault('eq_energy_level', None)
+    resolution = kargs['resolution']
+    final_t = kargs['simtime']
+    kargs.setdefault('init_time', 0)
+    kargs.setdefault('fin_time', -1)
+    idx_init = int(kargs['init_time']/resolution)
+    idx_init_atp = int(kargs['init_time']/kargs['record_rate'])
+
+    if kargs['fin_time'] == -1:
+        idx_fin = kargs['fin_time'] - 10
+        idx_fin_atp = kargs['fin_time']
+    else:
+        idx_fin = int(kargs['fin_time']/resolution) - 10
+        idx_fin_atp = int(kargs['fin_time']/kargs['record_rate'])
+    atp_stck = {}
+    atp_stack = {}
+    atp_mean = {}
+    atp_std = {}
+    mult_time = np.arange(start=kargs['multimeter_record_rate'], stop=final_t,
+                          step=kargs['multimeter_record_rate'])
+    firing_rate = tools.pop_firing_rate(pop_dict=pop_dict,
+                                        spikes_events=spikes_events,
+                                        time_window=kargs['time_window'],
+                                        final_t=final_t,
+                                        resolution=resolution)
+    for pop in spikes_events:
+
+        fig, ax = plt.subplots(1, figsize=fig_size)
+        if pop == 'ex':
+            color = 'darkred'
+            p = 'excitatory'
+        elif pop == 'in':
+            color = 'steelblue'
+            p = 'inhibitory'
+        ax.set_xlabel('Firing rate (Hz)', fontsize=fontsize_label)
+        senders = spikes_events[pop]['senders']
+        times = spikes_events[pop]['times']
+        # include min and max times
+        times_w_min = times[times > kargs['init_time']]
+        senders_w_min = senders[times > kargs['init_time']]
+        if kargs['fin_time'] > 0:
+            times_w_min_max = times_w_min[times_w_min < kargs['fin_time']]
+            senders_w_min_max = senders_w_min[times_w_min < kargs['fin_time']]
+        else:
+            times_w_min_max = times_w_min
+            senders_w_min_max = senders_w_min
+        ax.set_title('Firing rate versus ATP for ' + p + \
+                     ' population', fontsize=fontsize_title)
+        ax.set_ylabel('ATP (%)', fontsize=fontsize_label)
+        ax.grid(axis='x')
+        ax.tick_params(axis='both', labelsize=tick_size)
+        # ATP and firing rate
+        atp_per_sender = {}
+        for sender, atp in zip(multimeter_events[pop]['senders'],
+                            multimeter_events[pop]['ATP']):
+            atp_per_sender.setdefault(str(sender), []).append(atp)
+        atp_stck[pop] = [np.array(atp_s) for atp_s in atp_per_sender.values()]
+        atp_stack[pop] = np.stack(atp_stck[pop])
+        atp_mean[pop] = np.mean(atp_stack[pop], axis=0)
+        atp_std[pop] = np.std(atp_stack[pop], axis=0)
+
+#        if kargs['plot_each_n_atp']:
+#            for n, sender in enumerate(atp_per_sender):
+#                if n == 0:
+#                    ax.plot(mult_time[idx_init_atp: idx_fin_atp],
+#                               atp_per_sender[sender][idx_init_atp: idx_fin_atp],
+#                               '.', c=color, label=pop, alpha=kargs['alpha'])
+#                    ax.plot(mult_time[idx_init_atp: idx_fin_atp],
+#                               atp_per_sender[sender][idx_init_atp: idx_fin_atp],
+#                               c=color,
+#                            alpha=kargs['alpha'])
+#                else:
+#                    ax.plot(mult_time[idx_init_atp: idx_fin_atp],
+#                               atp_per_sender[sender][idx_init_atp: idx_fin_atp],
+#                               '.', c=color, alpha=kargs['alpha'])
+#                    ax.plot(mult_time[idx_init_atp: idx_fin_atp],
+#                               atp_per_sender[sender][idx_init_atp: idx_fin_atp],
+#                               c=color,
+#                            alpha=kargs['alpha'])
+
+
+        samples_every = 10
+        ax.plot(firing_rate[pop]['rates'][idx_init: idx_fin: samples_every],
+                   atp_mean[pop][idx_init_atp: idx_fin_atp],
+                   c='indigo',
+                   lw=kargs['mean_lw'],
+                   label=pop + ' mean')
+
+        ax.plot(firing_rate[pop]['rates'][idx_init],
+                atp_mean[pop][idx_init_atp],
+                color='red',
+                marker='8',
+                markersize=15,
+                linestyle = 'None',
+                label='Initial')
+        ax.plot(firing_rate[pop]['rates'][-1],
+                atp_mean[pop][-1],
+                color='green',
+                marker='*',
+                markersize=15,
+                linestyle = 'None',
+                label='Final')
+        #ax.quiver(firing_rate[pop]['rates'][idx_init: idx_fin: samples_every],
+        #           atp_mean[pop][idx_init_atp: idx_fin_atp],
+        #           color='indigo',
+        #           lw=kargs['mean_lw'],
+        #           label=pop + ' mean')
+        #ax.fill_between(firing_rate[pop]['rates'][idx_init: idx_fin: samples_every],
+        #                   atp_mean[pop][idx_init_atp: idx_fin_atp] - \
+        #                   atp_std[pop][idx_init_atp: idx_fin_atp],
+        #                   atp_mean[pop][idx_init_atp: idx_fin_atp] + \
+        #                   atp_std[pop][idx_init_atp: idx_fin_atp],
+        #                   edgecolor='indigo',
+        #                   color='indigo',
+        #                   label=pop + ' sd',
+        #                   alpha=kargs['alpha'])
+        # expected energy equilibrium
+        if pop == 'ex' and kargs['eq_energy_level'] != 0:
+            ax.axhline(kargs['eq_energy_level'],
+                          c='grey',
+                          ls='--',
+                          lw=kargs['mean_lw'],
+                          label=r'$\breve{A} =$' +
+                          f'{round(kargs["eq_energy_level"], 1)}')
+        ax.legend(fontsize=fontsize_legend)
+        logger.info('%s population ATP average through simulation %s',
+                    pop, np.mean(atp_mean[pop]))
+        # save image
+        save_fr_vs_atp_fig =f'{output_path}/{fig_name}_{pop}_separate'
+        plt.savefig(save_fr_vs_atp_fig, dpi=dpi)
+        plt.close(fig)

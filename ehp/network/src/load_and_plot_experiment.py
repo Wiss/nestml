@@ -33,7 +33,8 @@ from src.utils.figures import (create_weights_figs,
                                create_atp_vs_rate_figs,
                                create_w_vs_rate_figs,
                                delays_hist,
-                               weights_before_after_hist)
+                               weights_before_after_hist,
+                               create_fr_vs_atp_attractor_figs)
 
 if __name__ == '__main__':
     import argparse
@@ -107,13 +108,19 @@ if __name__ == '__main__':
 
     # choose simulation subsection
     init_time = 0
-    fin_time = 800
+    fin_time = 15000
+    # x and y lim for atp_vs_fr_own
+    xlim_wrate_vs_wrate = [120, 750]
+    ylim_wrate_vs_wrate = [-30, 1500]
+    # x and y lim for atp_vs_fr_in-strength_ex_incoming_cc_atp_last
+    xlim_w_vs_rate = [-700, 3000]
+    ylim_w_vs_rate = [-2, 100]
 
     if init_time >= fin_time:
         raise Exception("init time should be smaller than fin time")
 
     pops_figs = 0
-    spikes_figs = 1
+    spikes_figs = 0
     matrices_figs = 0
     full_matrix_figs = 0
     graph_measure_figs = 0
@@ -122,7 +129,16 @@ if __name__ == '__main__':
     multimeter_figs = 0
     cc_vs_incoming_figs = 0
     atp_vs_incoming_figs = 0
-    atp_vs_rate_figs = 0
+    atp_vs_rate_figs = 0  # only runs atp_vs_fr_own and
+    # atp_vs_fr_in-strength_ex_incominh_cc_atp_last (the two main figures
+    # shown in the thesis)
+    atp_vs_rate_figs_extra_info = 0
+    fr_vs_atp_attractor = 1
+
+    # if atp_vs_rate_figs_extra_info enabled, then
+    # atp_vs_rate_fig should be enabled too!
+    if atp_vs_rate_figs_extra_info and not atp_vs_rate_figs:
+        atp_vs_rate_figs = 1
 
     # generate plots
     # position plots
@@ -186,10 +202,17 @@ if __name__ == '__main__':
             matrix_name = matrix_k.split('_')[0].capitalize()
             matrix_str = matrix_k.split('_')[1]
             title = matrix_name + ' ' + matrix_str
-            create_matrices_figs(matrix=matrix_v,
-                                output_path=PATH_TO_FIGS,
-                                fig_name=matrix_k,
-                                title=title)
+            if matrix_name == 'Adjacency':
+                create_matrices_figs(matrix=matrix_v,
+                                    output_path=PATH_TO_FIGS,
+                                    fig_name=matrix_k,
+                                     title=title,
+                                     cmap='Greys')
+            else:
+                create_matrices_figs(matrix=matrix_v,
+                                    output_path=PATH_TO_FIGS,
+                                    fig_name=matrix_k,
+                                    title=title)
     if full_matrix_figs:
         full_matrices = {'weight_matrix_full_init': full_w_matrix_init,
                             'weight_matrix_full_fin': full_w_matrix_fin,
@@ -502,3 +525,24 @@ if __name__ == '__main__':
     print('## COMPUTE TIMES #########################')
     print('##########################################')
     print(f'plots takes: {plots_tot_time} sec. -> {plots_tot_time/60} min.')
+
+
+    if fr_vs_atp_attractor:
+        create_fr_vs_atp_attractor_figs(pop_dict=pop_dict,
+                        spikes_events=spikes_events,
+                        multimeter_events=multimeter_events,
+                        fig_name='attractor',
+                        output_path=PATH_TO_FIGS,
+                        mult_var=general['record']['multimeter'],
+                        alpha=0.2,
+                        multimeter_record_rate=general['record_rate'],
+                        simtime=general['simtime'],
+                        resolution=general['resolution'],
+                        n_neurons=network_layout['n_neurons'],
+                        ex_in_ratio=network_layout['ex_in_ratio'],
+                        time_window=general['firing_rate_window'],
+                        init_time=init_time,
+                        fin_time=fin_time,
+                        record_rate=general['record_rate'],
+                        eq_energy_level=mean_energy_fix_point
+                        )

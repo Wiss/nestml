@@ -615,6 +615,7 @@ def energy_fix_point(eta: float, alpha: float = 0.5, a_h: float = 100) -> float:
 def get_mean_fr_per_neuron(spikes_events: dict,
                          pop_dict: dict,
                          simtime: float,
+                         max_time: float = None,
                          min_time: float = 0):
     """
     Calculates average over time firing rate per neuron.
@@ -627,6 +628,8 @@ def get_mean_fr_per_neuron(spikes_events: dict,
         dictionary with populations
     simtime:
         simulation total time in ms
+    max_time:
+        max time to calculate fr
     min_time:
         min time to calculate fr (>0)
 
@@ -651,13 +654,18 @@ def get_mean_fr_per_neuron(spikes_events: dict,
         # include min and max times
         #times_w_min = times[times > min_time]
         senders_w_min = senders[times > min_time]
+        if max_time is not None:
+            sender_w_min_and_max = senders_w_min[times < max_time]
+        else:
+            sender_w_min_and_max = senders_w_min
+            max_time = simtime
         #lst = list(senders_w_min)
         #sorted_sender = set(sorted(lst))
         #for sender in sorted_sender:
         for sender in potential_senders[pop]:
-            if sender in senders_w_min:
+            if sender in senders_w_min_and_max:
                 mean_rate_per_neuron.append(sum(
-                        senders_w_min == sender)/(simtime - min_time)*1000)  # Hz
+                        senders_w_min_and_max == sender)/(max_time - min_time)*1000)  # Hz
             else:
                 mean_rate_per_neuron.append(0)
 
