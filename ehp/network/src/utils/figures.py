@@ -200,7 +200,9 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
         ax[0].plot(times_w_min_max,
                    senders_w_min_max,
                    '.',
-                   c=color)
+                   c=color,
+                   lw=0.1,
+                   ms=0.1)
         # ATP and firing rate
         atp_per_sender = {}
         for sender, atp in zip(multimeter_events[pop]['senders'],
@@ -307,7 +309,9 @@ def create_spikes_figs(pop_dict: dict, spikes_events: dict,
         # spikes
         ax[0].plot(times_w_min_max,
                    senders_w_min_max,
-                   '.', c=color, label=pop)
+                   '.', c=color, label=pop,
+                   lw=0.1,
+                   ms=0.1)
         # ATP
         if kargs['plot_each_n_atp']:
             for n, sender in enumerate(atp_per_sender):
@@ -867,7 +871,7 @@ def weights_before_after_hist(weights_init: dict, weights_fin: dict,
                      f'{w_v.get("synapse_model")[0]} synapse type',
                      fontsize=fontsize_title)
         for axes in ax:
-            axes.set_ylabel('Frequency', fontsize=fontsize_label)
+            axes.set_ylabel('# cases', fontsize=fontsize_label)
             axes.set_xlabel('Weight', fontsize=fontsize_label)
             axes.tick_params(axis='both', labelsize=tick_size)
         if any(item in w_v.get('synapse_model')[0].split('_') \
@@ -1184,6 +1188,8 @@ def create_atp_vs_rate_figs(mean_atp: np.array,
     kargs.setdefault('cmap', 'gray_r')
     kargs.setdefault('size', 60)
     kargs.setdefault('fig_size', fig_size)
+    kargs.setdefault('xlim', [])  # list with xmin and xmax
+    kargs.setdefault('ylim', [])  # list with ymin and ymax
     if kargs['cc_var'] == r'$\sum_j w_{ji}$':
         ylabel = r'$\bar{A}_t$'
         xlabel = r'$\bar{\nu}_t$'
@@ -1209,6 +1215,10 @@ def create_atp_vs_rate_figs(mean_atp: np.array,
     #             fontsize=fontsize_title)
     ax.set_ylabel(ylabel, fontsize=2*fontsize_label)
     ax.set_xlabel(xlabel, fontsize=2*fontsize_label)
+    if kargs['xlim']:
+        ax.set_xlim(kargs['xlim'][0], kargs['xlim'][1])
+    if kargs['ylim']:
+        ax.set_ylim(kargs['ylim'][0], kargs['ylim'][1])
     ax.tick_params(axis='both', labelsize=2*tick_size)
     points = ax.scatter(mean_fr, mean_atp, c=incoming_strength,
                         cmap=kargs['cmap'],
@@ -1256,6 +1266,8 @@ def create_w_vs_rate_figs(last_mean_firing_rate_per_neuron: list,
     kargs.setdefault('cmap', 'gray_r')
     kargs.setdefault('size', 60)
     kargs.setdefault('fig_size', fig_size)
+    kargs.setdefault('xlim', [])  # list with xmin and xmax
+    kargs.setdefault('ylim', [])  # list with ymin and ymax
     pop_length = kargs['ex_pop_length']
     for pop in ['ex', 'in']:
         if pop == 'ex':
@@ -1307,6 +1319,10 @@ def create_w_vs_rate_figs(last_mean_firing_rate_per_neuron: list,
         ax.set_ylabel(ylabel, fontsize=2*fontsize_label)
         ax.set_xlabel(xlabel, fontsize=2*fontsize_label)
         ax.tick_params(axis='both', labelsize=2*tick_size)
+        if kargs['xlim']:
+            ax.set_xlim(kargs['xlim'][0], kargs['xlim'][1])
+        if kargs['ylim']:
+            ax.set_ylim(kargs['ylim'][0], kargs['ylim'][1])
         points = ax.scatter(mean_other_w_fr,
                             mean_own_w_fr,
                             c=mean_atp,

@@ -377,10 +377,6 @@ if __name__ == '__main__':
                                             ATP=multimeter_events,
                                             simtime=general['simtime'],
                                             min_time=general['simtime']*0.9)
-        mean_firing_rate_per_neuron = get_mean_fr_per_neuron(
-                                                spikes_events=spikes_events,
-                                                pop_dict=pop_dict,
-                                                simtime=general['simtime'])
         last_mean_firing_rate_per_neuron = get_mean_fr_per_neuron(
                                                 spikes_events=spikes_events,
                                                 pop_dict=pop_dict,
@@ -390,19 +386,6 @@ if __name__ == '__main__':
                                             w_matrix=full_w_matrix_fin,
                                             ex_pop_length=ex_pop_length,
                                             )
-        in_strength_pos = get_incoming_strength_per_neuron(
-                                            w_matrix=full_w_matrix_fin,
-                                            ex_pop_length=ex_pop_length,
-                                            only_pos=True)
-        mean_in_str = np.mean(in_strength_pos)
-        mean_ex_fr = np.mean(mean_firing_rate_per_neuron[0: ex_pop_length])
-        print(f'mean in_strength_pos: {mean_in_str}')
-        print(f'mean ex_fr: {mean_ex_fr}')
-        print(f'expected A consumption: {mean_in_str * mean_ex_fr / ex_pop_length}')
-        in_strength_neg = get_incoming_strength_per_neuron(
-                                            w_matrix=full_w_matrix_fin,
-                                            ex_pop_length=ex_pop_length,
-                                            only_neg=True)
         # create \sum w*rate vs ATP figs
         if not (w_max == neurons['ex']['params']['energy_params']['w_min']['mean']
                 or w_max == neurons['ex']['params']['energy_params']['w_min']['mean']):
@@ -416,8 +399,45 @@ if __name__ == '__main__':
             ex_pop_length=ex_pop_length,
             w_max=w_max,
             w_min=w_min,
-            verbose=0)
+            verbose=0,
+            xlim=xlim_wrate_vs_wrate,
+            ylim=ylim_wrate_vs_wrate)
 
+        # although the plot below belongs to "..extra_info", we want to plot
+        # it because we are using this plot a lot in the thesis
+        # (practical reason)
+        if not atp_vs_rate_figs_extra_info:
+            create_atp_vs_rate_figs(mean_atp=last_mean_firing_rate_per_neuron,
+                                    mean_rate=in_strength,
+                                    incoming_strength=last_mean_energy_per_neuron,
+                                    output_path=PATH_TO_FIGS,
+                                    pop='ex',
+                                    ex_pop_length=ex_pop_length,
+                                    cc_var=r'<ATP>',
+                                    extra_info='_incoming_cc_atp_last',
+                                    xlim=xlim_w_vs_rate,
+                                    ylim=ylim_w_vs_rate)
+
+
+    if atp_vs_rate_figs_extra_info:
+
+        mean_firing_rate_per_neuron = get_mean_fr_per_neuron(
+                                                spikes_events=spikes_events,
+                                                pop_dict=pop_dict,
+                                                simtime=general['simtime'])
+        in_strength_pos = get_incoming_strength_per_neuron(
+                                            w_matrix=full_w_matrix_fin,
+                                            ex_pop_length=ex_pop_length,
+                                            only_pos=True)
+        mean_in_str = np.mean(in_strength_pos)
+        mean_ex_fr = np.mean(mean_firing_rate_per_neuron[0: ex_pop_length])
+        print(f'mean in_strength_pos: {mean_in_str}')
+        print(f'mean ex_fr: {mean_ex_fr}')
+        print(f'expected A consumption: {mean_in_str * mean_ex_fr / ex_pop_length}')
+        in_strength_neg = get_incoming_strength_per_neuron(
+                                            w_matrix=full_w_matrix_fin,
+                                            ex_pop_length=ex_pop_length,
+                                            only_neg=True)
         for pop in ['ex', 'in']:
             create_atp_vs_rate_figs(mean_atp=mean_energy_per_neuron,
                                     mean_rate=mean_firing_rate_per_neuron,
