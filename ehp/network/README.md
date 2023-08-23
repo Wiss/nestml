@@ -2,7 +2,7 @@
 For running one experiment
 
 ```
-ehp/network $ python -m src.experiment -f config/file_name.yaml
+ehp/network $ python -m src.experiment -f config/*file_name*.yaml
 ```
 
 For running multiple experiments
@@ -13,7 +13,7 @@ ehp/network $ python -m multiple_experiments
 
 For loading results and regenerate plots:
 ```
-ehp/network $ python -m src.load_and_plot -p /path/to/config/file/relative/to/results/folder
+ehp/network $ python -m src.load_and_plot -p */path/to/config/file/relative/to/results/folder*
 ```
 
 
