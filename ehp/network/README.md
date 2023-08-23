@@ -1,19 +1,19 @@
 # Execute
 For running one experiment
 
-```
-ehp/network $ python -m src.experiment -f config/*file_name*.yaml
+```bash
+ehp/network $ python -m src.experiment -f config/file_name.yaml
 ```
 
 For running multiple experiments
 
-```
+```bash
 ehp/network $ python -m multiple_experiments
 ```
 
 For loading results and regenerate plots:
-```
-ehp/network $ python -m src.load_and_plot -p */path/to/config/file/relative/to/results/folder*
+```bash
+ehp/network $ python -m src.load_and_plot -p /path/to/config/file/relative/to/results/folder
 ```
 
 
