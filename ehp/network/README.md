@@ -1,3 +1,22 @@
+# Execute
+For running one experiment
+
+```
+ehp/network $ python -m src.experiment -f config/file_name.yaml
+```
+
+For running multiple experiments
+
+```
+ehp/network $ python -m multiple_experiments
+```
+
+For loading results and regenerate plots:
+```
+ehp/network $ python -m src.load_and_plot -p /path/to/config/file/relative/to/results/folder
+```
+
+
 # modules
 
 If you want to run and energy dependent network with  `edlif_psc_alpha_percent`
